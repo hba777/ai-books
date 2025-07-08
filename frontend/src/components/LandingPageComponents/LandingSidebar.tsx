@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import api from "../lib/api";
+import api from "../../lib/api";
 
 interface LandingSidebarProps {
   open: boolean;
@@ -67,7 +67,7 @@ const LandingSidebar: React.FC<LandingSidebarProps> = ({ open, onClose }) => {
         Login as user
       </button>
       <button
-        className="py-3 px-6 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition"
+        className="py-3 px-6 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition"
         onClick={() => { resetForm(); setView("register"); }}
       >
         Register

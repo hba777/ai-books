@@ -1,6 +1,6 @@
 import { useState } from "react";
-import LandingSidebar from "../components/LandingSidebar";
-import LandingCard from "../components/LandingCard";
+import LandingSidebar from "../components/LandingPageComponents/LandingSidebar";
+import LandingCard from "../components/LandingPageComponents/LandingCard";
 import { HiOutlineBookOpen, HiOutlineSparkles, HiOutlineUsers } from "react-icons/hi2";
 
 export default function Home() {
