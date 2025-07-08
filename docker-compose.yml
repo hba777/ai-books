@@ -1,0 +1,28 @@
+
+services:
+  mongo:
+    image: mongo
+    container_name: mongo-db-container
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fastapi-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - mongo
+    env_file:
+      - ./backend/.env
+
+volumes:
+  mongo-data:
