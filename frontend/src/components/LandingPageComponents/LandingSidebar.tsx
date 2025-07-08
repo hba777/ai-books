@@ -37,12 +37,16 @@ const LandingSidebar: React.FC<LandingSidebarProps> = ({ open, onClose }) => {
       const res = await api.post("/users/login", { username, password });
       console.log("Login response:", res.data);
       // Decode JWT token
-      const decoded = jwtDecode(res.data.token);
+      const decoded: any = jwtDecode(res.data.token);
       console.log("Decoded JWT:", decoded);
       // Save token to localStorage
       localStorage.setItem("token", res.data.token);
       setSuccess("Login successful!");
-      router.push("/dashboard");
+      if (decoded.role === "admin") {
+        router.push("/adminDashboard");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err: any) {
       setError(err.response?.data?.detail || "Login failed");
     } finally {
