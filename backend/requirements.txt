@@ -3,3 +3,8 @@ uvicorn[standard]
 motor
 pydantic
 python-dotenv
+pymongo
+python-jose
+passlib
+bcrypt
+jwt
