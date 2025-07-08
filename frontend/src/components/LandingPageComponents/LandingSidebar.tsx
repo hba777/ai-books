@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import api from "../../lib/api";
+import { jwtDecode } from "jwt-decode";
+import { useRouter } from "next/router";
 
 interface LandingSidebarProps {
   open: boolean;
@@ -8,7 +10,7 @@ interface LandingSidebarProps {
   onAdminLogin?: () => void;
 }
 
-type View = "menu" | "login" | "register";
+type View = "menu" | "login";
 
 const LandingSidebar: React.FC<LandingSidebarProps> = ({ open, onClose }) => {
   const [view, setView] = useState<View>("menu");
@@ -17,6 +19,7 @@ const LandingSidebar: React.FC<LandingSidebarProps> = ({ open, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const router = useRouter();
 
   const resetForm = () => {
     setUsername("");
@@ -32,26 +35,16 @@ const LandingSidebar: React.FC<LandingSidebarProps> = ({ open, onClose }) => {
     setSuccess(null);
     try {
       const res = await api.post("/users/login", { username, password });
+      console.log("Login response:", res.data);
+      // Decode JWT token
+      const decoded = jwtDecode(res.data.token);
+      console.log("Decoded JWT:", decoded);
+      // Save token to localStorage
+      localStorage.setItem("token", res.data.token);
       setSuccess("Login successful!");
-      // You can store token or redirect here
+      router.push("/dashboard");
     } catch (err: any) {
       setError(err.response?.data?.detail || "Login failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-    try {
-      await api.post("/users/register", { username, password });
-      setSuccess("Registration successful! You can now log in.");
-      setView("login");
-    } catch (err: any) {
-      setError(err.response?.data?.detail || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -66,18 +59,12 @@ const LandingSidebar: React.FC<LandingSidebarProps> = ({ open, onClose }) => {
       >
         Login as user
       </button>
-      <button
-        className="py-3 px-6 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition"
-        onClick={() => { resetForm(); setView("register"); }}
-      >
-        Register
-      </button>
     </>
   );
 
-  const renderForm = (type: "login" | "register") => (
-    <form onSubmit={type === "login" ? handleLogin : handleRegister} className="flex flex-col gap-4">
-      <h2 className="text-2xl font-semibold mb-4 text-center">{type === "login" ? "Login" : "Register"}</h2>
+  const renderForm = (type: "login") => (
+    <form onSubmit={handleLogin} className="flex flex-col gap-4">
+      <h2 className="text-2xl font-semibold mb-4 text-center">Login</h2>
       <input
         className="border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
         type="text"
@@ -101,7 +88,7 @@ const LandingSidebar: React.FC<LandingSidebarProps> = ({ open, onClose }) => {
         className="py-3 px-6 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition disabled:opacity-50"
         disabled={loading}
       >
-        {loading ? (type === "login" ? "Logging in..." : "Registering...") : (type === "login" ? "Login" : "Register")}
+        {loading ? "Logging in..." : "Login"}
       </button>
       <button
         type="button"
@@ -129,7 +116,6 @@ const LandingSidebar: React.FC<LandingSidebarProps> = ({ open, onClose }) => {
         <div className="flex-1 flex flex-col justify-center">
           {view === "menu" && renderMenu()}
           {view === "login" && renderForm("login")}
-          {view === "register" && renderForm("register")}
         </div>
       </div>
     </div>

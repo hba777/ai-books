@@ -6,6 +6,7 @@ class User(BaseModel):
     username: str
     password: str
     token: Optional[str] = None
+    role: str
 
     class Config:
         validate_by_name = True
@@ -16,4 +17,5 @@ class User(BaseModel):
 
 class UserCreate(BaseModel):
     username: str
-    password: str 
+    password: str
+    role: Optional[str] = "user" 

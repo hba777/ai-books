@@ -4,6 +4,7 @@ from typing import Optional
 class UserResponse(BaseModel):
     id: Optional[str]
     username: str
+    role: str
 
     class Config:
         from_attributes = True
@@ -16,7 +17,9 @@ class LoginResponse(BaseModel):
     id: str
     username: str
     token: str 
+    role: str
 
 class RegisterRequest(BaseModel):
     username: str
     password: str
+    role: Optional[str] = "user"
