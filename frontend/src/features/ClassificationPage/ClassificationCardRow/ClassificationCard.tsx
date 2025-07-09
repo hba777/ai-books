@@ -39,4 +39,4 @@ const ClassificationStatCard: React.FC<ClassificationStatCardProps> = ({ value, 
   );
 };
 
-export { ClassificationStatCard };
+export default ClassificationStatCard;

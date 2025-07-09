@@ -1,5 +1,5 @@
 import React from "react";
-import { ClassificationStatCard } from "./ClassificationCard";
+import ClassificationStatCard from "./ClassificationCard";
 
 const ClassificationCardRow: React.FC = () => {
   return (

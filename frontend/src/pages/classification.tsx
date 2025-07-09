@@ -2,7 +2,8 @@ import React from "react";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import Header from "@/components/Header/Header";
 import { WelcomeSection } from "@/components/Header/WelcomeSection";
-import ClassificationCardRow from "@/features/ClassificationCardRow/ClassificationCardRow";
+import ClassificationCardRow from "@/features/ClassificationPage/ClassificationCardRow/ClassificationCardRow";
+import BookTable from "@/features/ClassificationPage/BookTable/BookTable";
 
 const Classifcation: React.FC = () => {
   return (
@@ -13,6 +14,7 @@ const Classifcation: React.FC = () => {
         <div className="flex-1 flex flex-col items-center px-4 py-12">
           <WelcomeSection />
           <ClassificationCardRow/>
+          <BookTable/>
         </div>
       </main>
     </div>
