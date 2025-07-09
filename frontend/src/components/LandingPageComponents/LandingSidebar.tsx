@@ -10,39 +10,33 @@ interface LandingSidebarProps {
   onAdminLogin?: () => void;
 }
 
-type View = "menu" | "login";
 
 const LandingSidebar: React.FC<LandingSidebarProps> = ({ open, onClose }) => {
-  const [view, setView] = useState<View>("menu");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const router = useRouter();
 
-  const resetForm = () => {
-    setUsername("");
-    setPassword("");
-    setError(null);
-    setSuccess(null);
-  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setSuccess(null);
     try {
       const res = await api.post("/users/login", { username, password });
       console.log("Login response:", res.data);
       // Decode JWT token
-      const decoded = jwtDecode(res.data.token);
+      const decoded: any = jwtDecode(res.data.token);
       console.log("Decoded JWT:", decoded);
       // Save token to localStorage
       localStorage.setItem("token", res.data.token);
-      setSuccess("Login successful!");
-      router.push("/dashboard");
+      if (decoded.role === "admin") {
+        router.push("/adminDashboard");
+      } else {
+        router.push("/dashboard");
+      }
+
     } catch (err: any) {
       setError(err.response?.data?.detail || "Login failed");
     } finally {
@@ -50,17 +44,7 @@ const LandingSidebar: React.FC<LandingSidebarProps> = ({ open, onClose }) => {
     }
   };
 
-  const renderMenu = () => (
-    <>
-      <h2 className="text-2xl font-semibold mb-8 text-center">Login</h2>
-      <button
-        className="mb-4 py-3 px-6 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
-        onClick={() => { resetForm(); setView("login"); }}
-      >
-        Login as user
-      </button>
-    </>
-  );
+  
 
   const renderForm = (type: "login") => (
     <form onSubmit={handleLogin} className="flex flex-col gap-4">
@@ -82,7 +66,6 @@ const LandingSidebar: React.FC<LandingSidebarProps> = ({ open, onClose }) => {
         required
       />
       {error && <div className="text-red-500 text-sm text-center">{error}</div>}
-      {success && <div className="text-green-600 text-sm text-center">{success}</div>}
       <button
         type="submit"
         className="py-3 px-6 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition disabled:opacity-50"
@@ -90,13 +73,7 @@ const LandingSidebar: React.FC<LandingSidebarProps> = ({ open, onClose }) => {
       >
         {loading ? "Logging in..." : "Login"}
       </button>
-      <button
-        type="button"
-        className="text-gray-500 hover:underline mt-2"
-        onClick={() => setView("menu")}
-      >
-        Back
-      </button>
+      
     </form>
   );
 
@@ -108,14 +85,13 @@ const LandingSidebar: React.FC<LandingSidebarProps> = ({ open, onClose }) => {
       <div className="flex flex-col h-full p-8">
         <button
           className="self-end text-gray-400 hover:text-gray-600 text-2xl mb-8"
-          onClick={() => { onClose(); setView("menu"); }}
+          onClick={onClose}
           aria-label="Close sidebar"
         >
           &times;
         </button>
         <div className="flex-1 flex flex-col justify-center">
-          {view === "menu" && renderMenu()}
-          {view === "login" && renderForm("login")}
+          {renderForm("login")}
         </div>
       </div>
     </div>
