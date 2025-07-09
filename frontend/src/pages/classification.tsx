@@ -2,7 +2,7 @@ import React from "react";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import Header from "@/components/Header/Header";
 import { WelcomeSection } from "@/components/Header/WelcomeSection";
-import ClassificationCardRow from "@/components/ClassificationCardRow/ClassificationCardRow";
+import ClassificationCardRow from "@/features/ClassificationCardRow/ClassificationCardRow";
 
 const Classifcation: React.FC = () => {
   return (
