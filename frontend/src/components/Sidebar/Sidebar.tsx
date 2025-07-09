@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { jwtDecode } from "jwt-decode";
 import { BsLightningCharge } from "react-icons/bs";
 import { FaRegMoon } from "react-icons/fa";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
@@ -28,6 +29,21 @@ const Sidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const router = useRouter();
   const active = (href: string) => router.pathname === href;
+  const [username, setUsername] = useState("Mario Rossi");
+  const [email, setEmail] = useState("mario@restaurant.com");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const decoded: any = jwtDecode(token);
+          if (decoded && decoded.sub) setUsername(decoded.sub);
+          if (decoded && decoded.email) setEmail(decoded.email);
+        } catch {}
+      }
+    }
+  }, []);
 
   if (collapsed) {
     return (
@@ -120,8 +136,8 @@ const Sidebar: React.FC = () => {
           M
         </div>
         <div>
-          <div className="font-semibold text-gray-900">Mario Rossi</div>
-          <div className="text-xs text-gray-500">mario@restaurant.com</div>
+          <div className="font-semibold text-gray-900">{username}</div>
+          <div className="text-xs text-gray-500">{email}</div>
         </div>
       </div>
     </aside>

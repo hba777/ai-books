@@ -9,6 +9,7 @@ from bson import ObjectId
 from typing import List
 import bcrypt
 from fastapi.security import OAuth2PasswordRequestForm
+import logging
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -28,6 +29,27 @@ def register_user(request: UserCreate):
     users_collection.update_one({"_id": result.inserted_id}, {"$set": {"token": token}})
     return UserResponse(id=str(db_user["_id"]), username=db_user["username"], role=db_user["role"])
 
+@router.post("/register-user")
+def register_user(
+    username: str ,
+    password: str ,
+    role: str
+):
+    users_collection = get_users_collection()
+    if users_collection.find_one({"username": username}):
+        raise HTTPException(status_code=400, detail="Username already exists")
+    
+    hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    user = {
+        "_id": ObjectId(),
+        "username": username,
+        "password": hashed_password,
+        "role": role
+    }
+    users_collection.insert_one(user)
+    return {"message": "User registered successfully"}
+
+
 @router.post("/login", response_model=LoginResponse)
 def login_user(request: LoginRequest):
     users_collection = get_users_collection()
@@ -40,7 +62,7 @@ def login_user(request: LoginRequest):
     users_collection.update_one({"_id": user_data["_id"]}, {"$set": {"token": token}})
     return LoginResponse(id=str(user_data["_id"]), username=user_data["username"], token=token, role=user_data["role"])
 
-@router.post("/token", response_model=LoginResponse)
+@router.post("/token")
 def login_token(form_data: OAuth2PasswordRequestForm = Depends()):
     users_collection = get_users_collection()
     user_data = users_collection.find_one({"username": form_data.username})
@@ -50,7 +72,19 @@ def login_token(form_data: OAuth2PasswordRequestForm = Depends()):
         raise HTTPException(status_code=401, detail="Invalid username or password")
     token = create_access_token(str(user_data["_id"]), user_data["username"], user_data["role"])
     users_collection.update_one({"_id": user_data["_id"]}, {"$set": {"token": token}})
-    return LoginResponse(id=str(user_data["_id"]), username=user_data["username"], token=token, role=user_data["role"])
+    return {
+        "access_token": token,
+        "token_type": "bearer"
+    }
+
+@router.post("/logout")
+def logout_user(current_user: UserResponse = Depends(get_current_user)):
+    users_collection = get_users_collection()
+    # Remove the token from the user's record to invalidate it
+    result = users_collection.update_one({"_id": ObjectId(current_user.id)}, {"$unset": {"token": ""}})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="User not found or already logged out")
+    return {"message": "Successfully logged out"}
 
 @router.get("/all", response_model=List[UserResponse], dependencies=[Depends(is_admin)])
 def get_all_users():

@@ -3,12 +3,28 @@ import { LuBell } from "react-icons/lu";
 import { FiSearch } from "react-icons/fi";
 import { useRouter } from "next/router";
 import { FiUpload } from "react-icons/fi";
-
+import api from "../../lib/api";
+import { jwtDecode } from "jwt-decode";
 // Header with search, bell, and profile picture
 export const Header: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [userInitial, setUserInitial] = useState("M");
   const avatarRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const decoded: any = jwtDecode(token);
+          if (decoded && decoded.sub) {
+            setUserInitial(decoded.sub.charAt(0).toUpperCase());
+          }
+        } catch {}
+      }
+    }
+  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -30,8 +46,14 @@ export const Header: React.FC = () => {
     };
   }, [dropdownOpen]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setDropdownOpen(false);
+    try {
+      await api.post("/users/logout");
+    } catch (err) {
+      // Optionally handle error (e.g., show a toast)
+    }
+    localStorage.removeItem("token");
     router.push("/");
   };
 
@@ -68,7 +90,7 @@ export const Header: React.FC = () => {
             className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center font-bold text-blue-700 text-lg shadow cursor-pointer select-none"
             onClick={() => setDropdownOpen((open) => !open)}
           >
-            M
+            {userInitial}
           </div>
           {dropdownOpen && (
             <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-50">

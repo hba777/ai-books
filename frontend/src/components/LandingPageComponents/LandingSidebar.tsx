@@ -16,36 +16,26 @@ const LandingSidebar: React.FC<LandingSidebarProps> = ({ open, onClose }) => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const router = useRouter();
 
-  const resetForm = () => {
-    setUsername("");
-    setPassword("");
-    setError(null);
-    setSuccess(null);
-  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setSuccess(null);
     try {
-      // const res = await api.post("/users/login", { username, password });
-      // console.log("Login response:", res.data);
-      // // Decode JWT token
-      // const decoded: any = jwtDecode(res.data.token);
-      // console.log("Decoded JWT:", decoded);
-      // // Save token to localStorage
-      // localStorage.setItem("token", res.data.token);
-      // setSuccess("Login successful!");
-      // if (decoded.role === "admin") {
-      //   router.push("/adminDashboard");
-      // } else {
-      //   router.push("/dashboard");
-      // }
-      router.push("/dashboard");
+      const res = await api.post("/users/login", { username, password });
+      console.log("Login response:", res.data);
+      // Decode JWT token
+      const decoded: any = jwtDecode(res.data.token);
+      console.log("Decoded JWT:", decoded);
+      // Save token to localStorage
+      localStorage.setItem("token", res.data.token);
+      if (decoded.role === "admin") {
+        router.push("/adminDashboard");
+      } else {
+        router.push("/dashboard");
+      }
 
     } catch (err: any) {
       setError(err.response?.data?.detail || "Login failed");
@@ -76,7 +66,6 @@ const LandingSidebar: React.FC<LandingSidebarProps> = ({ open, onClose }) => {
         required
       />
       {error && <div className="text-red-500 text-sm text-center">{error}</div>}
-      {success && <div className="text-green-600 text-sm text-center">{success}</div>}
       <button
         type="submit"
         className="py-3 px-6 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition disabled:opacity-50"

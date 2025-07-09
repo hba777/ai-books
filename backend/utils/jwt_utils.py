@@ -1,7 +1,6 @@
 from jose import jwt
 from jose.exceptions import JWTError, ExpiredSignatureError
 from datetime import datetime, timedelta
-from typing import Any, Dict
 import os
 from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer

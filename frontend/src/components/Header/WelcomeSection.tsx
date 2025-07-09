@@ -1,13 +1,25 @@
-import api from "../../lib/api";
-
+import React, { useState, useEffect } from "react";
+import { jwtDecode } from "jwt-decode";
 
 // Welcome section with welcome text, subtext, and a button on the right
 export const WelcomeSection: React.FC = () => {
+  const [username, setUsername] = useState("Mario");
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const decoded: any = jwtDecode(token);
+          if (decoded && decoded.sub) setUsername(decoded.sub);
+        } catch {}
+      }
+    }
+  }, []);
     return (
       <section className="flex items-center justify-between w-full mb-6 ml-3">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-1">
-            Welcome back, Mario <span className="inline-block">👋</span>
+            Welcome back, {username} <span className="inline-block">👋</span>
           </h1>
           <p className="text-gray-500 text-base">
             Here's the data and analytics of books or documents.
