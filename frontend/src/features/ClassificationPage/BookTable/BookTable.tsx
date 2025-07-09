@@ -2,6 +2,7 @@
     import { FiSearch } from "react-icons/fi";
     import { CiViewTable } from "react-icons/ci";
     import { IoGridOutline } from "react-icons/io5";
+import BookGridView from "./BookGridView";
 
 
     const dummyBooks = [
@@ -114,7 +115,7 @@
                 </div>
             )}
             </div>
-            <button className="ml-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold px-6 py-2 rounded-lg shadow hover:from-blue-600 hover:to-purple-600 transition">
+            <button className="ml-2 bg-gradient-to-r from-[#3B82F6] to-[#9333EA] opacity-40 text-white font-semibold px-6 py-2 rounded-lg shadow hover:from-blue-600 hover:to-purple-600 transition">
             Start Processing
             </button>
         </div>
@@ -159,9 +160,9 @@
             </table>
             </div>
         ) : (
-            <div className="bg-white rounded-2xl shadow p-12 flex items-center justify-center min-h-[200px] text-gray-400 text-lg">
+            <div className="rounded-2xl p-12 flex items-center justify-center min-h-[200px] text-lg">
             {/* Placeholder for grid view */}
-            Grid view coming soon...
+            <BookGridView/>
             </div>
         )}
         </div>
