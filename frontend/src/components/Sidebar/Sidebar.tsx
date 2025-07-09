@@ -4,6 +4,7 @@ import { FaRegMoon } from "react-icons/fa";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { LuChartColumn, LuBookOpenCheck, LuBrain } from "react-icons/lu";
 import { MdAccessTime } from "react-icons/md";
+import { FiGrid } from "react-icons/fi";
 import { IoSettingsOutline } from "react-icons/io5";
 import { IoIosHelpCircleOutline } from "react-icons/io";
 
@@ -12,7 +13,7 @@ import { useRouter } from "next/router";
 
 const navLinks = [
   { label: "Dashboard", href: "/dashboard", icon: <LuChartColumn className="text-2xl" />, subtitle: "Overview & Analytics" },
-  { label: "Classification", href: "/classification", icon: <LuBookOpenCheck className="text-2xl" />, subtitle: "of Books & Documents" },
+  { label: "Classification", href: "/classification", icon: <FiGrid className="text-2xl" />, subtitle: "of Books & Documents" },
   { label: "In-depth Analysis", href: "/analysis", icon: <LuBookOpenCheck className="text-2xl" />, subtitle: "Review of Classified Books" },
   { label: "Reports", href: "/reports", icon: <MdAccessTime className="text-2xl" />, subtitle: "Of Books" },
   { label: "Review Content", href: "/review", icon: <LuBrain className="text-2xl" />, subtitle: "AI Training & Settings" },
