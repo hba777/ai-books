@@ -73,7 +73,7 @@ const Sidebar: React.FC = () => {
         <hr className="border-t border-gray-200 mb-4" />
         <div className="px-6">
           <nav className="flex flex-col gap-3">
-            <div className="text-xs text-gray-400 px-2 mb-2">MAIN NAVIGATION</div>
+            <div className="text-xs text-gray-400 px-2 mb-    2">MAIN NAVIGATION</div>
             {navLinks.map(link => (
               <Link href={link.href} key={link.href} legacyBehavior>
                 <a
