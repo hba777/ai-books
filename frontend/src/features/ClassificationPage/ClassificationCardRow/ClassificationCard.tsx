@@ -22,7 +22,7 @@ const ClassificationStatCard: React.FC<ClassificationStatCardProps> = ({ value, 
   }
 
   return (
-    <div className="flex flex-col items-start bg-white rounded-2xl shadow p-6 min-w-[170px] max-w-[200px] w-full h-44 relative">
+    <div className="flex flex-col items-start bg-white rounded-2xl shadow-md p-6 min-w-[170px] max-w-[200px] w-full h-44 relative">
       <div className="flex items-center mb-4">
         <div
           className={`w-12 h-12 rounded-xl flex items-center justify-center text-white text-2xl mr-2 overflow-hidden ${iconBgClass}`}
