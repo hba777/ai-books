@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import api from "../lib/api";
 import { useRouter } from "next/router";
 import Sidebar from "../components/Sidebar/Sidebar";
-import { Header, WelcomeSection } from "../components/Header/Header";
+import { Header } from "../components/Header/Header";
+import { WelcomeSection } from "@/components/Header/WelcomeSection";
 
 interface User {
   id: string;
@@ -11,10 +12,6 @@ interface User {
 }
 
 const Dashboard: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-blue-50 to-purple-100">
