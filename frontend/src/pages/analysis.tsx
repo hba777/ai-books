@@ -1,15 +1,35 @@
-import React from "react";
+import React, { useState } from "react";
 import Sidebar from "@/components/Sidebar/Sidebar";
+import Header from "@/components/Header/Header";
+import BookTable from "@/features/ClassificationPage/BookTable/BookTable";
+import { ClassificationProvider } from "@/features/ClassificationPage/ClassificationCardRow/ClassificationContext";
+import HeroSection from "@/features/InDepthAnalysisPage/HeroSection";
 
+const bookTableFilters = [
+    { value: "All", label: "All Classified Books" },
+    { value: "Analysed", label: "Analysed Books" },
+    { value: "Analysing", label: "Currently Analysing Books" },
+    { value: "Pending", label: "Pending Books" },
+  ];
+
+  
 const Analysis: React.FC = () => {
-    return (
-        <div className="min-h-screen flex bg-gradient-to-br from-blue-50 to-purple-100">
-            <Sidebar />
-            <main className="flex-1 flex flex-col items-center py-12 px-4">
+  const [modalOpen, setModalOpen] = useState(false);
 
-            </main>
-        </div>
-    )       
-}
+  return (
+    <ClassificationProvider>
+      <div className="min-h-screen flex bg-gradient-to-br from-blue-50 to-purple-100">
+        <Sidebar />
+        <main className="flex-1 flex flex-col">
+          <Header />
+          <div className="flex-1 flex flex-col items-center px-4 py-12">
+            <HeroSection/>
+            <BookTable filterOptions={bookTableFilters}/>
+          </div>
+        </main>
+      </div>
+    </ClassificationProvider>
+  );
+};
 
 export default Analysis;
