@@ -3,7 +3,7 @@ import api from "../lib/api";
 import { useRouter } from "next/router";
 import Sidebar from "../components/Sidebar/Sidebar";
 import { Header } from "../components/Header/Header";
-import { WelcomeSection } from "@/components/Header/WelcomeSection";
+import { WelcomeSection } from "@/features/ClassificationPage/WelcomeSection/WelcomeSection";
 
 interface User {
   id: string;

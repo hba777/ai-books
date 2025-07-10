@@ -5,6 +5,23 @@ import { IoGridOutline } from "react-icons/io5";
 import BookGridView from "./BookGridView";
 import { useClassificationContext } from "../ClassificationCardRow/ClassificationContext";
 
+interface FilterOption {
+  value: string;
+  label: string;
+}
+
+interface BookTableProps {
+  filterOptions?: FilterOption[];
+}
+
+const defaultFilterOptions: FilterOption[] = [
+  { value: "All", label: "All Books" },
+  { value: "Processed", label: "Total Processed" },
+  { value: "Processing", label: "Currently Processing" },
+  { value: "Pending", label: "Pending Books" },
+  { value: "Assigned", label: "Assigned" },
+];
+
 const dummyBooks = [
   {
     title: "The Kite Runner",
@@ -63,7 +80,7 @@ const viewOptions = [
   { value: "grid", icon: <IoGridOutline className="text-2xl mr-2" /> },
 ];
 
-const BookTable: React.FC = () => {
+const BookTable: React.FC<BookTableProps> = ({ filterOptions }) => {
   const [view, setView] = useState<"table" | "grid" | null>(null);
 
   useEffect(() => {
@@ -75,6 +92,8 @@ const BookTable: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { currentFilter, setCurrentFilter } = useClassificationContext();
+
+  const options = filterOptions || defaultFilterOptions;
 
   // Filter books based on current filter
   const filteredBooks = dummyBooks.filter(book => {
@@ -132,11 +151,9 @@ const BookTable: React.FC = () => {
           value={currentFilter}
           onChange={(e) => setCurrentFilter(e.target.value as any)}
         >
-          <option value="All">All Books</option>
-          <option value="Processed">Total Processed</option>
-          <option value="Processing">Currently Processing</option>
-          <option value="Pending">Pending Books</option>
-          <option value="Assigned">Assigned</option>
+          {options.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
         </select>
         {/* Custom Dropdown for view */}
         <div className="relative" ref={dropdownRef}>
