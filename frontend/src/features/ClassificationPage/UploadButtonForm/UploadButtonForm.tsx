@@ -115,7 +115,7 @@
                 ×
               </button>
             </div>
-            <div className="p-4 pt-2 overflow-y-auto max-h-[90vh] rounded-2xl custom-scrollbar">
+            <div className="p-4 pt-2 overflow-y-auto max-h-[90vh] rounded-2xl ">
               {/* Drag-and-drop area */}
               <div
                 className={`border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center mb-4 cursor-pointer bg-gray-50 hover:bg-gray-100 transition ${
