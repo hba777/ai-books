@@ -2,7 +2,11 @@ import React, { useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
 
 // Welcome section with welcome text, subtext, and a button on the right
-export const WelcomeSection: React.FC = () => {
+interface WelcomeSectionProps {
+  onUploadClick?: () => void;
+}
+
+export const WelcomeSection: React.FC<WelcomeSectionProps> = ({ onUploadClick }) => {
   const [username, setUsername] = useState("Mario");
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -25,7 +29,10 @@ export const WelcomeSection: React.FC = () => {
             Here's the data and analytics of books or documents.
           </p>
         </div>
-        <button className="bg-gradient-to-r mr-5 from-blue-500 to-purple-500 text-white font-semibold px-10 py-3 rounded-lg shadow hover:from-blue-600 hover:to-purple-600 transition min-w-[300px] flex items-center justify-center">
+        <button
+          className="bg-gradient-to-r mr-5 from-blue-500 to-purple-500 text-white font-semibold px-10 py-3 rounded-lg shadow hover:from-blue-600 hover:to-purple-600 transition min-w-[300px] flex items-center justify-center"
+          onClick={onUploadClick}
+        >
           <svg className="mr-2"
             width="21"
             height="20"

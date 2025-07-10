@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
 import { LuBell } from "react-icons/lu";
-import { FiSearch } from "react-icons/fi";
 import { useRouter } from "next/router";
 import api from "../../lib/api";
 import { jwtDecode } from "jwt-decode";
