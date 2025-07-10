@@ -3,12 +3,20 @@ import { FiSearch } from "react-icons/fi";
 import { CiViewTable } from "react-icons/ci";
 import { IoGridOutline } from "react-icons/io5";
 import BookGridView from "./BookGridView";
+import { useClassificationContext } from "../ClassificationCardRow/ClassificationContext";
 
 const dummyBooks = [
   {
     title: "The Kite Runner",
     author: "Khalid Hussaini",
     status: "Processed",
+    date: "1/15/2024",
+    labels: "History, Geo-Political, Religious",
+  },
+  {
+    title: "The Kite Runner",
+    author: "Khalid Hussaini",
+    status: "Unprocessed",
     date: "1/15/2024",
     labels: "History, Geo-Political, Religious",
   },
@@ -43,6 +51,7 @@ const dummyBooks = [
 ];
 
 const statusColors: Record<string, string> = {
+  Unprocessed: "bg-gray-50 text-grey-500 border border-grey-200",
   Processed: "bg-green-50 text-green-600 border border-green-200",
   Assigned: "bg-blue-50 text-blue-600 border border-blue-200",
   Pending: "bg-orange-50 text-orange-600 border border-orange-200",
@@ -55,9 +64,37 @@ const viewOptions = [
 ];
 
 const BookTable: React.FC = () => {
-  const [view, setView] = useState<"table" | "grid">("table");
+  const [view, setView] = useState<"table" | "grid" | null>(null);
+
+  useEffect(() => {
+    const savedView = localStorage.getItem("bookViewPreference");
+    const validatedView = savedView === "grid" || savedView === "table" ? savedView : "table";
+    setView(validatedView);
+  }, []);
+  
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { currentFilter, setCurrentFilter } = useClassificationContext();
+
+  // Filter books based on current filter
+  const filteredBooks = dummyBooks.filter(book => {
+    if (currentFilter === 'All') return true;
+    return book.status === currentFilter;
+  });
+
+  // Convert table books to grid books format
+  const gridBooks = filteredBooks.map(book => ({
+    title: book.title,
+    author: book.author,
+    status: book.status,
+    percent: book.status === 'Processed' ? 100 : 
+             book.status === 'Processing' ? 50 : 
+             book.status === 'Assigned' ? 100 : 
+             book.status === 'Pending' ? 0 : 0,
+    startDate: book.date,
+    endDate: book.status === 'Processed' ? book.date : null,
+    uploadDate: book.date,
+  }));
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -81,8 +118,8 @@ const BookTable: React.FC = () => {
   return (
     <div className="w-full mt-4">
       {/* Search and controls */}
-      <div className="flex items-center gap-3 bg-white rounded-xl shadow p-4 mb-6">
-        <div className="flex-1 flex items-center bg-gray-50 rounded-lg px-3 py-2 max-w-[600px]">
+      <div className="flex items-center gap-6 bg-white rounded-xl shadow p-4 mb-6">
+        <div className="flex-1 flex items-center bg-gray-50 rounded-lg px-3 py-2 max-w-[600px] ml-4">
           <FiSearch className="text-blue-400 text-lg mr-2" />
           <input
             type="text"
@@ -90,23 +127,27 @@ const BookTable: React.FC = () => {
             className="bg-transparent outline-none flex-1 text-gray-700"
           />
         </div>
-        <select className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-700">
-          <option>All Books</option>
-          <option>Total Processed</option>
-          <option>Currently Processed</option>
-          <option>Pending Books</option>
-          <option>Assigned</option>
+        <select 
+          className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-700"
+          value={currentFilter}
+          onChange={(e) => setCurrentFilter(e.target.value as any)}
+        >
+          <option value="All">All Books</option>
+          <option value="Processed">Total Processed</option>
+          <option value="Processing">Currently Processing</option>
+          <option value="Pending">Pending Books</option>
+          <option value="Assigned">Assigned</option>
         </select>
         {/* Custom Dropdown for view */}
         <div className="relative" ref={dropdownRef}>
           <button
-            className="flex items-center bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-gray-700 min-w-[120px] h-12"
+            className="flex items-center bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-gray-700 min-w-[80px] h-10"
             onClick={() => setDropdownOpen((open) => !open)}
             type="button"
           >
             {viewOptions.find((opt) => opt.value === view)?.icon}
             <svg
-              className="ml-1 w-4 h-4 text-gray-400"
+              className="ml-3 w-4 h-4 text-gray-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -130,7 +171,9 @@ const BookTable: React.FC = () => {
                       : "text-gray-700"
                   }`}
                   onClick={() => {
-                    setView(opt.value as "table" | "grid");
+                    const newView = opt.value as "table" | "grid";
+                    setView(newView);
+                    localStorage.setItem("bookViewPreference", newView);
                     setDropdownOpen(false);
                   }}
                 >
@@ -140,10 +183,24 @@ const BookTable: React.FC = () => {
             </div>
           )}
         </div>
-        <button className="ml-2 bg-gradient-to-r from-[#3B82F6] to-[#9333EA] opacity-40 text-white font-semibold px-6 py-2 rounded-lg shadow hover:from-blue-600 hover:to-purple-600 transition">
-          Start Processing
-        </button>
+       
       </div>
+
+      {/* Filter indicator */}
+      {currentFilter !== 'All' && (
+        <div className="mb-4 flex items-center gap-2">
+          <span className="text-sm text-gray-600">Showing:</span>
+          <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+            {currentFilter}
+          </span>
+          <button
+            onClick={() => setCurrentFilter('All')}
+            className="text-sm text-gray-500 hover:text-gray-700 underline"
+          >
+            Clear filter
+          </button>
+        </div>
+      )}
 
       {/* Table or Grid View */}
       {view === "table" ? (
@@ -262,7 +319,7 @@ const BookTable: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {dummyBooks.map((book, idx) => (
+              {filteredBooks.map((book, idx) => (
                 <tr
                   key={idx}
                   className={
@@ -302,8 +359,8 @@ const BookTable: React.FC = () => {
         </div>
       ) : (
         <div className="rounded-2xl p-12 flex items-center justify-center min-h-[200px] text-lg">
-          {/* Placeholder for grid view */}
-          <BookGridView />
+          {/* Grid view with filtered books */}
+          <BookGridView books={gridBooks} />
         </div>
       )}
     </div>

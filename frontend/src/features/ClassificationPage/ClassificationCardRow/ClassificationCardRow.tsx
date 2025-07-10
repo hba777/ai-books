@@ -1,14 +1,19 @@
 import React from "react";
 import ClassificationStatCard from "./ClassificationCard";
+import { useClassificationContext } from "./ClassificationContext";
 
 const ClassificationCardRow: React.FC = () => {
+  const { currentFilter, setCurrentFilter } = useClassificationContext();
+
   return (
-    <div className="flex gap-6 w-full justify-center mt-6 mb-8">
+    <div className="flex gap-18 w-full justify-center mt-6 mb-8">
       <ClassificationStatCard
         value={245}
         label="Books Uploaded"
         subtitle=""
         bgColor={["#3B82F6", "#2563EB"]}
+        onClick={() => setCurrentFilter('Unprocessed')}
+        isActive={currentFilter === 'Unprocessed'}
         icon={
           <svg
             width="25"
@@ -39,13 +44,15 @@ const ClassificationCardRow: React.FC = () => {
               stroke-linejoin="round"
             />
           </svg>
-        } // Replace with your image/icon
+        } 
       />
       <ClassificationStatCard
         value={67}
         label="Total Processed"
         subtitle=""
         bgColor={["#22C55E", "#16A34A"]}
+        onClick={() => setCurrentFilter('Processed')}
+        isActive={currentFilter === 'Processed'}
         badge={
           <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">
             +8%
@@ -81,36 +88,16 @@ const ClassificationCardRow: React.FC = () => {
               stroke-linejoin="round"
             />
           </svg>
-        } // Replace with your image/icon
+        } 
       />
-      <ClassificationStatCard
-        value={1}
-        label="Processing"
-        subtitle=""
-        bgColor={["#EC4899", "#DB2777"]}
-        icon={
-          <svg
-            width="25"
-            height="25"
-            viewBox="0 0 25 25"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M21.4 12.8367C21.3999 14.7373 20.7982 16.589 19.681 18.1266C18.5638 19.6642 16.9885 20.8086 15.1809 21.3958C13.3733 21.9831 11.4262 21.983 9.61867 21.3957C7.81111 20.8083 6.2359 19.6638 5.11879 18.1262C4.00168 16.5886 3.40001 14.7368 3.40002 12.8362C3.40004 10.9356 4.00173 9.08378 5.11887 7.54617C6.236 6.00856 7.81123 4.86408 9.61879 4.27675C11.4264 3.68941 13.3734 3.68939 15.181 4.27667"
-              stroke="white"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-        } // Replace with your image/icon
-      />
+      
       <ClassificationStatCard
         value={78}
         label="Pending Books"
         subtitle=""
         bgColor={["#F97316", "#EA580C"]}
+        onClick={() => setCurrentFilter('Pending')}
+        isActive={currentFilter === 'Pending'}
         icon={
           <svg
             width="25"
@@ -155,6 +142,8 @@ const ClassificationCardRow: React.FC = () => {
         label="Books Assigned"
         subtitle=""
         bgColor={["#A855F7", "#9333EA"]}
+        onClick={() => setCurrentFilter('Assigned')}
+        isActive={currentFilter === 'Assigned'}
         badge={
           <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">
             +5%
@@ -183,7 +172,7 @@ const ClassificationCardRow: React.FC = () => {
               stroke-linejoin="round"
             />
           </svg>
-        } // Replace with your image/icon
+        }
       />
     </div>
   );

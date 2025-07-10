@@ -1,5 +1,19 @@
 import React from "react";
 
+interface Book {
+  title: string;
+  author: string;
+  status: string;
+  percent: number;
+  startDate: string;
+  endDate: string | null;
+  uploadDate: string;
+}
+
+interface BookGridViewProps {
+  books: Book[];
+}
+
 const dummyBooks = [
   {
     title: "The Kite Runner",
@@ -49,6 +63,11 @@ const dummyBooks = [
 ];
 
 const statusStyles: Record<string, { border: string; bar: string; text: string }> = {
+  Unprocessed: {
+    border: "border-gray-400",
+    bar: "bg-gray-500",
+    text: "text-gray-600",
+  },
   Processing: {
     border: "border-blue-400",
     bar: "bg-blue-500",
@@ -71,10 +90,10 @@ const statusStyles: Record<string, { border: string; bar: string; text: string }
   },
 };
 
-const BookGridView: React.FC = () => {
+const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-      {dummyBooks.map((book, idx) => {
+      {books.map((book, idx) => {
         const style = statusStyles[book.status] || statusStyles["Processing"];
         return (
           <div

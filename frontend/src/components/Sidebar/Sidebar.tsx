@@ -69,25 +69,6 @@ const Sidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const router = useRouter();
   const active = (href: string) => router.pathname === href;
-  const [username, setUsername] = useState("Mario Rossi");
-  const [email, setEmail] = useState("mario@restaurant.com");
-  const [userInitial, setUserInitial] = useState("M");
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
-      if (token) {
-        try {
-          const decoded: any = jwtDecode(token);
-          if (decoded && decoded.sub) {
-            setUsername(decoded.sub);
-            setUserInitial(decoded.sub.charAt(0).toUpperCase());
-          }
-          if (decoded && decoded.email) setEmail(decoded.email);
-        } catch {}
-      }
-    }
-  }, []);
 
   return (
     <aside
