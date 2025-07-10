@@ -8,6 +8,7 @@ import { MdAccessTime } from "react-icons/md";
 import { FiGrid } from "react-icons/fi";
 import { IoSettingsOutline } from "react-icons/io5";
 import { IoIosHelpCircleOutline } from "react-icons/io";
+import { RiArchiveDrawerLine } from "react-icons/ri";
 
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -43,6 +44,12 @@ const navLinks = [
     icon: <LuBrain className="text-2xl" />,
     subtitle: "AI Training & Settings",
   },
+  {
+    label: "Archived Books",
+    href: "/archivedBooks",
+    icon: <RiArchiveDrawerLine className="text-2xl" />,
+    subtitle: "View Archived Books",
+  }
 ];
 
 const otherLinks = [
@@ -62,25 +69,6 @@ const Sidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const router = useRouter();
   const active = (href: string) => router.pathname === href;
-  const [username, setUsername] = useState("Mario Rossi");
-  const [email, setEmail] = useState("mario@restaurant.com");
-  const [userInitial, setUserInitial] = useState("M");
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
-      if (token) {
-        try {
-          const decoded: any = jwtDecode(token);
-          if (decoded && decoded.sub) {
-            setUsername(decoded.sub);
-            setUserInitial(decoded.sub.charAt(0).toUpperCase());
-          }
-          if (decoded && decoded.email) setEmail(decoded.email);
-        } catch {}
-      }
-    }
-  }, []);
 
   return (
     <aside
@@ -228,43 +216,6 @@ const Sidebar: React.FC = () => {
               ))}
             </nav>
           </div>
-        </div>
-      </div>
-
-      {/* User Profile Section - use visibility classes */}
-      <div
-        className={`flex items-center gap-3 mx-5 bg-[#F3F4F6] rounded-xl p-4 mt-8 shadow-md transition-all duration-300 ${
-          collapsed ? "opacity-0 h-0" : "opacity-100 h-auto"
-        }`}
-        style={{ pointerEvents: collapsed ? "none" : "auto" }} // Disable clicks for this user profile section when hidden
-      >
-        <div className="bg-[#2563EB] rounded-full w-10 h-10 flex items-center justify-center font-bold text-blue-700 text-lg">
-          <svg
-            width="21"
-            height="21"
-            viewBox="0 0 21 21"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M16.5 17.8334V16.1667C16.5 15.2827 16.1488 14.4348 15.5237 13.8097C14.8986 13.1846 14.0507 12.8334 13.1667 12.8334H8.16667C7.28261 12.8334 6.43477 13.1846 5.80965 13.8097C5.18453 14.4348 4.83334 15.2827 4.83334 16.1667V17.8334"
-              stroke="white"
-              stroke-width="1.66667"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-            <path
-              d="M10.6667 9.50004C12.5076 9.50004 14 8.00766 14 6.16671C14 4.32576 12.5076 2.83337 10.6667 2.83337C8.82572 2.83337 7.33334 4.32576 7.33334 6.16671C7.33334 8.00766 8.82572 9.50004 10.6667 9.50004Z"
-              stroke="white"
-              stroke-width="1.66667"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-        </div>
-        <div className="whitespace-nowrap">
-          <div className="font-semibold text-gray-900">{username}</div>
-          <div className="text-xs text-gray-500">{email}</div>
         </div>
       </div>
     </aside>
