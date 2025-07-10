@@ -104,10 +104,10 @@
         <div className="fixed inset-0 z-50 bg-gray-900/40 flex items-center justify-center">
           <div className="bg-white rounded shadow-xl w-full max-w-lg relative animate-fadeIn flex flex-col">
             {/* Header row */}
-            <div className="flex items-center justify-between p-4 pt-6 pb-2 sticky top-0 bg-white z-10 rounded-t-2xl">
+            <div className="flex items-center justify-between p-4 pt-6 pb-2 sticky top-0 bg-white z-10 rounded-3xl">
               <h2 className="text-2xl font-bold text-gray-900 mb-0">Upload Books Here</h2>
               <button
-                className="text-gray-400 hover:text-gray-600 text-2xl font-bold ml-4"
+                className="flex items-center justify-center w-10 h-10 text-gray-400 hover:text-gray-600 text-2xl font-bold border border-gray-300 hover:border-gray-400 rounded-xl"
                 onClick={onClose}
                 aria-label="Close"
                 type="button"
