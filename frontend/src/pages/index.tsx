@@ -1,6 +1,6 @@
+import LandingCard from "@/features/LandingPage/LandingCard";
+import LandingSidebar from "@/features/LandingPage/LandingSidebar";
 import { useState } from "react";
-import LandingSidebar from "../components/LandingPageComponents/LandingSidebar";
-import LandingCard from "../components/LandingPageComponents/LandingCard";
 import { HiOutlineBookOpen, HiOutlineSparkles, HiOutlineUsers } from "react-icons/hi2";
 
 export default function Home() {
@@ -8,15 +8,7 @@ export default function Home() {
 
   const handleLoginClick = () => setSidebarOpen(true);
   const handleCloseSidebar = () => setSidebarOpen(false);
-  const handleUserLogin = () => {
-    // Implement user login navigation
-    alert("User login clicked");
-  };
-  const handleAdminLogin = () => {
-    // Implement admin login navigation
-    alert("Admin login clicked");
-  };
-
+  
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-purple-100 relative px-4">
       <header className="w-full max-w-3xl mx-auto text-center mt-16 mb-10">
@@ -61,8 +53,6 @@ export default function Home() {
       <LandingSidebar
         open={sidebarOpen}
         onClose={handleCloseSidebar}
-        onUserLogin={handleUserLogin}
-        onAdminLogin={handleAdminLogin}
       />
     </div>
   );

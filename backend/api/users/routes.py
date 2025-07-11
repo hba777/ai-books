@@ -1,7 +1,7 @@
-from fastapi import APIRouter, HTTPException, Path, Depends
+from fastapi import APIRouter, HTTPException, Path, Depends, Response
 from models.user import User, UserCreate
 from api.users.users_response_schemas import UserResponse, LoginRequest, LoginResponse, RegisterRequest
-from utils.jwt_utils import create_access_token, get_current_user, is_admin
+from utils.jwt_utils import create_access_token, get_user_from_cookie, is_admin_cookie
 from db.mongo import get_users_collection
 from passlib.context import CryptContext
 from pydantic import BaseModel
@@ -10,12 +10,17 @@ from typing import List
 import bcrypt
 from fastapi.security import OAuth2PasswordRequestForm
 import logging
+from jose import jwt, JWTError, ExpiredSignatureError
+import os
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = "HS256"
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-@router.post("/register", response_model=UserResponse, dependencies=[Depends(is_admin)])
+@router.post("/register", response_model=UserResponse, dependencies=[Depends(is_admin_cookie)])
 def register_user(request: UserCreate):
     users_collection = get_users_collection()
     if users_collection.find_one({"username": request.username}):
@@ -51,7 +56,7 @@ def register_user(
 
 
 @router.post("/login", response_model=LoginResponse)
-def login_user(request: LoginRequest):
+def login_user(request: LoginRequest, response: Response):
     users_collection = get_users_collection()
     user_data = users_collection.find_one({"username": request.username})
     if not user_data:
@@ -60,6 +65,13 @@ def login_user(request: LoginRequest):
         raise HTTPException(status_code=401, detail="Invalid username or password")
     token = create_access_token(str(user_data["_id"]), user_data["username"], user_data["role"])
     users_collection.update_one({"_id": user_data["_id"]}, {"$set": {"token": token}})
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=False,
+        secure=False,      # Set to True if using HTTPS
+        samesite="lax"   # Use 'lax' if frontend/backend are same site, 'none' if cross-site
+    )
     return LoginResponse(id=str(user_data["_id"]), username=user_data["username"], token=token, role=user_data["role"])
 
 @router.post("/token")
@@ -78,21 +90,22 @@ def login_token(form_data: OAuth2PasswordRequestForm = Depends()):
     }
 
 @router.post("/logout")
-def logout_user(current_user: UserResponse = Depends(get_current_user)):
+def logout_user(response: Response, current_user: UserResponse = Depends(get_user_from_cookie)):
     users_collection = get_users_collection()
     # Remove the token from the user's record to invalidate it
     result = users_collection.update_one({"_id": ObjectId(current_user.id)}, {"$unset": {"token": ""}})
+    response.delete_cookie("access_token")
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="User not found or already logged out")
     return {"message": "Successfully logged out"}
 
-@router.get("/all", response_model=List[UserResponse], dependencies=[Depends(is_admin)])
+@router.get("/all", response_model=List[UserResponse], dependencies=[Depends(is_admin_cookie)])
 def get_all_users():
     users_collection = get_users_collection()
     users = users_collection.find()
     return [UserResponse(id=str(user["_id"]), username=user["username"], role=user["role"]) for user in users]
 
-@router.delete("/{user_id}", dependencies=[Depends(is_admin)])
+@router.delete("/{user_id}", dependencies=[Depends(is_admin_cookie)])
 def delete_user(user_id: str = Path(..., description="The ID of the user to delete")):
     users_collection = get_users_collection()
     try:
@@ -103,3 +116,8 @@ def delete_user(user_id: str = Path(..., description="The ID of the user to dele
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="User not found")
     return {"detail": "User deleted successfully"} 
+
+
+@router.get("/me", response_model=UserResponse)
+def get_me(current_user: UserResponse = Depends(get_user_from_cookie)):
+    return current_user 

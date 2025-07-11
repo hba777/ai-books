@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
-import { LuBell } from "react-icons/lu";
+import { BsLightningCharge } from "react-icons/bs";
 import { useRouter } from "next/router";
 import api from "../../lib/api";
 
-// Header with search, bell, and profile picture
-export const Header: React.FC = () => {
+const AdminDashboardHeader: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [userInitial, setUserInitial] = useState("");
   const avatarRef = useRef<HTMLDivElement>(null);
@@ -55,19 +54,16 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="flex items-end justify-end w-full py-6 px-6 bg-white border-b border-gray-100 shadow-sm">
-      <div className="flex items-end gap-6">
-        <div className="relative">
-          <button className="relative p-2 rounded-full hover:bg-gray-100 transition">
-            <LuBell className="text-2xl text-gray-500" />
-            <span
-              className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full px-1.5 py-0.5 shadow"
-              style={{ fontSize: "0.7rem" }}
-            >
-              3
-            </span>
-          </button>
+    <header className="flex items-center justify-between w-full py-6 px-6 bg-white border-b border-gray-100 shadow-sm">
+      <div className="flex items-center gap-4">
+        <div className="bg-blue-600 p-2 rounded-xl flex items-center justify-center">
+          <BsLightningCharge className="text-white text-2xl" />
         </div>
+        <div className="font-bold text-2xl text-gray-900 whitespace-nowrap">
+          Admin Dashboard
+        </div>
+      </div>
+      <div className="flex items-center gap-6">
         <div className="relative" ref={avatarRef}>
           <div
             className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center font-bold text-blue-700 text-lg shadow cursor-pointer select-none"
@@ -91,5 +87,4 @@ export const Header: React.FC = () => {
   );
 };
 
-
-export default Header;
+export default AdminDashboardHeader;

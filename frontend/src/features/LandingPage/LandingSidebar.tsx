@@ -1,13 +1,10 @@
 import React, { useState } from "react";
 import api from "../../lib/api";
-import { jwtDecode } from "jwt-decode";
 import { useRouter } from "next/router";
 
 interface LandingSidebarProps {
   open: boolean;
   onClose: () => void;
-  onUserLogin?: () => void;
-  onAdminLogin?: () => void;
 }
 
 
@@ -23,26 +20,29 @@ const LandingSidebar: React.FC<LandingSidebarProps> = ({ open, onClose }) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+  
     try {
-      const res = await api.post("/users/login", { username, password });
+      const res = await api.post(
+        "/users/login",
+        { username, password },
+      );
+  
       console.log("Login response:", res.data);
-      // Decode JWT token
-      const decoded: any = jwtDecode(res.data.token);
-      console.log("Decoded JWT:", decoded);
-      // Save token to localStorage
-      localStorage.setItem("token", res.data.token);
-      if (decoded.role === "admin") {
+      const { role } = res.data;
+      console.log("Role",role)
+      if (role === "admin") {
         router.push("/adminDashboard");
       } else {
         router.push("/dashboard");
       }
-
+  
     } catch (err: any) {
       setError(err.response?.data?.detail || "Login failed");
     } finally {
       setLoading(false);
     }
   };
+  
 
   
 
