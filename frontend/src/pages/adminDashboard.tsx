@@ -4,6 +4,7 @@ import AdminDashboardTable from "../features/AdminDashboard/AdminDashboardTable"
 import api from "../lib/api";
 import AdminDashboardHeader from "@/features/AdminDashboard/AdminDashboardHeader";
 import AdminDashboardDeletePopUp from "../features/AdminDashboard/AdminDashboardDeletePopUp";
+import { toast } from 'react-toastify';
 
 interface User {
   id: string;
@@ -39,7 +40,7 @@ const Dashboard: React.FC = () => {
   };
 
   const handleUserAdded = () => {
-    setSuccess("User added successfully!");
+    toast.success("User added successfully!");
     setError(null);
     fetchUsers();
     setTimeout(() => setSuccess(null), 2000);
@@ -60,7 +61,7 @@ const Dashboard: React.FC = () => {
     setSuccess(null);
     try {
       await api.delete(`/users/${deleteUserId}`);
-      setSuccess("User deleted successfully!");
+      toast.success("User deleted successfully!");
       fetchUsers();
       setTimeout(() => setSuccess(null), 2000);
     } catch (err: any) {
