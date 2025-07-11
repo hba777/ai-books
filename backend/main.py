@@ -39,6 +39,6 @@ app.include_router(users_router)
 @app.get("/")
 def read_root():
     return {
-        "mongo_url": os.getenv("MONGO_URL"),
-        "secret_key": os.getenv("SECRET_KEY")
+        "mongo_url": "Hello",
+        "secret_key": "Hello"
     }
