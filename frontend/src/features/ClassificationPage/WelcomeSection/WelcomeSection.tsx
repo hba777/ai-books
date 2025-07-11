@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { jwtDecode } from "jwt-decode";
+import api from "../../../lib/api";
 
 // Welcome section with welcome text, subtext, and a button on the right
 interface WelcomeSectionProps {
@@ -9,15 +9,16 @@ interface WelcomeSectionProps {
 export const WelcomeSection: React.FC<WelcomeSectionProps> = ({ onUploadClick }) => {
   const [username, setUsername] = useState("Mario");
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
-      if (token) {
-        try {
-          const decoded: any = jwtDecode(token);
-          if (decoded && decoded.sub) setUsername(decoded.sub);
-        } catch {}
-      }
-    }
+    // Fetch user info from backend using cookie
+    api.get("/users/me")
+      .then(res => {
+        if (res.data && res.data.username) {
+          setUsername(res.data.username);
+        }
+      })
+      .catch(() => {
+        setUsername("");
+      });
   }, []);
     return (
       <section className="flex items-center justify-between w-full mb-6 ml-3">
