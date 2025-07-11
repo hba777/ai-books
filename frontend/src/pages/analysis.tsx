@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import Header from "@/components/Header/Header";
-import BookTable from "@/features/ClassificationPage/BookTable/BookTable";
+import BookTable from "@/features/ClassificationPage/BookTable/BooksView";
 import { ClassificationProvider } from "@/features/ClassificationPage/ClassificationCardRow/ClassificationContext";
 import HeroSection from "@/features/InDepthAnalysisPage/HeroSection";
 
