@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import { BsLightningCharge } from "react-icons/bs";
 import { useRouter } from "next/router";
 import api from "../../lib/api";
-import { jwtDecode } from "jwt-decode";
 
 const AdminDashboardHeader: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -11,17 +10,16 @@ const AdminDashboardHeader: React.FC = () => {
   const router = useRouter();
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
-      if (token) {
-        try {
-          const decoded: any = jwtDecode(token);
-          if (decoded && decoded.sub) {
-            setUserInitial(decoded.sub.charAt(0).toUpperCase());
-          }
-        } catch {}
-      }
-    }
+    // Fetch user info from backend using cookie
+    api.get("/users/me")
+      .then(res => {
+        if (res.data && res.data.username) {
+          setUserInitial(res.data.username.charAt(0).toUpperCase());
+        }
+      })
+      .catch(() => {
+        setUserInitial("");
+      });
   }, []);
 
   // Close dropdown on outside click

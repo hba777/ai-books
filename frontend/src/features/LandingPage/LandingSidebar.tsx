@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import api from "../../lib/api";
-import { jwtDecode } from "jwt-decode";
 import { useRouter } from "next/router";
 
 interface LandingSidebarProps {
@@ -30,7 +29,7 @@ const LandingSidebar: React.FC<LandingSidebarProps> = ({ open, onClose }) => {
   
       console.log("Login response:", res.data);
       const { role } = res.data;
-  
+      console.log("Role",role)
       if (role === "admin") {
         router.push("/adminDashboard");
       } else {
