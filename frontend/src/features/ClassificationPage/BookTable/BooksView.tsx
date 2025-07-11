@@ -4,6 +4,7 @@ import { CiViewTable } from "react-icons/ci";
 import { IoGridOutline } from "react-icons/io5";
 import BookGridView from "./BookGridView";
 import { useClassificationContext } from "../ClassificationCardRow/ClassificationContext";
+import BookTableView from "./BookTableView";
 
 interface FilterOption {
   value: string;
@@ -96,10 +97,18 @@ const BookTable: React.FC<BookTableProps> = ({ filterOptions }) => {
   const options = filterOptions || defaultFilterOptions;
 
   // Filter books based on current filter
-  const filteredBooks = dummyBooks.filter(book => {
+  const filteredBooksRaw = dummyBooks.filter(book => {
     if (currentFilter === 'All') return true;
     return book.status === currentFilter;
   });
+
+  // Convert labels to string[] for BookTableView
+  const filteredBooks = filteredBooksRaw.map(book => ({
+    ...book,
+    labels: typeof book.labels === 'string'
+      ? (book.labels === '-- NIL --' ? ['NIL'] : book.labels.split(',').map(l => l.trim()))
+      : book.labels
+  }));
 
   // Convert table books to grid books format
   const gridBooks = filteredBooks.map(book => ({
@@ -221,159 +230,7 @@ const BookTable: React.FC<BookTableProps> = ({ filterOptions }) => {
 
       {/* Table or Grid View */}
       {view === "table" ? (
-        <div className="bg-white rounded-2xl shadow overflow-x-auto">
-          <table className="min-w-full text-left">
-            <thead>
-              <tr className="text-sm border-b">
-                <th className="flex py-4 px-6 font-semibold">
-                  Name
-                  <svg
-                    className="mt-1"
-                    width="25"
-                    height="17"
-                    viewBox="0 0 25 17"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <g clip-path="url(#clip0_50_13170)">
-                      <path
-                        d="M22.5152 10.8301L19.8486 13.4967L17.1819 10.8301"
-                        stroke="#111827"
-                        stroke-width="1.33333"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M19.8484 13.4967V2.83008"
-                        stroke="#111827"
-                        stroke-width="1.33333"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M10.5151 5.49674L13.1818 2.83008L15.8485 5.49674"
-                        stroke="#111827"
-                        stroke-width="1.33333"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M13.1819 2.83008V13.4967"
-                        stroke="#111827"
-                        stroke-width="1.33333"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </g>
-                    <defs>
-                      <clipPath id="clip0_50_13170">
-                        <rect
-                          width="16"
-                          height="16"
-                          fill="white"
-                          transform="translate(8.51514 0.163391)"
-                        />
-                      </clipPath>
-                    </defs>
-                  </svg>
-                </th>
-                <th className="py-4 px-6 font-semibold">Author</th>
-                <th className="flex py-4 px-6 font-semibold">
-                  Status <svg
-                    className="mt-1"
-                    width="25"
-                    height="17"
-                    viewBox="0 0 25 17"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <g clip-path="url(#clip0_50_13170)">
-                      <path
-                        d="M22.5152 10.8301L19.8486 13.4967L17.1819 10.8301"
-                        stroke="#111827"
-                        stroke-width="1.33333"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M19.8484 13.4967V2.83008"
-                        stroke="#111827"
-                        stroke-width="1.33333"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M10.5151 5.49674L13.1818 2.83008L15.8485 5.49674"
-                        stroke="#111827"
-                        stroke-width="1.33333"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M13.1819 2.83008V13.4967"
-                        stroke="#111827"
-                        stroke-width="1.33333"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </g>
-                    <defs>
-                      <clipPath id="clip0_50_13170">
-                        <rect
-                          width="16"
-                          height="16"
-                          fill="white"
-                          transform="translate(8.51514 0.163391)"
-                        />
-                      </clipPath>
-                    </defs>
-                  </svg>
-                </th>
-                <th className="py-4 px-6 font-semibold">Date Submitted</th>
-                <th className="py-4 px-6 font-semibold">
-                  Labels (If Classified)
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredBooks.map((book, idx) => (
-                <tr
-                  key={idx}
-                  className={
-                    idx === 3 ? "bg-blue-50/60" : "hover:bg-gray-50 transition"
-                  }
-                >
-                  <td className="py-4 px-6 font-semibold text-gray-900 whitespace-nowrap">
-                    {book.title}
-                  </td>
-                  <td className="py-4 px-6 text-gray-700 whitespace-nowrap">
-                    {book.author}
-                  </td>
-                  <td className="py-4 px-6">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        statusColors[book.status] ||
-                        "bg-gray-100 text-gray-500 border border-gray-200"
-                      }`}
-                    >
-                      {book.status}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6 text-gray-500 whitespace-nowrap">
-                    {book.date}
-                  </td>
-                  <td className="py-4 px-6 text-gray-500 whitespace-nowrap">
-                    {book.labels.includes("NIL") ? (
-                      <span className="text-gray-700 font-bold">-- NIL --</span>
-                    ) : (
-                      book.labels
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <BookTableView filteredBooks={filteredBooks} statusColors={statusColors}/>
       ) : (
         <div className="rounded-2xl p-12 flex items-center justify-center min-h-[200px] text-lg">
           {/* Grid view with filtered books */}
