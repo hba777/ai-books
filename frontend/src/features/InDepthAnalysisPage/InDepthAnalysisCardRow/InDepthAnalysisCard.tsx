@@ -7,7 +7,7 @@ interface InDepthAnalysisCardProps {
 }
 
 const InDepthAnalysisCard: React.FC<InDepthAnalysisCardProps> = ({ value, label, icon }) => (
-  <div className="flex items-center justify-between bg-white rounded-xl shadow p-7 min-w-[550px]">
+  <div className="flex items-center justify-between bg-white rounded-xl p-7 min-w-[550px]">
     <div>
       <div className="text-3xl font-bold text-black">{value}</div>
       <div className="text-sm text-gray-500 mt-1">{label}</div>
