@@ -8,11 +8,11 @@ const HeroSection: React.FC = () => {
           In-Depth Analysis / Review
         </h1>
         <p className="text-gray-500 text-base">
-          Here's the data of and analytics of books or documents.
+          Here&rsquo;s the data of and analytics of books or documents.
         </p>
       </div>
     </section>
   );
 };
 
-export default HeroSection; 
+export default HeroSection;

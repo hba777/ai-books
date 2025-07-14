@@ -13,7 +13,7 @@ interface ClassificationStatCardProps {
 
 const ClassificationStatCard: React.FC<ClassificationStatCardProps> = ({ value, label, subtitle, badge, icon, bgColor = "#3b82f6", onClick, isActive = false }) => {
   // Determine background style
-  let iconBgStyle: React.CSSProperties = {};
+  const iconBgStyle: React.CSSProperties = {};
   let iconBgClass = "";
   if (Array.isArray(bgColor) && bgColor.length === 2) {
     iconBgStyle.background = `linear-gradient(135deg, ${bgColor[0]}, ${bgColor[1]})`;

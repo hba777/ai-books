@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-import { jwtDecode } from "jwt-decode";
+import React, { useState } from "react";
 import { BsLightningCharge } from "react-icons/bs";
 import { FaRegMoon } from "react-icons/fa";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";

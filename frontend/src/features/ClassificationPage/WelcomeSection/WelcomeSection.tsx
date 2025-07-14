@@ -27,7 +27,7 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({ onUploadClick })
             Welcome back, {username} <span className="inline-block">👋</span>
           </h1>
           <p className="text-gray-500 text-base">
-            Here's the data and analytics of books or documents.
+          Here&rsquo;s the data and analytics of books or documents.
           </p>
         </div>
         <button
