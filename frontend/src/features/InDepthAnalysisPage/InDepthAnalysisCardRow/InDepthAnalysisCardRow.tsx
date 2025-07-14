@@ -1,6 +1,6 @@
 import React from 'react';
-import InDepthAnalysisCard from '../InDepthAnalysisCard';
-import { MdMenuBook, MdRefresh } from 'react-icons/md';
+import InDepthAnalysisCard from './InDepthAnalysisCard';
+import { MdRefresh } from 'react-icons/md';
 
 const InDepthAnalysisCardRow: React.FC = () => (
   <div className="flex gap-6">
