@@ -3,6 +3,7 @@ import { Header } from "../components/Header/Header";
 import { WelcomeSection } from "@/features/ClassificationPage/WelcomeSection/WelcomeSection";
 import InDepthAnalysisCardRow from "@/features/InDepthAnalysisPage/InDepthAnalysisCardRow/InDepthAnalysisCardRow";
 import DashboardCardRow from "@/features/Dashboard/DashboardCardRow/DashboardCardRow";
+import AgentsCard from "@/features/Dashboard/AgentsCard/AgentsCard";
 
 const Dashboard: React.FC = () => {
 
@@ -15,6 +16,7 @@ const Dashboard: React.FC = () => {
           <WelcomeSection />
           <DashboardCardRow/>
           <InDepthAnalysisCardRow/>
+          <AgentsCard/>
         </div>
       </main>
     </div>
