@@ -22,14 +22,14 @@ const icon = (
 const ClassificationAgentRow: React.FC = () => (
   <div className="flex gap-4 w-full">
     {agents.map((agent, idx) => (
-      <div key={idx} className="flex flex-col bg-[#EFF6FF] rounded-xl p-4 min-w-[200px] max-w-[220px] shadow-sm relative overflow-hidden border border-[#2563EB]">
-        <div className="flex items-center gap-3 mb-2 mt-2">
+      <div key={idx} className="flex flex-col bg-[#EFF6FF] rounded-xl p-4 min-w-[200px] max-w-[220px] h-35 shadow-sm relative overflow-hidden border border-[#2563EB]">
+        <div className="flex flex-col gap-3 mb-1 mt-2">
           <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-[#2563EB]">
             {icon}
           </div>
           <div className="font-semibold text-gray-800 text-base">{agent.name}</div>
         </div>
-        <div className="text-xs text-gray-500 mt-1">{agent.status}</div>
+        <div className="text-xs text-gray-500">{agent.status}</div>
       </div>
     ))}
   </div>

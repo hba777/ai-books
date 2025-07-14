@@ -14,13 +14,8 @@ const LandingForm: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.post('/users/login', { username: username, password });
-      const { role } = res.data;
-      if (role === 'admin') {
-        router.push('/adminDashboard');
-      } else {
-        router.push('/dashboard');
-      }
+      await api.post('/users/login', { username: username, password });
+      router.push('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Login failed');
     } finally {

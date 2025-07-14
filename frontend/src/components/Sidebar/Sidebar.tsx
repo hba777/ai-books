@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BsLightningCharge } from "react-icons/bs";
 import { FaRegMoon } from "react-icons/fa";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
@@ -11,6 +11,7 @@ import { RiArchiveDrawerLine } from "react-icons/ri";
 
 import Link from "next/link";
 import { useRouter } from "next/router";
+import api from "@/lib/api";
 
 const navLinks = [
   {
@@ -51,23 +52,19 @@ const navLinks = [
   }
 ];
 
-const otherLinks = [
-  {
-    label: "Settings",
-    href: "/settings",
-    icon: <IoSettingsOutline className="text-base" />,
-  },
-  {
-    label: "Help & Support",
-    href: "/help",
-    icon: <IoIosHelpCircleOutline className="text-base" />,
-  },
-];
-
 const Sidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const [role, setRole] = useState<string>("");
   const router = useRouter();
   const active = (href: string) => router.pathname === href;
+
+  useEffect(() => {
+    api.get("/users/me").then(res => {
+      if (res.data && res.data.role) {
+        setRole(res.data.role);
+      }
+    });
+  }, []);
 
   return (
     <aside
@@ -188,31 +185,47 @@ const Sidebar: React.FC = () => {
               <div className="text-xs text-gray-400 px-2 mt-6 mb-2 whitespace-nowrap">
                 OTHER
               </div>
-              {otherLinks.map((link) => (
-                <Link href={link.href} key={link.href} legacyBehavior>
+              {/* Only show Admin Settings if role is admin */}
+              {role === 'admin' && (
+                <Link href="/adminSettings" legacyBehavior>
                   <a
-                    className={`relative flex items-center w-full text-left px-4 py-2 rounded-lg font-medium transition transform duration-150 ${
-                      active(link.href)
+                    className={`relative flex items-center w-full text-left px-4 py-2 rounded-lg font-medium transition transform duration-150 text-lg ${
+                      active('/adminSettings')
                         ? "bg-[#eff6ff] text-gray-700 shadow-md scale-[1.04]"
                         : "text-gray-700 hover:bg-gray-100 hover:shadow hover:scale-[1.03]"
                     }`}
                   >
-                    {active(link.href) && (
+                    {active('/adminSettings') && (
                       <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-[#60a5fa] rounded-full" />
                     )}
-                    <span
-                      className={`flex items-center justify-center w-9 h-9 rounded-lg mr-3 ${
-                        active(link.href)
-                          ? "bg-[#2563eb] text-white"
-                          : "bg-gray-100"
-                      }`}
-                    >
-                      {link.icon}
+                    <span className={`flex items-center justify-center w-9 h-9 rounded-lg mr-3 ${
+                      active('/adminSettings') ? 'bg-[#2563eb] text-white' : 'bg-gray-100'
+                    }`}>
+                      <IoSettingsOutline className="text-base" />
                     </span>
-                    <span className="whitespace-nowrap">{link.label}</span>
+                    <span className="whitespace-nowrap">Admin Settings</span>
                   </a>
                 </Link>
-              ))}
+              )}
+              <Link href="/help" legacyBehavior>
+                <a
+                  className={`relative flex items-center w-full text-left px-4 py-2 rounded-lg font-medium transition transform duration-150 text-lg ${
+                    active('/help')
+                      ? "bg-[#eff6ff] text-gray-700 shadow-md scale-[1.04]"
+                      : "text-gray-700 hover:bg-gray-100 hover:shadow hover:scale-[1.03]"
+                  }`}
+                >
+                  {active('/help') && (
+                    <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-[#60a5fa] rounded-full" />
+                  )}
+                  <span className={`flex items-center justify-center w-9 h-9 rounded-lg mr-3 ${
+                    active('/help') ? 'bg-[#2563eb] text-white' : 'bg-gray-100'
+                  }`}>
+                    <IoIosHelpCircleOutline className="text-base" />
+                  </span>
+                  <span className="whitespace-nowrap">Help & Support</span>
+                </a>
+              </Link>
             </nav>
           </div>
         </div>

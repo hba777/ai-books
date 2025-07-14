@@ -121,3 +121,24 @@ def delete_user(user_id: str = Path(..., description="The ID of the user to dele
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: UserResponse = Depends(get_user_from_cookie)):
     return current_user 
+
+@router.patch("/{user_id}", dependencies=[Depends(is_admin_cookie)])
+def update_user(user_id: str, update: dict):
+    users_collection = get_users_collection()
+    try:
+        obj_id = ObjectId(user_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid user ID format")
+    update_fields = {}
+    if "username" in update:
+        update_fields["username"] = update["username"]
+    if "password" in update and update["password"]:
+        update_fields["password"] = bcrypt.hashpw(update["password"].encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    if "role" in update:
+        update_fields["role"] = update["role"]
+    if not update_fields:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+    result = users_collection.update_one({"_id": obj_id}, {"$set": update_fields})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"detail": "User updated successfully"} 
