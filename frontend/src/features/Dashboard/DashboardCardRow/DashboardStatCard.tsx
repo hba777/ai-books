@@ -1,17 +1,15 @@
 import React from "react";
 
-interface ClassificationStatCardProps {
+interface DashboardStatCardProps {
   value: string | number;
   label: string;
   subtitle: string;
   badge?: React.ReactNode;
   icon?: React.ReactNode;
   bgColor?: string | [string, string]; // Accepts a single color or two hex values for gradient
-  onClick?: () => void;
-  isActive?: boolean;
 }
 
-const ClassificationStatCard: React.FC<ClassificationStatCardProps> = ({ value, label, subtitle, badge, icon, bgColor = "#3b82f6", onClick, isActive = false }) => {
+const DashboardStatCard: React.FC<DashboardStatCardProps> = ({ value, label, subtitle, badge, icon, bgColor = "#3b82f6" }) => {
   // Determine background style
   const iconBgStyle: React.CSSProperties = {};
   let iconBgClass = "";
@@ -25,16 +23,7 @@ const ClassificationStatCard: React.FC<ClassificationStatCardProps> = ({ value, 
 
   return (
     <div 
-      className={`flex flex-col items-start bg-white rounded-2xl shadow-md p-8 min-w-[200px] max-w-[250px] w-full h-49 relative cursor-pointer transition-all duration-200 ${
-        isActive ? 'shadow-lg hover:scale-105' : 'hover:shadow-lg hover:scale-105'
-      }`}
-      style={isActive && Array.isArray(bgColor) && bgColor.length === 2 ? {
-        border: `2px solid transparent`,
-        background: `linear-gradient(white, white) padding-box, linear-gradient(135deg, ${bgColor[0]}, ${bgColor[1]}) border-box`
-      } : isActive && typeof bgColor === "string" && bgColor.startsWith("#") ? {
-        border: `2px solid ${bgColor}`
-      } : {}}
-      onClick={onClick}
+      className="flex flex-col items-start bg-white rounded-2xl shadow-md p-8 min-w-[200px] max-w-[250px] w-full h-49 relative"
     >
       <div className="flex items-center mb-4">
         <div
@@ -52,4 +41,4 @@ const ClassificationStatCard: React.FC<ClassificationStatCardProps> = ({ value, 
   );
 };
 
-export default ClassificationStatCard;
+export default DashboardStatCard;
