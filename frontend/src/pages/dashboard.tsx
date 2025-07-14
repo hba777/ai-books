@@ -4,6 +4,8 @@ import { useRouter } from "next/router";
 import Sidebar from "../components/Sidebar/Sidebar";
 import { Header } from "../components/Header/Header";
 import { WelcomeSection } from "@/features/ClassificationPage/WelcomeSection/WelcomeSection";
+import ClassificationCardRow from "@/features/ClassificationPage/ClassificationCardRow/ClassificationCardRow";
+import { ClassificationProvider } from "@/features/ClassificationPage/ClassificationCardRow/ClassificationContext";
 
 interface User {
   id: string;
@@ -14,16 +16,18 @@ interface User {
 const Dashboard: React.FC = () => {
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-blue-50 to-purple-100">
+    <ClassificationProvider>
+      <div className="min-h-screen flex bg-gradient-to-br from-blue-50 to-purple-100">
       <Sidebar />
       <main className="flex-1 flex flex-col">
         <Header />
         <div className="flex-1 flex flex-col items-center px-4 py-12">
           <WelcomeSection />
-          {/* ...rest of your content */}
+          <ClassificationCardRow/>
         </div>
       </main>
     </div>
+    </ClassificationProvider>
   );
 };
 

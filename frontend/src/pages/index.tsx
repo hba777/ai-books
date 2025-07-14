@@ -1,59 +1,17 @@
-import LandingCard from "@/features/LandingPage/LandingCard";
-import LandingSidebar from "@/features/LandingPage/LandingSidebar";
-import { useState } from "react";
-import { HiOutlineBookOpen, HiOutlineSparkles, HiOutlineUsers } from "react-icons/hi2";
+import LandingCard from '../features/LandingPage/LandingForm';
 
-export default function Home() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const handleLoginClick = () => setSidebarOpen(true);
-  const handleCloseSidebar = () => setSidebarOpen(false);
-  
+export default function LoginPage() {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><circle cx='50' cy='50' r='40' fill='red'/></svg>`;
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-purple-100 relative px-4">
-      <header className="w-full max-w-3xl mx-auto text-center mt-16 mb-10">
-        <h1 className="text-5xl font-extrabold mb-4 text-gray-900 tracking-tight">AI Book: All-in-One Book Management</h1>
-        <p className="text-lg text-gray-600 mb-6">
-          Effortlessly manage, classify, and analyze books for departments, libraries, and organizations. <br/>
-          AI Book is your unified solution for uploading, organizing, and gaining insights from your book collections.
-        </p>
-        <button
-          className="px-10 py-4 rounded-xl bg-blue-600 text-white text-lg font-semibold shadow-lg hover:bg-blue-700 transition"
-          onClick={handleLoginClick}
-        >
-          Login
-        </button>
-      </header>
-      <section className="w-full max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
-        <LandingCard
-          title="Smart Classification"
-          description="Automatically classify books and documents by genre, subject, or department using advanced AI."
-          icon={<HiOutlineSparkles />}
-        />
-        <LandingCard
-          title="Centralized Management"
-          description="Upload, assign, and track books across multiple departments or libraries from a single dashboard."
-          icon={<HiOutlineBookOpen />}
-        />
-        <LandingCard
-          title="Collaboration & Insights"
-          description="Enable teams to review, analyze, and generate reports on book collections with ease."
-          icon={<HiOutlineUsers />}
-        />
-      </section>
-      <section className="w-full max-w-3xl mx-auto text-center mb-10">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800">Why Choose AI Book?</h2>
-        <p className="text-gray-600 text-base mb-2">
-          - Save time with automated classification and analytics.<br/>
-          - Keep your collections organized and accessible.<br/>
-          - Empower your team with collaborative tools and insightful reports.<br/>
-          - Secure, scalable, and easy to use for any organization size.
-        </p>
-      </section>
-      <LandingSidebar
-        open={sidebarOpen}
-        onClose={handleCloseSidebar}
-      />
+    <div className="min-h-screen flex items-center justify-center bg-cover bg-center relative" style={{backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(svg) }")`}}>
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm" />
+      {/* Centered Login Card */}
+      <div className="relative z-10 flex items-center justify-center w-full h-full">
+        <LandingCard />
+      </div>
     </div>
   );
 }
