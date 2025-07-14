@@ -31,7 +31,7 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({ onUploadClick })
           </p>
         </div>
         <button
-          className="bg-gradient-to-r mr-5 from-blue-500 to-purple-500 text-white font-semibold px-10 py-3 rounded-lg shadow hover:from-blue-600 hover:to-purple-600 transition min-w-[300px] flex items-center justify-center"
+          className="bg-gradient-to-r mr-5 from-blue-500 to-purple-500 text-white font-semibold px-10 py-3 rounded-lg shadow hover:from-blue-600 hover:to-purple-600 transition min-w-[300px] flex items-center justify-center cursor-pointer"
           onClick={onUploadClick}
         >
           <svg className="mr-2"

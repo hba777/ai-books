@@ -6,6 +6,7 @@ import ClassificationCardRow from "@/features/ClassificationPage/ClassificationC
 import BookTable from "@/features/ClassificationPage/BookTable/BooksView";
 import { ClassificationProvider } from "@/features/ClassificationPage/ClassificationCardRow/ClassificationContext";
 import UploadButtonForm from "@/features/ClassificationPage/UploadButtonForm/UploadButtonForm";
+import ProcessingCard from "@/components/ProcessingCard/ProcessingCard";
 
 const Classifcation: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -19,8 +20,10 @@ const Classifcation: React.FC = () => {
           <div className="flex-1 flex flex-col items-center px-4 py-12">
             <WelcomeSection onUploadClick={() => setModalOpen(true)} />
             <ClassificationCardRow/>
+            <div className="w-full flex justify-start mb-6">
+            <ProcessingCard/>
+            </div>
             <BookTable/>
-
           </div>
         </main>
         <UploadButtonForm open={modalOpen} onClose={() => setModalOpen(false)} />
