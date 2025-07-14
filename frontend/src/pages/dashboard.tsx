@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import Sidebar from "../components/Sidebar/Sidebar";
 import { Header } from "../components/Header/Header";
 import { WelcomeSection } from "@/features/ClassificationPage/WelcomeSection/WelcomeSection";
-import InDepthAnalysisCardRow from "@/features/InDepthAnalysisPage/InDepthAnalysisCardRow/InDepthAnalysisCardRow";
 import DashboardCardRow from "@/features/Dashboard/DashboardCardRow/DashboardCardRow";
 import AgentsCard from "@/features/Dashboard/AgentsCard/AgentsCard";
 import UploadButtonForm from "@/features/ClassificationPage/UploadButtonForm/UploadButtonForm";
 import ProcessingCard from "@/components/ProcessingCard/ProcessingCard";
+import AnalysisCardRow from "@/features/Dashboard/AnalysisCardRow/AnalysisCardRow";
 
 const Dashboard: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -22,7 +22,7 @@ const Dashboard: React.FC = () => {
             <ProcessingCard/>
           </div>
           <DashboardCardRow/>
-          <InDepthAnalysisCardRow/>
+          <AnalysisCardRow/>
           <AgentsCard/>
         </div>
       </main>

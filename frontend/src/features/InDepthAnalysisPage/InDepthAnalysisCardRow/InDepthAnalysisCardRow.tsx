@@ -45,7 +45,7 @@ const InDepthAnalysisCardRow: React.FC = () => (
     {cardData.map((card, idx) => (
       <div
         key={idx}
-        className="flex flex-col items-start bg-white rounded-xl shadow-xl p-6 min-w-[340px] max-w-[360px] w-full h-40"
+        className="flex flex-col items-start bg-white rounded-xl shadow-lg p-6 min-w-[340px] max-w-[360px] w-full h-40"
       >
         <div className={`w-10 h-10 flex items-center justify-center rounded-md mb-3 ${card.iconBg}`}>
           <span className="text-white text-2xl">{card.icon}</span>
