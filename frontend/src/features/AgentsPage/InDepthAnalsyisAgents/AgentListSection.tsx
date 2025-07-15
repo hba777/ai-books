@@ -19,7 +19,6 @@ interface AgentListSectionProps {
   sectionDescription: string;
   agents: Agent[];
   icon: React.ReactNode;
-  onAdd: () => void;
 }
 
 const AgentListSection: React.FC<AgentListSectionProps> = ({
@@ -27,7 +26,6 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
   sectionDescription,
   agents,
   icon,
-  onAdd,
 }) => {
   const [isAddFormOpen, setisAddFormOpen] = useState(false);
   const [isEditFormOpen, setisEditFormOpen] = useState(false);

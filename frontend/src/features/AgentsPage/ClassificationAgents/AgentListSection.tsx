@@ -27,7 +27,6 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
   sectionDescription,
   agents,
   icon,
-  onAdd,
 }) => {
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
