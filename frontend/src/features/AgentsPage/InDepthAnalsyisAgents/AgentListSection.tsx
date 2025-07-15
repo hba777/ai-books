@@ -4,6 +4,8 @@ import AgentCard from "./AgentCard";
 import InDepthAnalysisAgentForm from "./InDepthAnalysisAgentForm";
 import DeleteAgent from "../DeleteAgent/DeleteAgent";
 import api from "@/lib/api";
+import { FaPlay } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 interface Agent {
   id: string;
@@ -32,6 +34,7 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [deletingAgent, setDeletingAgent] = useState<Agent | null>(null);
+  const [poweredOff, setPoweredOff] = useState<{ [id: string]: boolean }>({});
 
   const handleOpenForm = () => setisAddFormOpen(true);
   const handleEditOpenform = (agent: Agent) => {
@@ -48,6 +51,16 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
       setIsDeleteOpen(false);
       setDeletingAgent(null);
       // Optionally: refresh agent list here
+    }
+  };
+
+  const handlePowerClick = (agentId: string) => {
+    if (poweredOff[agentId]) {
+      toast.success("Powered on");
+      setPoweredOff((prev) => ({ ...prev, [agentId]: false }));
+    } else {
+      toast.info("Powered off");
+      setPoweredOff((prev) => ({ ...prev, [agentId]: true }));
     }
   };
   return (
@@ -130,40 +143,51 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
                 </clipPath>
               </defs>
             </svg>
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <g clip-path="url(#clip0_1_10435)">
-                <path
-                  d="M7.80078 1.36621V7.84164"
-                  stroke="#394560"
-                  stroke-width="1.5541"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-                <path
-                  d="M11.9452 4.34473C12.7589 5.15876 13.3134 6.19552 13.5387 7.32426C13.7639 8.453 13.6499 9.62317 13.211 10.6872C12.7721 11.7512 12.028 12.6615 11.0724 13.3031C10.1169 13.9448 8.99275 14.2892 7.84175 14.2928C6.69076 14.2964 5.56446 13.9591 4.60492 13.3234C3.64537 12.6877 2.89553 11.7822 2.44998 10.7209C2.00442 9.65965 1.88309 8.49021 2.10129 7.36008C2.31949 6.22995 2.86745 5.18974 3.67607 4.37063"
-                  stroke="#394560"
-                  stroke-width="1.5541"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </g>
-              <defs>
-                <clipPath id="clip0_1_10435">
-                  <rect
-                    width="15.541"
-                    height="15.541"
-                    fill="white"
-                    transform="translate(0.0302734 0.0712891)"
+            {poweredOff[agent.id] ? (
+              <button onClick={() => handlePowerClick(agent.id)}
+                className="text-blue-500 hover:text-blue-700 focus:outline-none"
+                title="Powered Off"
+              >
+                <FaPlay />
+              </button>
+            ) : (
+              <svg
+                onClick={() => handlePowerClick(agent.id)}
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                style={{ cursor: 'pointer' }}
+              >
+                <g clipPath="url(#clip0_1_10435)">
+                  <path
+                    d="M7.80078 1.36621V7.84164"
+                    stroke="#394560"
+                    strokeWidth="1.5541"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
-                </clipPath>
-              </defs>
-            </svg>
+                  <path
+                    d="M11.9452 4.34473C12.7589 5.15876 13.3134 6.19552 13.5387 7.32426C13.7639 8.453 13.6499 9.62317 13.211 10.6872C12.7721 11.7512 12.028 12.6615 11.0724 13.3031C10.1169 13.9448 8.99275 14.2892 7.84175 14.2928C6.69076 14.2964 5.56446 13.9591 4.60492 13.3234C3.64537 12.6877 2.89553 11.7822 2.44998 10.7209C2.00442 9.65965 1.88309 8.49021 2.10129 7.36008C2.31949 6.22995 2.86745 5.18974 3.67607 4.37063"
+                    stroke="#394560"
+                    strokeWidth="1.5541"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </g>
+                <defs>
+                  <clipPath id="clip0_1_10435">
+                    <rect
+                      width="15.541"
+                      height="15.541"
+                      fill="white"
+                      transform="translate(0.0302734 0.0712891)"
+                    />
+                  </clipPath>
+                </defs>
+              </svg>
+            )}
           </AgentCard>
         ))}
       </div>
