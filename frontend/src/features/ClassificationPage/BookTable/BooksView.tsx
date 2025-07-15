@@ -25,6 +25,7 @@ const defaultFilterOptions: FilterOption[] = [
 
 const dummyBooks = [
   {
+    id: "1",
     title: "The Kite Runner",
     author: "Khalid Hussaini",
     status: "Processed",
@@ -32,6 +33,7 @@ const dummyBooks = [
     labels: "History, Geo-Political, Religious",
   },
   {
+    id: "2",
     title: "The Kite Runner",
     author: "Khalid Hussaini",
     status: "Unprocessed",
@@ -39,6 +41,7 @@ const dummyBooks = [
     labels: "History, Geo-Political, Religious",
   },
   {
+    id: "3",
     title: "The Kite Runner",
     author: "Khalid Hussaini",
     status: "Assigned",
@@ -46,6 +49,7 @@ const dummyBooks = [
     labels: "History, Geo-Political, Religious",
   },
   {
+    id: "4",
     title: "The Kite Runner",
     author: "Khalid Hussaini",
     status: "Processed",
@@ -53,6 +57,7 @@ const dummyBooks = [
     labels: "History, Geo-Political, Religious",
   },
   {
+    id: "5",
     title: "The Kite Runner",
     author: "Khalid Hussaini",
     status: "Pending",
@@ -60,6 +65,7 @@ const dummyBooks = [
     labels: "-- NIL --",
   },
   {
+    id: "6",
     title: "The Kite Runner",
     author: "Khalid Hussaini",
     status: "Processing",
@@ -112,6 +118,7 @@ const BookTable: React.FC<BookTableProps> = ({ filterOptions }) => {
 
   // Convert table books to grid books format
   const gridBooks = filteredBooks.map(book => ({
+    id: book.id,
     title: book.title,
     author: book.author,
     status: book.status,
@@ -234,7 +241,7 @@ const BookTable: React.FC<BookTableProps> = ({ filterOptions }) => {
       ) : (
         <div className="rounded-2xl p-12 flex items-center justify-center min-h-[200px] text-lg">
           {/* Grid view with filtered books */}
-          <BookGridView books={gridBooks} />
+          <BookGridView books={filteredBooks} />
         </div>
       )}
     </div>

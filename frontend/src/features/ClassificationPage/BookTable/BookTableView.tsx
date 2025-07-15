@@ -1,6 +1,8 @@
 import React from "react";
+import { useRouter } from "next/router";
 
 interface Book {
+  id: string; // MongoDB ObjectId as string
   title: string;
   author: string;
   status: string;
@@ -14,6 +16,10 @@ interface BookTableViewProps {
 }
 
 const BookTableView: React.FC<BookTableViewProps> = ({ filteredBooks, statusColors }) => {
+  const router = useRouter();
+  const handleRowClick = (id: string) => {
+    router.push(`/classification/${id}`);
+  };
   return (
     <div className="bg-white rounded-2xl shadow overflow-x-auto">
       <table className="min-w-full text-left">
@@ -130,7 +136,11 @@ const BookTableView: React.FC<BookTableViewProps> = ({ filteredBooks, statusColo
         </thead>
         <tbody>
           {filteredBooks.map((book, idx) => (
-            <tr key={idx} className="hover:bg-blue-50/60 transition">
+            <tr
+              key={book.id}
+              className="hover:bg-blue-50/60 transition cursor-pointer"
+              onClick={() => handleRowClick(book.id)}
+            >
               <td className="py-4 px-6 font-semibold text-gray-900 whitespace-nowrap">
                 {book.title}
               </td>
