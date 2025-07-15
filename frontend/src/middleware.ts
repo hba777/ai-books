@@ -10,7 +10,9 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/static') ||
-    pathname === '/favicon.ico'
+    pathname === '/favicon.ico' ||
+    // Allow all files with an extension (e.g., .jpg, .png, .css, .js, etc.)
+    /\.[^/]+$/.test(pathname)
   ) {
     return NextResponse.next()
   }

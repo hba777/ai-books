@@ -1,66 +1,22 @@
 import React from "react";
+import { useRouter } from "next/router";
 
 interface Book {
+  id: string;
   title: string;
   author: string;
   status: string;
-  percent: number;
-  startDate: string;
-  endDate: string | null;
-  uploadDate: string;
+  date: string;
+  labels?: string[];
+  percent?: number;
+  startDate?: string;
+  endDate?: string | null;
+  uploadDate?: string;
 }
 
 interface BookGridViewProps {
   books: Book[];
 }
-
-const dummyBooks = [
-  {
-    title: "The Kite Runner",
-    author: "Khalid Hussaini",
-    status: "Processing",
-    percent: 20,
-    startDate: "12 January 2023",
-    endDate: null,
-    uploadDate: "12 January 2023",
-  },
-  {
-    title: "The Kite Runner",
-    author: "Khalid Hussaini",
-    status: "Processed",
-    percent: 100,
-    startDate: "12 January 2023",
-    endDate: "12 January 2023",
-    uploadDate: "12 January 2023",
-  },
-  {
-    title: "The Kite Runner",
-    author: "Khalid Hussaini",
-    status: "Assigned",
-    percent: 100,
-    startDate: "12 January 2023",
-    endDate: null,
-    uploadDate: "12 January 2023",
-  },
-  {
-    title: "The Kite Runner",
-    author: "Khalid Hussaini",
-    status: "Pending",
-    percent: 0,
-    startDate: "12 January 2023",
-    endDate: null,
-    uploadDate: "12 January 2023",
-  },
-  {
-    title: "The Kite Runner",
-    author: "Khalid Hussaini",
-    status: "Processed",
-    percent: 100,
-    startDate: "12 January 2023",
-    endDate: "12 January 2023",
-    uploadDate: "12 January 2023",
-  },
-];
 
 const statusStyles: Record<string, { border: string; bar: string; text: string }> = {
   Unprocessed: {
@@ -91,14 +47,32 @@ const statusStyles: Record<string, { border: string; bar: string; text: string }
 };
 
 const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
+  const router = useRouter();
+  const handleBookClick = (id: string) => {
+    router.push(`/classification/${id}`);
+  };
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
       {books.map((book, idx) => {
         const style = statusStyles[book.status] || statusStyles["Processing"];
+        // Calculate percent if not present
+        const percent =
+          typeof book.percent === "number"
+            ? book.percent
+            : book.status === "Processed"
+            ? 100
+            : book.status === "Processing"
+            ? 50
+            : book.status === "Assigned"
+            ? 100
+            : book.status === "Pending"
+            ? 0
+            : 0;
         return (
           <div
-            key={idx}
-            className={`relative bg-white rounded-2xl shadow p-6 min-w-[320px] max-w-[380px] mx-auto`}
+            key={book.id}
+            onClick={() => handleBookClick(book.id)}
+            className={`relative bg-white rounded-2xl shadow p-6 min-w-[320px] max-w-[380px] mx-auto cursor-pointer`}
           >
             {/* Colored top border */}
             <div className={`absolute top-0 left-0 w-full h-1.5 rounded-t-2xl ${style.bar}`} />
@@ -113,7 +87,7 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
               </button>
             </div>
             <div className="text-sm text-gray-500 mb-1">
-              Start Process Date: {book.startDate}
+              Start Process Date: {book.date || book.startDate}
             </div>
             {book.endDate ? (
               <div className="text-sm text-gray-500 mb-4">
@@ -121,7 +95,7 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
               </div>
             ) : (
               <div className="text-sm text-gray-500 mb-4">
-                Date Uploaded: {book.uploadDate}
+                Date Uploaded: {book.uploadDate || book.date}
               </div>
             )}
             <div className="flex items-center justify-between mb-1">
@@ -130,12 +104,12 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
                   ? "Process Completed"
                   : book.status}
               </span>
-              <span className="text-xs text-gray-500 font-bold">{book.percent}%</span>
+              <span className="text-xs text-gray-500 font-bold">{percent}%</span>
             </div>
             <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
                 className={`h-2 rounded-full ${style.bar}`}
-                style={{ width: `${book.percent}%` }}
+                style={{ width: `${percent}%` }}
               />
             </div>
           </div>
