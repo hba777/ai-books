@@ -19,8 +19,8 @@ const AddAgentSection: React.FC<AddAgentSectionProps> = ({
       <span className="text-base text-gray-500">{description}</span>
     </div>
     <button
-      className="bg-gradient-to-r from-[#3B82F6] to-[#9333EA] text-white font-semibold px-6 py-2 rounded-lg shadow hover:from-blue-600 hover:to-purple-600 transition flex items-center gap-2"
-      onClick={onAdd}
+      className="bg-gradient-to-r from-[#3B82F6] to-[#9333EA] text-white font-semibold px-6 py-2 rounded-lg shadow hover:from-blue-600 hover:to-purple-600 transition flex items-center gap-2 cursor-pointer"
+      onClick={onAdd} // Calls the onAdd handler passed as a prop
     >
       {buttonLabel}
     </button>
