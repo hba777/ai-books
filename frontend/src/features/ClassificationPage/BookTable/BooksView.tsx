@@ -115,22 +115,7 @@ const BookTable: React.FC<BookTableProps> = ({ filterOptions }) => {
       ? (book.labels === '-- NIL --' ? ['NIL'] : book.labels.split(',').map(l => l.trim()))
       : book.labels
   }));
-
-  // Convert table books to grid books format
-  const gridBooks = filteredBooks.map(book => ({
-    id: book.id,
-    title: book.title,
-    author: book.author,
-    status: book.status,
-    percent: book.status === 'Processed' ? 100 : 
-             book.status === 'Processing' ? 50 : 
-             book.status === 'Assigned' ? 100 : 
-             book.status === 'Pending' ? 0 : 0,
-    startDate: book.date,
-    endDate: book.status === 'Processed' ? book.date : null,
-    uploadDate: book.date,
-  }));
-
+  
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
