@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import api from '../../lib/api';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 const LandingForm: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -74,7 +76,7 @@ const LandingForm: React.FC = () => {
             <div className="relative">
               <input
                 id="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 className="w-full px-4 py-2 rounded-lg bg-[#34374E] bg-opacity-80 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400 pr-10 placeholder-gray-400"
                 placeholder="Enter Password"
                 value={password}
@@ -82,9 +84,18 @@ const LandingForm: React.FC = () => {
                 required
                 style={{fontWeight: 500}}
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer">
-                {/* Eye icon placeholder, add toggle logic if needed */}
-                <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/></svg>
+              <span
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"
+                onClick={() => setShowPassword((v) => !v)}
+                tabIndex={0}
+                role="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <FiEyeOff size={20} />
+                ) : (
+                  <FiEye size={20} />
+                )}
               </span>
             </div>
           </div>
