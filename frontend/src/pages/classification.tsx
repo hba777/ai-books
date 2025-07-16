@@ -5,7 +5,7 @@ import { WelcomeSection } from "@/features/ClassificationPage/WelcomeSection/Wel
 import ClassificationCardRow from "@/features/ClassificationPage/ClassificationCardRow/ClassificationCardRow";
 import BookTable from "@/components/BookTable/BooksView";
 import { ClassificationProvider } from "@/features/ClassificationPage/ClassificationCardRow/ClassificationContext";
-import UploadButtonForm from "@/features/ClassificationPage/UploadButtonForm/UploadButtonForm";
+import UploadButtonForm from "@/components/UploadButtonForm/UploadButtonForm";
 import ProcessingCard from "@/components/ProcessingCard/ProcessingCard";
 
 const Classifcation: React.FC = () => {

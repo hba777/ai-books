@@ -4,7 +4,7 @@ import { Header } from "../components/Header/Header";
 import { WelcomeSection } from "@/features/ClassificationPage/WelcomeSection/WelcomeSection";
 import DashboardCardRow from "@/features/Dashboard/DashboardCardRow/DashboardCardRow";
 import AgentsCard from "@/features/Dashboard/AgentsCard/AgentsCard";
-import UploadButtonForm from "@/features/ClassificationPage/UploadButtonForm/UploadButtonForm";
+import UploadButtonForm from "@/components/UploadButtonForm/UploadButtonForm";
 import ProcessingCard from "@/components/ProcessingCard/ProcessingCard";
 import AnalysisCardRow from "@/features/Dashboard/AnalysisCardRow/AnalysisCardRow";
 
