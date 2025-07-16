@@ -3,7 +3,7 @@ import Sidebar from "@/components/Sidebar/Sidebar";
 import Header from "@/components/Header/Header";
 import { WelcomeSection } from "@/features/ClassificationPage/WelcomeSection/WelcomeSection";
 import ClassificationCardRow from "@/features/ClassificationPage/ClassificationCardRow/ClassificationCardRow";
-import BookTable from "@/features/ClassificationPage/BookTable/BooksView";
+import BookTable from "@/components/BookTable/BooksView";
 import { ClassificationProvider } from "@/features/ClassificationPage/ClassificationCardRow/ClassificationContext";
 import UploadButtonForm from "@/features/ClassificationPage/UploadButtonForm/UploadButtonForm";
 import ProcessingCard from "@/components/ProcessingCard/ProcessingCard";

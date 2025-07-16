@@ -49,7 +49,8 @@ const statusStyles: Record<string, { border: string; bar: string; text: string }
 const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
   const router = useRouter();
   const handleBookClick = (id: string) => {
-    router.push(`/classification/${id}`);
+    const basePath = router.pathname.startsWith('/analysis') ? '/analysis' : '/classification';
+    router.push(`${basePath}/${id}`);
   };
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
