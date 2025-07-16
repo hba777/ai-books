@@ -18,7 +18,8 @@ interface BookTableViewProps {
 const BookTableView: React.FC<BookTableViewProps> = ({ filteredBooks, statusColors }) => {
   const router = useRouter();
   const handleRowClick = (id: string) => {
-    router.push(`/classification/${id}`);
+    const basePath = router.pathname.startsWith('/analysis') ? '/analysis' : '/classification';
+    router.push(`${basePath}/${id}`);
   };
   return (
     <div className="bg-white rounded-2xl shadow overflow-x-auto">

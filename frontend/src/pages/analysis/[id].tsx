@@ -1,21 +1,40 @@
-import React from "react";
+import React, { useState } from "react";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import Header from "@/components/Header/Header";
+import TopSection from "@/features/AnalysisDetailsPage/TopSection/TopSection";
+import AnalysisTable from "@/features/AnalysisDetailsPage/AnalysisTable/AnalysisTable";
+import SeeInfo from "@/features/ClassificationDetailsPage/SeeInfo";
 
+const mockRows = [
+  { pageNo: "01", paragraph: "If system integration fails: 'I'm having trouble accessing our scheduling system right now. Let me collect you...", confidence: "54%", observations: "If system integration fails: 'I'm having trouble accessing our scheduling system right now. Let me collect you..." },
+  { pageNo: "234", paragraph: "If system integration fails: 'I'm having trouble accessing our scheduling system right now. Let me collect you...", confidence: "54%", observations: "If system integration fails: 'I'm having trouble accessing our scheduling system right now. Let me collect you..." },
+  { pageNo: "78", paragraph: "If system integration fails: 'I'm having trouble accessing our scheduling system right now. Let me collect you...", confidence: "54%", observations: "If system integration fails: 'I'm having trouble accessing our scheduling system right now. Let me collect you..." },
+  { pageNo: "900", paragraph: "If system integration fails: 'I'm having trouble accessing our scheduling system right now. Let me collect you...", confidence: "54%", observations: "If system integration fails: 'I'm having trouble accessing our scheduling system right now. Let me collect you..." },
+  { pageNo: "25", paragraph: "If system integration fails: 'I'm having trouble accessing our scheduling system right now. Let me collect you...", confidence: "54%", observations: "If system integration fails: 'I'm having trouble accessing our scheduling system right now. Let me collect you..." },
+];
+
+const mockTags = ["Political", "Maths", "IT/CS", "Maths", "Maths"];
 
 const AnalysisDetails: React.FC = () => {
+  const [showSeeInfo, setShowSeeInfo] = useState(false);
 
+  // In real use, get id from router.query and fetch data
+  const bookId = "1";
   return (
-      <div className="min-h-screen flex bg-gradient-to-br from-blue-50 to-purple-100">
-        <Sidebar />
-        <main className="flex-1 flex flex-col">
-          <Header />
-          <div className="flex-1 flex flex-col items-center px-4 py-12">
-
+    <div className="min-h-screen flex bg-[#f7f9fc]">
+      <Sidebar />
+      <main className="flex-1 flex flex-col">
+        <Header />
+        <div className="flex-1 flex flex-col items-center px-4 py-12 w-full">
+          <div className="w-full max-w-6xl">
+            <TopSection bookTitle="The Kite Runner" tags={mockTags} bookId={bookId} onSeeInfo={()=>setShowSeeInfo(true)} />
+            <AnalysisTable rows={mockRows} />
           </div>
-        </main>
+        </div>
+      </main>
+      {showSeeInfo && <SeeInfo onClose={() => setShowSeeInfo(false)} />}
 
-      </div>
+    </div>
   );
 };
 

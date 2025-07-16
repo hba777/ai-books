@@ -25,28 +25,21 @@
     }) => {
       const fileInputRef = useRef<HTMLInputElement>(null);
       const [dragActive, setDragActive] = useState(false);
-      const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-      const [activeIndex, setActiveIndex] = useState(0);
-      const [bookForms, setBookForms] = useState<{ [idx: number]: BookFormState }>(
-        {}
-      );
+      const [selectedFile, setSelectedFile] = useState<File | null>(null);
+      const [bookForm, setBookForm] = useState<BookFormState>(defaultBookForm);
 
       if (!open) return null;
 
       // Handle file selection (from input or drop)
       const handleFiles = (files: FileList | null) => {
         if (files && files.length > 0) {
-          const newFiles = Array.from(files);
-          setSelectedFiles((prev) => [...prev, ...newFiles]);
-          setBookForms((prev) => {
-            const updated = { ...prev };
-            const startIdx = selectedFiles.length;
-            newFiles.forEach((_, i) => {
-              updated[startIdx + i] = { ...defaultBookForm };
-            });
-            return updated;
-          });
-          setActiveIndex(selectedFiles.length); // focus first new file
+          const file = files[0];
+          if (file.type === "application/pdf") {
+            setSelectedFile(file);
+            setBookForm(defaultBookForm);
+          } else {
+            alert("Only PDF files are allowed.");
+          }
         }
       };
 
@@ -68,36 +61,18 @@
         handleFiles(e.target.files);
       };
 
-      // Remove a file and its form state
-      const removeFile = (idx: number) => {
-        setSelectedFiles((prev) => prev.filter((_, i) => i !== idx));
-        setBookForms((prev) => {
-          const updated = { ...prev };
-          delete updated[idx];
-          // Re-index forms
-          const newForms: { [idx: number]: BookFormState } = {};
-          Object.keys(updated)
-            .map(Number)
-            .sort((a, b) => a - b)
-            .forEach((oldIdx, i) => {
-              newForms[i] = updated[oldIdx];
-            });
-          return newForms;
-        });
-        setActiveIndex((prev) =>
-          prev > 0 && prev === idx ? prev - 1 : Math.max(0, Math.min(prev, selectedFiles.length - 2))
-        );
+      // Remove the file and reset form
+      const removeFile = () => {
+        setSelectedFile(null);
+        setBookForm(defaultBookForm);
       };
 
-      // Handle form field change for the active book
+      // Handle form field change
       const handleFormChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
       ) => {
         const { name, value } = e.target;
-        setBookForms((prev) => ({
-          ...prev,
-          [activeIndex]: { ...prev[activeIndex], [name]: value },
-        }));
+        setBookForm((prev) => ({ ...prev, [name]: value }));
       };
 
       return (
@@ -105,7 +80,7 @@
           <div className="bg-white rounded shadow-xl w-full max-w-lg relative animate-fadeIn flex flex-col">
             {/* Header row */}
             <div className="flex items-center justify-between p-4 pt-6 pb-2 sticky top-0 bg-white z-10 rounded-3xl">
-              <h2 className="text-2xl font-bold text-gray-900 mb-0">Upload Books Here</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-0">Upload Book Here</h2>
               <button
                 className="flex items-center justify-center w-10 h-10 text-gray-400 hover:text-gray-600 text-2xl font-bold border border-gray-300 hover:border-gray-400 rounded-xl"
                 onClick={onClose}
@@ -117,79 +92,66 @@
             </div>
             <div className="p-4 pt-2 overflow-y-auto max-h-[90vh] rounded-2xl ">
               {/* Drag-and-drop area */}
-              <div
-                className={`border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center mb-4 cursor-pointer bg-gray-50 hover:bg-gray-100 transition ${
-                  dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"
-                }`}
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-              >
-                <input
-                  type="file"
-                  multiple
-                  ref={fileInputRef}
-                  className="hidden"
-                  accept=".pdf,.doc,.docx,.zip"
-                  onChange={handleInputChange}
-                />
-                <div className="flex flex-col items-center">
-                  <svg width="40" height="40" fill="none" viewBox="0 0 48 48">
-                    <rect width="40" height="40" rx="20" fill="#EEF2FF" />
-                    <path
-                      d="M20 28V14M20 14l-5 5M20 14l5 5"
-                      stroke="#6366F1"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  <span className="text-blue-600 font-semibold mt-2 mb-1 text-center text-sm">
-                    Drag and drop files here or click to upload
-                  </span>
-                  <span className="text-xs text-gray-400 mb-1">
-                    File size: <span className="font-bold">40 GB</span> &nbsp;|&nbsp; File type: <span className="font-bold">PDF, DOC, ZIP</span>
-                  </span>
-                </div>
-              </div>
-              {/* Book containers row */}
-              {selectedFiles.length > 0 && (
-                <div className="flex gap-2 mb-4 overflow-x-auto">
-                  {selectedFiles.map((file, idx) => (
-                    <div
-                      key={idx}
-                      className={`flex items-center px-4 py-2 rounded-lg cursor-pointer transition-all border ${activeIndex === idx
-                        ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white border-blue-500"
-                        : "bg-gradient-to-r from-blue-500 to-purple-500 opacity-40 text-white border-transparent"
-                      }`}
-                      onClick={() => setActiveIndex(idx)}
-                    >
-                      <span className="truncate max-w-[120px]">{file.name}</span>
-                      <button
-                        className="ml-2 text-white hover:text-red-200"
-                        onClick={e => {
-                          e.stopPropagation();
-                          removeFile(idx);
-                        }}
-                        aria-label="Remove file"
-                        type="button"
-                      >
-                        <ImCross size={14} />
-                      </button>
-                    </div>
-                  ))}
+              {!selectedFile && (
+                <div
+                  className={`border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center mb-4 cursor-pointer bg-gray-50 hover:bg-gray-100 transition ${
+                    dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"
+                  }`}
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="application/pdf"
+                    onChange={handleInputChange}
+                  />
+                  <div className="flex flex-col items-center">
+                    <svg width="40" height="40" fill="none" viewBox="0 0 48 48">
+                      <rect width="40" height="40" rx="20" fill="#EEF2FF" />
+                      <path
+                        d="M20 28V14M20 14l-5 5M20 14l5 5"
+                        stroke="#6366F1"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <span className="text-blue-600 font-semibold mt-2 mb-1 text-center text-sm">
+                      Drag and drop a PDF file here or click to upload
+                    </span>
+                    <span className="text-xs text-gray-400 mb-1">
+                      File type: <span className="font-bold">PDF</span>
+                    </span>
+                  </div>
                 </div>
               )}
-              {/* Book form for active file */}
-              {selectedFiles.length > 0 && (
+              {/* File display */}
+              {selectedFile && (
+                <div className="flex items-center min-w-[200px] max-w-[230px] px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white mb-4">
+                  <span className="truncate max-w-[200px]">{selectedFile.name}</span>
+                  <button
+                    className="ml-2 text-white hover:text-red-200"
+                    onClick={removeFile}
+                    aria-label="Remove file"
+                    type="button"
+                  >
+                    <ImCross size={14} />
+                  </button>
+                </div>
+              )}
+              {/* Book form for selected file */}
+              {selectedFile && (
                 <form className="space-y-3">
                   <div>
                     <label className="block text-gray-700 font-semibold mb-1">Book Title*</label>
                     <input
                       type="text"
                       name="title"
-                      value={bookForms[activeIndex]?.title || ""}
+                      value={bookForm.title}
                       onChange={handleFormChange}
                       className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900"
                       placeholder="Enter book name"
@@ -201,7 +163,7 @@
                     <input
                       type="text"
                       name="author"
-                      value={bookForms[activeIndex]?.author || ""}
+                      value={bookForm.author}
                       onChange={handleFormChange}
                       className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900"
                       placeholder="Enter author name"
@@ -213,7 +175,7 @@
                     <input
                       type="date"
                       name="date"
-                      value={bookForms[activeIndex]?.date || ""}
+                      value={bookForm.date}
                       onChange={handleFormChange}
                       className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900"
                       required
@@ -224,7 +186,7 @@
                     <input
                       type="text"
                       name="reference"
-                      value={bookForms[activeIndex]?.reference || ""}
+                      value={bookForm.reference}
                       onChange={handleFormChange}
                       className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900"
                       placeholder="Enter Reference Here"
@@ -234,7 +196,7 @@
                     <label className="block text-gray-700 font-semibold mb-1">General Category</label>
                     <select
                       name="category"
-                      value={bookForms[activeIndex]?.category || "History"}
+                      value={bookForm.category}
                       onChange={handleFormChange}
                       className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900"
                     >
@@ -249,7 +211,7 @@
                     <label className="block text-gray-700 font-semibold mb-1">Abstract</label>
                     <textarea
                       name="abstract"
-                      value={bookForms[activeIndex]?.abstract || ""}
+                      value={bookForm.abstract}
                       onChange={handleFormChange}
                       className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900"
                       placeholder="Max 200 words"

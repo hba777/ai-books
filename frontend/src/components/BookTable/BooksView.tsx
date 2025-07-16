@@ -3,7 +3,7 @@ import { FiSearch } from "react-icons/fi";
 import { CiViewTable } from "react-icons/ci";
 import { IoGridOutline } from "react-icons/io5";
 import BookGridView from "./BookGridView";
-import { useClassificationContext } from "../ClassificationCardRow/ClassificationContext";
+import { useClassificationContext } from "../../features/ClassificationPage/ClassificationCardRow/ClassificationContext";
 import BookTableView from "./BookTableView";
 
 interface FilterOption {
