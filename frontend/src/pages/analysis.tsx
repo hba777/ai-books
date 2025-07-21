@@ -3,9 +3,9 @@ import Sidebar from "@/components/Sidebar/Sidebar";
 import Header from "@/components/Header/Header";
 import BookTable from "@/components/BookTable/BooksView";
 import { ClassificationProvider } from "@/features/ClassificationPage/ClassificationCardRow/ClassificationContext";
-import HeroSection from "@/features/InDepthAnalysisPage/HeroSection";
 import ProcessingCard from "@/components/ProcessingCard/ProcessingCard";
 import InDepthAnalysisCardRow from "@/features/InDepthAnalysisPage/InDepthAnalysisCardRow/InDepthAnalysisCardRow";
+import HeroSection from "@/features/InDepthAnalysisPage/HeroSection/HeroSection";
 
 const bookTableFilters = [
   { value: "All", label: "All Classified Books" },
@@ -26,7 +26,6 @@ const Analysis: React.FC = () => {
           <div className="flex-1 flex flex-col items-center px-4 py-12">
             <HeroSection />
             <InDepthAnalysisCardRow/>
-
             <div className="w-full flex justify-start mb-4 mt-4">
               <ProcessingCard />
             </div>
