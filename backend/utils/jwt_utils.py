@@ -11,14 +11,18 @@ ALGORITHM = "HS256"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/token")
 
 
-def create_access_token(user_id: str, username: str, role: str, expires_delta: timedelta = timedelta(hours=1)) -> str:
-    expire = datetime.utcnow() + expires_delta
+def create_access_token(user_id: str, username: str, role: str, expires_delta: timedelta = None) -> str:
     payload = {
         "sub": username,
         "id": user_id,
-        "role": role,
-        "exp": expire
+        "role": role
     }
+
+    # Only add expiration if explicitly requested
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+        payload["exp"] = expire
+
     encoded_jwt = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
