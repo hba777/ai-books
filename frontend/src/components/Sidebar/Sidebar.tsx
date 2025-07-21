@@ -8,10 +8,10 @@ import { FiGrid } from "react-icons/fi";
 import { IoSettingsOutline } from "react-icons/io5";
 import { IoIosHelpCircleOutline } from "react-icons/io";
 import { RiArchiveDrawerLine } from "react-icons/ri";
+import { useUser } from "../../context/UserContext";
 
 import Link from "next/link";
 import { useRouter } from "next/router";
-import api from "@/lib/api";
 
 const navLinks = [
   {
@@ -54,17 +54,10 @@ const navLinks = [
 
 const Sidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const [role, setRole] = useState<string>("");
+  const { user } = useUser();
   const router = useRouter();
   const active = (href: string) => router.pathname === href;
 
-  useEffect(() => {
-    api.get("/users/me").then(res => {
-      if (res.data && res.data.role) {
-        setRole(res.data.role);
-      }
-    });
-  }, []);
 
   return (
     <aside
@@ -186,7 +179,7 @@ const Sidebar: React.FC = () => {
                 OTHER
               </div>
               {/* Only show Admin Settings if role is admin */}
-              {role === 'admin' && (
+              {user?.role === 'admin' && (
                 <Link href="/adminSettings" legacyBehavior>
                   <a
                     className={`relative flex items-center w-full text-left px-4 py-2 rounded-lg font-medium transition transform duration-150 text-lg ${

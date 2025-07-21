@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import Header from "@/components/Header/Header";
-import { WelcomeSection } from "@/features/ClassificationPage/WelcomeSection/WelcomeSection";
+import { WelcomeSection } from "@/components/WelcomeSection/WelcomeSection";
 import ClassificationCardRow from "@/features/ClassificationPage/ClassificationCardRow/ClassificationCardRow";
 import BookTable from "@/components/BookTable/BooksView";
 import { ClassificationProvider } from "@/features/ClassificationPage/ClassificationCardRow/ClassificationContext";

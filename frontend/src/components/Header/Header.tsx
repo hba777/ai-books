@@ -2,26 +2,14 @@ import React, { useState, useRef, useEffect } from "react";
 import { LuBell } from "react-icons/lu";
 import { useRouter } from "next/router";
 import api from "../../lib/api";
+import { useUser } from "../../context/UserContext";
 
 // Header with search, bell, and profile picture
 export const Header: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [userInitial, setUserInitial] = useState("");
   const avatarRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-
-  useEffect(() => {
-    // Fetch user info from backend using cookie
-    api.get("/users/me")
-      .then(res => {
-        if (res.data && res.data.username) {
-          setUserInitial(res.data.username.charAt(0).toUpperCase());
-        }
-      })
-      .catch(() => {
-        setUserInitial("");
-      });
-  }, []);
+  const { user, logout } = useUser();
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -45,12 +33,7 @@ export const Header: React.FC = () => {
 
   const handleLogout = async () => {
     setDropdownOpen(false);
-    try {
-      await api.post("/users/logout");
-    } catch (err) {
-      // Optionally handle error (e.g., show a toast)
-    }
-    localStorage.removeItem("token");
+    await logout();
     router.push("/");
   };
 
@@ -73,7 +56,7 @@ export const Header: React.FC = () => {
             className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center font-bold text-blue-700 text-lg shadow cursor-pointer select-none"
             onClick={() => setDropdownOpen((open) => !open)}
           >
-            {userInitial}
+            {user?.username ? user.username.charAt(0).toUpperCase() : ""}
           </div>
           {dropdownOpen && (
             <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-50">

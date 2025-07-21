@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Sidebar from "../components/Sidebar/Sidebar";
 import { Header } from "../components/Header/Header";
-import { WelcomeSection } from "@/features/ClassificationPage/WelcomeSection/WelcomeSection";
+import { WelcomeSection } from "@/components/WelcomeSection/WelcomeSection";
 import DashboardCardRow from "@/features/Dashboard/DashboardCardRow/DashboardCardRow";
 import AgentsCard from "@/features/Dashboard/AgentsCard/AgentsCard";
 import UploadButtonForm from "@/components/UploadButtonForm/UploadButtonForm";
