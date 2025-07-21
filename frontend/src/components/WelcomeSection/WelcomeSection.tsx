@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import api from "../../../lib/api";
+import { useUser } from "../../context/UserContext";
 
 // Welcome section with welcome text, subtext, and a button on the right
 interface WelcomeSectionProps {
@@ -7,24 +7,13 @@ interface WelcomeSectionProps {
 }
 
 export const WelcomeSection: React.FC<WelcomeSectionProps> = ({ onUploadClick }) => {
-  const [username, setUsername] = useState("Mario");
-  useEffect(() => {
-    // Fetch user info from backend using cookie
-    api.get("/users/me")
-      .then(res => {
-        if (res.data && res.data.username) {
-          setUsername(res.data.username);
-        }
-      })
-      .catch(() => {
-        setUsername("");
-      });
-  }, []);
+  const { user } = useUser();
+
     return (
       <section className="flex items-center justify-between w-full mb-6 ml-3">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-1">
-            Welcome back, {username} <span className="inline-block">👋</span>
+            Welcome back, {user?.username} <span className="inline-block">👋</span>
           </h1>
           <p className="text-gray-500 text-base">
           Here&rsquo;s the data and analytics of books or documents.

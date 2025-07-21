@@ -15,7 +15,6 @@ const bookTableFilters = [
 ];
 
 const Analysis: React.FC = () => {
-  const [modalOpen, setModalOpen] = useState(false);
 
   return (
     <ClassificationProvider>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import api from '../../lib/api';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { useUser } from "../../context/UserContext";
 
 const LandingForm: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -10,13 +11,13 @@ const LandingForm: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
-
+  const { login } = useUser();
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      await api.post('/users/login', { username: username, password });
+      await login(username, password);
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Login failed');
