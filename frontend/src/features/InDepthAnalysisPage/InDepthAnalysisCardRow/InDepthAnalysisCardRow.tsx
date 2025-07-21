@@ -51,7 +51,7 @@ const InDepthAnalysisCardRow: React.FC = () => (
           <span className="text-white text-2xl">{card.icon}</span>
         </div>
         <div className="text-3xl font-bold text-black mb-1">{card.value}</div>
-        <div className="text-gray-700 font-semibold text-base leading-tight">{card.label}</div>
+        <div className="text-gray-700 text-base leading-tight">{card.label}</div>
       </div>
     ))}
   </div>

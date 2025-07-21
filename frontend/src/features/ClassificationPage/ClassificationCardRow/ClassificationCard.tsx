@@ -46,7 +46,7 @@ const ClassificationStatCard: React.FC<ClassificationStatCardProps> = ({ value, 
         {badge && <div className="ml-2">{badge}</div>}
       </div>
       <div className="text-3xl font-bold text-gray-900 mb-1">{value}</div>
-      <div className="text-gray-700 font-semibold text-base leading-tight">{label}</div>
+      <div className="text-gray-700 text-base leading-tight">{label}</div>
       <div className="text-gray-400 text-sm mt-1">{subtitle}</div>
     </div>
   );
