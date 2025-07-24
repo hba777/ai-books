@@ -5,6 +5,7 @@ import { IoGridOutline } from "react-icons/io5";
 import BookGridView from "./BookGridView";
 import { useClassificationContext } from "../../features/ClassificationPage/ClassificationCardRow/ClassificationContext";
 import BookTableView from "./BookTableView";
+import { useBooks } from "@/context/BookContext";
 
 interface FilterOption {
   value: string;
@@ -23,56 +24,6 @@ const defaultFilterOptions: FilterOption[] = [
   { value: "Assigned", label: "Assigned" },
 ];
 
-const dummyBooks = [
-  {
-    id: "1",
-    title: "The Kite Runner",
-    author: "Khalid Hussaini",
-    status: "Processed",
-    date: "1/15/2024",
-    labels: "History, Geo-Political, Religious",
-  },
-  {
-    id: "2",
-    title: "The Kite Runner",
-    author: "Khalid Hussaini",
-    status: "Unprocessed",
-    date: "1/15/2024",
-    labels: "History, Geo-Political, Religious",
-  },
-  {
-    id: "3",
-    title: "The Kite Runner",
-    author: "Khalid Hussaini",
-    status: "Assigned",
-    date: "1/15/2024",
-    labels: "History, Geo-Political, Religious",
-  },
-  {
-    id: "4",
-    title: "The Kite Runner",
-    author: "Khalid Hussaini",
-    status: "Processed",
-    date: "1/15/2024",
-    labels: "History, Geo-Political, Religious",
-  },
-  {
-    id: "5",
-    title: "The Kite Runner",
-    author: "Khalid Hussaini",
-    status: "Pending",
-    date: "1/15/2024",
-    labels: "-- NIL --",
-  },
-  {
-    id: "6",
-    title: "The Kite Runner",
-    author: "Khalid Hussaini",
-    status: "Processing",
-    date: "1/15/2024",
-    labels: "-- NIL --",
-  },
-];
 
 const statusColors: Record<string, string> = {
   Unprocessed: "bg-gray-50 text-grey-500 border border-grey-200",
@@ -88,6 +39,8 @@ const viewOptions = [
 ];
 
 const BookTable: React.FC<BookTableProps> = ({ filterOptions }) => {
+  const { books } = useBooks(); // <- use context directly
+
   const [view, setView] = useState<"table" | "grid" | null>(null);
 
   useEffect(() => {
@@ -103,18 +56,11 @@ const BookTable: React.FC<BookTableProps> = ({ filterOptions }) => {
   const options = filterOptions || defaultFilterOptions;
 
   // Filter books based on current filter
-  const filteredBooksRaw = dummyBooks.filter(book => {
+  const filteredBooksRaw = books.filter(book => {
     if (currentFilter === 'All') return true;
     return book.status === currentFilter;
   });
 
-  // Convert labels to string[] for BookTableView
-  const filteredBooks = filteredBooksRaw.map(book => ({
-    ...book,
-    labels: typeof book.labels === 'string'
-      ? (book.labels === '-- NIL --' ? ['NIL'] : book.labels.split(',').map(l => l.trim()))
-      : book.labels
-  }));
   
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -222,11 +168,11 @@ const BookTable: React.FC<BookTableProps> = ({ filterOptions }) => {
 
       {/* Table or Grid View */}
       {view === "table" ? (
-        <BookTableView filteredBooks={filteredBooks} statusColors={statusColors}/>
+        <BookTableView filteredBooks={filteredBooksRaw} statusColors={statusColors}/>
       ) : (
         <div className="rounded-2xl p-12 flex items-center justify-center min-h-[200px] text-lg">
           {/* Grid view with filtered books */}
-          <BookGridView books={filteredBooks} />
+          <BookGridView books={filteredBooksRaw} />
         </div>
       )}
     </div>

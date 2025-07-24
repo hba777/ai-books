@@ -2,12 +2,17 @@ import React from "react";
 import { useRouter } from "next/router";
 
 interface Book {
-  id: string; // MongoDB ObjectId as string
-  title: string;
+  _id: string;
+  doc_name: string;
   author: string;
-  status: string;
   date: string;
-  labels: string[];
+  category: string;
+  reference: string;
+  status: string;
+  summary: string;
+  labels?: string[] | null;
+  startDate?: string | null;
+  endDate?: string | null;
 }
 
 interface BookTableViewProps {
@@ -15,10 +20,15 @@ interface BookTableViewProps {
   statusColors: { [key: string]: string };
 }
 
-const BookTableView: React.FC<BookTableViewProps> = ({ filteredBooks, statusColors }) => {
+const BookTableView: React.FC<BookTableViewProps> = ({
+  filteredBooks,
+  statusColors,
+}) => {
   const router = useRouter();
   const handleRowClick = (id: string) => {
-    const basePath = router.pathname.startsWith('/analysis') ? '/analysis' : '/classification';
+    const basePath = router.pathname.startsWith("/analysis")
+      ? "/analysis"
+      : "/classification";
     router.push(`${basePath}/${id}`);
   };
   return (
@@ -138,12 +148,12 @@ const BookTableView: React.FC<BookTableViewProps> = ({ filteredBooks, statusColo
         <tbody>
           {filteredBooks.map((book, idx) => (
             <tr
-              key={book.id}
+              key={book._id}
               className="hover:bg-blue-50/60 transition cursor-pointer"
-              onClick={() => handleRowClick(book.id)}
+              onClick={() => handleRowClick(book._id)}
             >
               <td className="py-4 px-6 font-semibold text-gray-900 whitespace-nowrap">
-                {book.title}
+                {book.doc_name}
               </td>
               <td className="py-4 px-6 text-gray-700 whitespace-nowrap">
                 {book.author}
@@ -162,10 +172,14 @@ const BookTableView: React.FC<BookTableViewProps> = ({ filteredBooks, statusColo
                 {book.date}
               </td>
               <td className="py-4 px-6 text-gray-500 whitespace-nowrap">
-                {book.labels.includes("NIL") ? (
-                  <span className="text-gray-700 font-bold">-- NIL --</span>
+                {book.labels && book.labels.length > 0 ? (
+                  book.labels.includes("NIL") ? (
+                    <span className="text-gray-700 font-bold">-- NIL --</span>
+                  ) : (
+                    book.labels.join(", ")
+                  )
                 ) : (
-                  book.labels.join(", ")
+                  <span className="text-gray-700 font-bold">-- NIL --</span>
                 )}
               </td>
             </tr>
