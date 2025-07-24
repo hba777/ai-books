@@ -34,7 +34,14 @@ app.add_middleware(
 
 # Import and include users router
 from api.users.routes import router as users_router
+from api.documents.routes import router as documents_router
+from api.chunks.routes import router as chunks_router
+from api.review_outcomes.routes import router as review_outcomes_router 
+
 app.include_router(users_router)
+app.include_router(documents_router)
+app.include_router(chunks_router)   
+app.include_router(review_outcomes_router)  
 
 @app.get("/")
 def read_root():
