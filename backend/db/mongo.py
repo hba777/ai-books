@@ -7,7 +7,7 @@ MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
 client = MongoClient(MONGO_URI)
 
 # ai_books database for users
-ai_books_db = client["ai_books"]
+ai_books_db = client["ai-books"]
 users_collection = ai_books_db["users"]
 
 # document_classification database for documents, chunks, review_outcomes, and GridFS
