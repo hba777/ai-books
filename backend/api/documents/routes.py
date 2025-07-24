@@ -8,17 +8,17 @@ from pymongo import MongoClient
 import gridfs
 import os
 
-router = APIRouter()
+router = APIRouter(prefix="/books", tags=["Books"])
 
 
-@router.get("/books", response_model=List[BookResponse], dependencies=[Depends(get_user_from_cookie)])
+@router.get("/", response_model=List[BookResponse], dependencies=[Depends(get_user_from_cookie)])
 def get_all_books():
     books = list(books_collection.find())
     # Convert to BookResponse models
     return [BookResponse(**{**book, "_id": str(book["_id"])}) for book in books]
 
 @router.post(
-    "/books",
+    "/",
     response_model=BookResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(get_user_from_cookie)]

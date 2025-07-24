@@ -7,10 +7,10 @@ from bson import ObjectId
 
 from .schemas import AgentConfigResponse, AgentConfigListResponse, AgentDeleteResponse
 
-router = APIRouter()
+router = APIRouter(prefix="/agents", tags=["Agent Configurations"])
 
 @router.get(
-    "/agents",
+    "/",
     response_model=AgentConfigListResponse,
     dependencies=[Depends(get_user_from_cookie)]
 )
@@ -22,7 +22,7 @@ def get_all_agents():
     return AgentConfigListResponse(agents=[AgentConfigResponse(**agent) for agent in agents])
 
 @router.post(
-    "/agents",
+    "/",
     response_model=AgentConfigResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(get_user_from_cookie)]
@@ -35,7 +35,7 @@ def create_agent(agent: AgentConfigModel):
     return AgentConfigResponse(**agent_dict)
 
 @router.put(
-    "/agents/{agent_id}",
+    "/{agent_id}",
     response_model=AgentConfigResponse,
     dependencies=[Depends(get_user_from_cookie)]
 )
@@ -53,7 +53,7 @@ def update_agent(agent_id: str, agent: AgentConfigModel):
     return AgentConfigResponse(**result)
 
 @router.delete(
-    "/agents/{agent_id}",
+    "/{agent_id}",
     response_model=AgentDeleteResponse,
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(get_user_from_cookie)]

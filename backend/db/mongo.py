@@ -19,6 +19,9 @@ review_outcomes_collection = doc_class_db["review_outcomes"]
 review_db = client["review_db"]
 agent_configs_collection = review_db["agent_configs"]
 
+knowledge_base_db = client["knowledge_base"]
+kb_data_collection = knowledge_base_db["kb_data"]
+
 #Storage for documents using GridFS
 fs = gridfs.GridFS(doc_class_db) 
 
@@ -36,6 +39,9 @@ def get_review_outcomes_collection():
 
 def get_agent_configs_collection():
     return agent_configs_collection
+
+def get_kb_data_collection():
+    return kb_data_collection
 
 def get_gridfs():
     return fs
