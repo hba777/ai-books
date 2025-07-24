@@ -7,13 +7,11 @@ import AgentsCard from "@/features/Dashboard/AgentsCard/AgentsCard";
 import UploadButtonForm from "@/components/UploadButtonForm/UploadButtonForm";
 import ProcessingCard from "@/components/ProcessingCard/ProcessingCard";
 import AnalysisCardRow from "@/features/Dashboard/AnalysisCardRow/AnalysisCardRow";
-import { BookProvider } from "@/context/BookContext";
 
 const Dashboard: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
 
   return (
-    <BookProvider>
       <div className="min-h-screen flex bg-[#f7f9fc]">
       <Sidebar />
       <main className="flex-1 flex flex-col">
@@ -30,7 +28,6 @@ const Dashboard: React.FC = () => {
       </main>
       <UploadButtonForm open={modalOpen} onClose={() => setModalOpen(false)}/>
     </div>
-    </BookProvider>
   );
 };
 

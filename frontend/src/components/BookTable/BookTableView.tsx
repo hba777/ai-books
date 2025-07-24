@@ -146,7 +146,7 @@ const BookTableView: React.FC<BookTableViewProps> = ({
           </tr>
         </thead>
         <tbody>
-          {filteredBooks.map((book, idx) => (
+          {filteredBooks.map((book) => (
             <tr
               key={book._id}
               className="hover:bg-blue-50/60 transition cursor-pointer"

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import Header from "@/components/Header/Header";
 import BookTable from "@/components/BookTable/BooksView";
@@ -6,7 +6,6 @@ import { ClassificationProvider } from "@/features/ClassificationPage/Classifica
 import ProcessingCard from "@/components/ProcessingCard/ProcessingCard";
 import InDepthAnalysisCardRow from "@/features/InDepthAnalysisPage/InDepthAnalysisCardRow/InDepthAnalysisCardRow";
 import HeroSection from "@/features/InDepthAnalysisPage/HeroSection/HeroSection";
-import { BookProvider } from "@/context/BookContext";
 
 const bookTableFilters = [
   { value: "All", label: "All Classified Books" },
@@ -18,7 +17,6 @@ const bookTableFilters = [
 const Analysis: React.FC = () => {
 
   return (
-    <BookProvider>
       <ClassificationProvider>
       <div className="min-h-screen flex bg-[#f7f9fc]">
         <Sidebar />
@@ -35,7 +33,6 @@ const Analysis: React.FC = () => {
         </main>
       </div>
     </ClassificationProvider>
-    </BookProvider>
     
   );
 };
