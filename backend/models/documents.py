@@ -1,22 +1,34 @@
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, Field
 
 class BookModel(BaseModel):
-    id: str = Field(default=None, alias="_id")  # _id as string for MongoDB
-    doc_id: str
-    doc_name: str
-    status: str  # Pending, In Progress, Completed
-    summary: str
+    id: Optional[str] = Field(default=None, alias="_id")  # MongoDB _id as string
+    doc_id: str                                 # Will store same value as _id
+    doc_name: str                               # corresponds to title in frontend
+    author: str
+    date: str                                   # Date string
+    status: str = "Pending"                     # Default status
+    category: str
+    reference: str
+    summary: str                                # Can store abstract_summary
+    labels: Optional[List[str]] = []            # Tags or topics
+    startDate: Optional[str] = None             # Initially empty
+    endDate: Optional[str] = None               # Initially empty
 
     class Config:
         populate_by_name = True
 
 
-
 # Input Schema (for creating books)
 class BookCreate(BaseModel):
-    doc_id: str
+    doc_id: Optional[str] = None  # Optional on creation; will be set to _id later
     doc_name: str
-    status: str
+    author: str
+    date: Optional[str] = None
+    status: str = "Pending"
+    category: str
+    reference: str
     summary: str
-
+    labels: Optional[List[str]] = []
+    startDate: Optional[str] = None
+    endDate: Optional[str] = None

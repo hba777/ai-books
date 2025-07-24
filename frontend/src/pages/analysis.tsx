@@ -6,6 +6,7 @@ import { ClassificationProvider } from "@/features/ClassificationPage/Classifica
 import ProcessingCard from "@/components/ProcessingCard/ProcessingCard";
 import InDepthAnalysisCardRow from "@/features/InDepthAnalysisPage/InDepthAnalysisCardRow/InDepthAnalysisCardRow";
 import HeroSection from "@/features/InDepthAnalysisPage/HeroSection/HeroSection";
+import { BookProvider } from "@/context/BookContext";
 
 const bookTableFilters = [
   { value: "All", label: "All Classified Books" },
@@ -17,7 +18,8 @@ const bookTableFilters = [
 const Analysis: React.FC = () => {
 
   return (
-    <ClassificationProvider>
+    <BookProvider>
+      <ClassificationProvider>
       <div className="min-h-screen flex bg-[#f7f9fc]">
         <Sidebar />
         <main className="flex-1 flex flex-col">
@@ -33,6 +35,8 @@ const Analysis: React.FC = () => {
         </main>
       </div>
     </ClassificationProvider>
+    </BookProvider>
+    
   );
 };
 

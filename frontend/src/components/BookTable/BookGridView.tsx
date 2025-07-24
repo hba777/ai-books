@@ -2,16 +2,18 @@ import React from "react";
 import { useRouter } from "next/router";
 
 interface Book {
-  id: string;
-  title: string;
+  _id: string;
+  doc_name: string;
   author: string;
-  status: string;
   date: string;
-  labels?: string[];
-  percent?: number;
-  startDate?: string;
+  category: string;
+  reference: string;
+  status: string;
+  summary: string;
+  labels?: string[] | null;
+  startDate?: string | null;
   endDate?: string | null;
-  uploadDate?: string;
+  percent?: number;
 }
 
 interface BookGridViewProps {
@@ -71,8 +73,8 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
             : 0;
         return (
           <div
-            key={book.id}
-            onClick={() => handleBookClick(book.id)}
+            key={book._id}
+            onClick={() => handleBookClick(book._id)}
             className={`relative bg-white rounded-2xl shadow p-6 min-w-[320px] max-w-[380px] mx-auto cursor-pointer`}
           >
             {/* Colored top border */}
@@ -82,13 +84,13 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
               <div className="w-28 h-36 bg-gray-100 rounded shadow-inner" />
             </div>
             <div className="flex items-center justify-between mb-2">
-              <div className="font-bold text-lg text-gray-900">{book.title}</div>
+              <div className="font-bold text-lg text-gray-900">{book.doc_name}</div>
               <button className="text-gray-400 hover:text-gray-600 p-1 rounded-full">
                 <span className="text-2xl">&#8942;</span>
               </button>
             </div>
             <div className="text-sm text-gray-500 mb-1">
-              Start Process Date: {book.date || book.startDate}
+              Start Process Date: {book.startDate}
             </div>
             {book.endDate ? (
               <div className="text-sm text-gray-500 mb-4">
@@ -96,7 +98,7 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
               </div>
             ) : (
               <div className="text-sm text-gray-500 mb-4">
-                Date Uploaded: {book.uploadDate || book.date}
+                Date Uploaded: {book.date}
               </div>
             )}
             <div className="flex items-center justify-between mb-1">
