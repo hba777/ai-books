@@ -1,14 +1,17 @@
-from fastapi import APIRouter, Depends, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, status, UploadFile, File, Form, HTTPException
+from fastapi.responses import StreamingResponse
 from typing import List, Optional
 from models.documents import BookModel
 from utils.jwt_utils import get_user_from_cookie
 from db.mongo import books_collection, fs
-from .schemas import BookResponse
+from .schemas import BookResponse, BookDeleteResponse
 import json
+from bson import ObjectId
 
 router = APIRouter(prefix="/books", tags=["Books"])
 
 
+#Get All books
 @router.get("/", response_model=List[BookResponse], dependencies=[Depends(get_user_from_cookie)])
 def get_all_books():
     books = list(books_collection.find())
@@ -18,6 +21,7 @@ def get_all_books():
     ]
 
 
+# Create a new book
 @router.post(
     "/",
     response_model=BookResponse,
@@ -93,11 +97,57 @@ async def create_book(
         endDate=endDate
     )
 
+# Get a book by ID
+@router.get(
+    "/{book_id}",
+    response_model=BookResponse,
+    dependencies=[Depends(get_user_from_cookie)]
+)
+def get_book_by_id(book_id: str):
+    book = books_collection.find_one({"_id": ObjectId(book_id)})
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    book["_id"] = str(book["_id"])
+    return BookResponse(**book)
+
+# Get a book file by ID
+@router.get(
+    "/{book_id}/file",
+    response_class=StreamingResponse,
+    dependencies=[Depends(get_user_from_cookie)]
+)
+def get_book_file(book_id: str):
+    book = books_collection.find_one({"_id": ObjectId(book_id)})
+    if not book or "file_id" not in book:
+        raise HTTPException(status_code=404, detail="File not found")
+    file_id = book["file_id"]
+    file_obj = fs.get(file_id)
+    return StreamingResponse(file_obj, media_type="application/pdf", headers={
+        "Content-Disposition": f'attachment; filename="{file_obj.filename}"'
+    })
+
+
+# Delete all books
 @router.delete(
     "/",
+    response_model=BookDeleteResponse,
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(get_user_from_cookie)]
 )
 def delete_all_books():
     result = books_collection.delete_many({})
-    return {"detail": f"Deleted {result.deleted_count} books."}
+    return BookDeleteResponse(detail=f"Deleted {result.deleted_count} books.")
+
+# Delete book by ID
+@router.delete(
+    "/{book_id}",
+    response_model=BookDeleteResponse,
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_cookie)]
+)
+def delete_book_by_id(book_id: str):
+    result = books_collection.delete_one({"_id": ObjectId(book_id)})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Book not found")
+    return BookDeleteResponse(detail="Book deleted successfully.")
+

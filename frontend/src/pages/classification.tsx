@@ -7,13 +7,11 @@ import BookTable from "@/components/BookTable/BooksView";
 import { ClassificationProvider } from "@/features/ClassificationPage/ClassificationCardRow/ClassificationContext";
 import UploadButtonForm from "@/components/UploadButtonForm/UploadButtonForm";
 import ProcessingCard from "@/components/ProcessingCard/ProcessingCard";
-import { BookProvider } from "@/context/BookContext";
 
 const Classifcation: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
 
   return (
-    <BookProvider>
       <ClassificationProvider>
       <div className="min-h-screen flex bg-[#f7f9fc]">
         <Sidebar />
@@ -32,7 +30,6 @@ const Classifcation: React.FC = () => {
 
       </div>
     </ClassificationProvider>
-    </BookProvider>
     
   );
 };
