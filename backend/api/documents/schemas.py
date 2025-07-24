@@ -18,3 +18,5 @@ class BookResponse(BaseModel):
     class Config:
         populate_by_name = True
         from_attributes = True
+class BookDeleteResponse(BaseModel):
+    detail: str
