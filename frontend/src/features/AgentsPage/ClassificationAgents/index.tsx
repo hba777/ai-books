@@ -15,16 +15,19 @@ const classificationIcon = (
 
 const agents = [
   {
+    id: "1",
     name: "Content Moderation Agent",
     status: "Active" as const,
     description: "Classifies content for inappropriate material, spam, and policy violations",
   },
   {
+    id: "1",
     name: "Document Classifier",
     status: "Active" as const,
     description: "Categorizes documents by type, department, and priority level",
   },
   {
+    id: "1",
     name: "Email Priority Agent",
     status: "Disabled" as const,
     description: "Classifies incoming emails by urgency and routes them to appropriate teams",

@@ -49,12 +49,14 @@ const analysisIcon = (
 
 const agents = [
   {
+    id: "1",
     name: "Email Priority Agent",
     status: "Active" as const,
     description:
       "Classifies incoming emails by urgency and routes them to appropriate teams",
   },
   {
+    id: "2",
     name: "Email Priority Agent",
     status: "Disabled" as const,
     description:
