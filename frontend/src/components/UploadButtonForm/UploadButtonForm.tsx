@@ -1,6 +1,8 @@
 import React, { useRef, useState } from "react";
 import { ImCross } from "react-icons/im";
 import { useBooks } from "@/context/BookContext";
+import { toast } from "react-toastify";
+
 interface BookFormState {
   title: string;
   author: string;
@@ -104,10 +106,10 @@ const UploadButtonForm: React.FC<{ open: boolean; onClose: () => void }> = ({
 
   try {
     await createBook(formData);
-    console.log("Book creation successful!");
+    toast.success("Book creation successful!");
     onClose();
   } catch (err) {
-    console.error("Error creating book:", err);
+    toast.error("Error creating book:" + (err as Error).message);
   }
 };
 

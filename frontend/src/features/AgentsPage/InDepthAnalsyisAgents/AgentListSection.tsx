@@ -19,6 +19,7 @@ interface AgentListSectionProps {
   sectionDescription: string;
   agents: Agent[];
   icon: React.ReactNode;
+  onAdd: () => void;
 }
 
 const AgentListSection: React.FC<AgentListSectionProps> = ({
