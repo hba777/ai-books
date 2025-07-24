@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from typing import List
-from backend.models.review_outcomes import ReviewOutcomesModel
-from backend.utils.jwt_utils import get_user_from_cookie
-from backend.db.mongo import get_review_outcomes_collection
+from models.review_outcomes import ReviewOutcomesModel
+from utils.jwt_utils import get_user_from_cookie
+from db.mongo import get_review_outcomes_collection
 
 router = APIRouter(prefix="/review_outcomes", tags=["Review Outcomes"])
 

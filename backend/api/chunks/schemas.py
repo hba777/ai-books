@@ -1,7 +1,9 @@
+# backend/api/chunks/schemas.py
 from pydantic import BaseModel, Field
+from typing import List
 
-class ChunkModel(BaseModel):
-    id: str = Field(..., alias="_id")  # Handle MongoDB _id as string
+class ChunkResponse(BaseModel):
+    id: str = Field(..., alias="_id")  # MongoDB _id as string
     analysis_status: str
     chunk_id: str
     chunk_index: int
@@ -11,3 +13,7 @@ class ChunkModel(BaseModel):
 
     class Config:
         populate_by_name = True  # Allows using 'id' or '_id'
+
+
+class ChunkListResponse(BaseModel):
+    items: List[ChunkResponse]

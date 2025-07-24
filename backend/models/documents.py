@@ -1,29 +1,22 @@
+from typing import Optional
 from pydantic import BaseModel, Field
-from bson import ObjectId
-
-class PyObjectId(ObjectId):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-
-    @classmethod
-    def validate(cls, v):
-        if not ObjectId.is_valid(v):
-            raise ValueError("Invalid ObjectId")
-        return ObjectId(v)
-
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(type="string")
 
 class BookModel(BaseModel):
-    _id: PyObjectId = Field(..., alias="_id")
+    id: str = Field(default=None, alias="_id")  # _id as string for MongoDB
     doc_id: str
     doc_name: str
-    status: str # Pending, In Progress, Completed
+    status: str  # Pending, In Progress, Completed
     summary: str
 
     class Config:
-        allow_population_by_field_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+        populate_by_name = True
+
+
+
+# Input Schema (for creating books)
+class BookCreate(BaseModel):
+    doc_id: str
+    doc_name: str
+    status: str
+    summary: str
+

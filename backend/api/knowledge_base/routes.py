@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from backend.db.mongo import get_kb_data_collection
+from db.mongo import get_kb_data_collection
 from .schemas import KnowledgeBaseResponse, KnowledgeBaseListResponse
 
 router = APIRouter(prefix="/kb_data", tags=["Knowledge Base Data"])

@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from typing import List
-from backend.models.agent_configs import AgentConfigModel
-from backend.utils.jwt_utils import get_user_from_cookie
-from backend.db.mongo import get_agent_configs_collection
+from models.agent_configs import AgentConfigModel
+from utils.jwt_utils import get_user_from_cookie
+from db.mongo import get_agent_configs_collection
 from bson import ObjectId
 
 from .schemas import AgentConfigResponse, AgentConfigListResponse, AgentDeleteResponse

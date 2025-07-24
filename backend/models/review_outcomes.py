@@ -1,23 +1,8 @@
 from pydantic import BaseModel, Field
 from typing import Optional
-from bson import ObjectId
 from datetime import datetime
 
-class PyObjectId(ObjectId):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-
-    @classmethod
-    def validate(cls, v):
-        if not ObjectId.is_valid(v):
-            raise ValueError("Invalid ObjectId")
-        return ObjectId(v)
-
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(type="string")
-
+# Reusable review detail schema
 class ReviewDetailModel(BaseModel):
     confidence: int
     human_review: bool
@@ -28,8 +13,9 @@ class ReviewDetailModel(BaseModel):
     retries: int
     status: str
 
+# Main review outcome model
 class ReviewOutcomesModel(BaseModel):
-    _id: PyObjectId = Field(..., alias="_id")
+    id: str = Field(..., alias="_id")  # MongoDB _id as string
     Book_Name: str = Field(..., alias="Book Name")
     Chunk_no: int = Field(..., alias="Chunk no.")
     Chunk_ID: str = Field(..., alias="Chunk_ID")
@@ -49,6 +35,7 @@ class ReviewOutcomesModel(BaseModel):
     timestamp: datetime
 
     class Config:
-        allow_population_by_field_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str, datetime: lambda v: v.isoformat()}
+        populate_by_name = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat()  # Ensure datetime is serialized to ISO string
+        }
