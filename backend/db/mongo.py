@@ -15,7 +15,12 @@ doc_class_db = client["document_classification"]
 books_collection = doc_class_db["documents"]
 chunks_collection = doc_class_db["chunks"]
 review_outcomes_collection = doc_class_db["review_outcomes"]
-fs = gridfs.GridFS(doc_class_db)
+
+review_db = client["review_db"]
+agent_configs_collection = review_db["agent_configs"]
+
+#Storage for documents using GridFS
+fs = gridfs.GridFS(doc_class_db) 
 
 def get_users_collection():
     return users_collection
@@ -28,6 +33,9 @@ def get_chunks_collection():
 
 def get_review_outcomes_collection():
     return review_outcomes_collection
+
+def get_agent_configs_collection():
+    return agent_configs_collection
 
 def get_gridfs():
     return fs

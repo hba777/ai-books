@@ -16,12 +16,11 @@ class PyObjectId(ObjectId):
     def __modify_schema__(cls, field_schema):
         field_schema.update(type="string")
 
-class BookModel(BaseModel):
+class AgentConfigModel(BaseModel):
     _id: PyObjectId = Field(..., alias="_id")
-    doc_id: str
-    doc_name: str
-    status: str # Pending, In Progress, Completed
-    summary: str
+    agent_name: str
+    criteria: str
+    guidelines: str
 
     class Config:
         allow_population_by_field_name = True
