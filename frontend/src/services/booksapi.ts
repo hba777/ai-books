@@ -20,11 +20,6 @@ export async function getAllBooks(): Promise<Book[]> {
 }
 
 export async function createBook(formData: FormData): Promise<Book> {
-  // Debug: log FormData contents
-  console.log("FormData being sent:");
-  for (const [key, value] of formData.entries()) {
-    console.log(`${key}:`, value);
-  }
 
   const res = await api.post<Book>(
     `${process.env.NEXT_PUBLIC_API_URL}/books/`,

@@ -79,33 +79,38 @@ const UploadButtonForm: React.FC<{ open: boolean; onClose: () => void }> = ({
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
+  if (!selectedFile) {
+    alert("Please select a file.");
+    return;
+  }
 
-    if (!selectedFile) {
-      alert("Please select a file.");
-      return;
-    }
+  const formData = new FormData();
 
-    const formData = new FormData();
+  // Map frontend fields to backend fields
+  formData.append("doc_name", bookForm.title);
+  formData.append("author", bookForm.author);
+  formData.append("date", bookForm.date);
+  formData.append("category", bookForm.category);
+  formData.append("reference", bookForm.reference);
+  formData.append("status", "Pending");
+  formData.append("summary", bookForm.abstract_summary);
+  formData.append("labels", JSON.stringify([]));
+  formData.append("startDate", "");
+  formData.append("endDate", "");
 
-    // Map frontend fields to backend fields
-    formData.append("doc_name", bookForm.title);
-    formData.append("author", bookForm.author);
-    formData.append("date", bookForm.date);
-    formData.append("category", bookForm.category);
-    formData.append("reference", bookForm.reference);
-    formData.append("status", "Pending");
-    formData.append("summary", bookForm.abstract_summary);
-    formData.append("labels", JSON.stringify([]));
-    formData.append("startDate", "");
-    formData.append("endDate", "");
+  // Only append file if it's not null
+  formData.append("file", selectedFile);
 
-    // Only append file if it's not null
-    formData.append("file", selectedFile);
-
+  try {
     await createBook(formData);
+    console.log("Book creation successful!");
     onClose();
-  };
+  } catch (err) {
+    console.error("Error creating book:", err);
+  }
+};
+
 
   return (
     <div className="fixed inset-0 z-50 bg-gray-900/40 flex items-center justify-center">

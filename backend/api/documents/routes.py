@@ -37,6 +37,7 @@ async def create_book(
     endDate: Optional[str] = Form(None),
     file: UploadFile = File(...)
 ):
+    
     # Parse labels JSON safely
     try:
         labels_list = json.loads(labels) if labels else []

@@ -6,14 +6,14 @@ class BookModel(BaseModel):
     doc_id: str                                 # Will store same value as _id
     doc_name: str                               # corresponds to title in frontend
     author: str
-    date: str                                   # Date string
-    status: str = "Pending"                     # Default status
+    date: str                                   
+    status: str = "Pending"                     # Default status. Pending, In Progress, Completed, Assigned
     category: str
     reference: str
     summary: str                                # Can store abstract_summary
     labels: Optional[List[str]] = []            # Tags or topics
-    startDate: Optional[str] = None             # Initially empty
-    endDate: Optional[str] = None               # Initially empty
+    startDate: Optional[str] = None             
+    endDate: Optional[str] = None               
 
     class Config:
         populate_by_name = True
