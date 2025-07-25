@@ -1,16 +1,16 @@
 import React, { useState } from "react";
-import AddAgentSection from "../AddAgent/AddAgentSection";
 import AgentCard from "./AgentCard";
 import ClassificationAgentForm from "./ClassificationAgentForm";
 import DeleteAgent from "../DeleteAgent/DeleteAgent";
-import api from "@/lib/api";
 import { FaPlay } from "react-icons/fa";
 import { toast } from "react-toastify";
+import { Agent as BackendAgent } from "@/services/agentsApi";
+import AddClassificationAgentSection from "../AddAgent/AddClassificationAgentSection";
+import { useAgents } from "@/context/AgentsContext";
 
-interface Agent {
-  id: string;
-  name: string;
-  status: "Active" | "Disabled";
+interface Agent extends BackendAgent {
+  _id: string
+  agent_name: string;
   description: string;
 }
 
@@ -19,7 +19,6 @@ interface AgentListSectionProps {
   sectionDescription: string;
   agents: Agent[];
   icon: React.ReactNode;
-  onAdd: () => void;
 }
 
 const AgentListSection: React.FC<AgentListSectionProps> = ({
@@ -28,14 +27,12 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
   agents,
   icon,
 }) => {
-  const [isAddFormOpen, setIsAddFormOpen] = useState(false);
+  const { powerToggleAgent, deleteAgent } = useAgents();
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [deletingAgent, setDeletingAgent] = useState<Agent | null>(null);
-  const [poweredOff, setPoweredOff] = useState<{ [id: string]: boolean }>({});
-
-  const handleOpenForm = () => setIsAddFormOpen(true);
+ 
   const handleEditOpenForm = (agent: Agent) => {
     setEditingAgent(agent);
     setIsEditFormOpen(true);
@@ -46,39 +43,42 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
   };
   const handleDeleteConfirm = async () => {
     if (deletingAgent) {
-      await api.delete(`/agents/${deletingAgent.id}`);
+      console.log("Deleting agent",deletingAgent)
+      try{
+      await deleteAgent(deletingAgent?._id);
       setIsDeleteOpen(false);
       setDeletingAgent(null);
-      // Optionally: refresh agent list here
+      }
+      catch (err) {
+        toast.error("Failed to delete agent")
+      }
     }
   };
-  const handlePowerClick = (agentId: string) => {
-    if (poweredOff[agentId]) {
-      toast.success("Powered on");
-      setPoweredOff((prev) => ({ ...prev, [agentId]: false }));
-    } else {
-      toast.info("Powered off");
-      setPoweredOff((prev) => ({ ...prev, [agentId]: true }));
+  const handlePowerClick = async (agentId: string, currentStatus: boolean | undefined) => {
+    try {
+      await powerToggleAgent(agentId, !!currentStatus);
+      toast.success(currentStatus === false ? "Powered on" : "Powered off");
+    } catch (err) {
+      toast.error("Failed to toggle power");
     }
   };
   // You can use isFormOpen to conditionally render your form/modal
   return (
     <div className="mb-10 w-full">
-      <AddAgentSection
+      <AddClassificationAgentSection
         title={sectionTitle}
         description={sectionDescription}
-        onAdd={handleOpenForm}
       />
       <div className="mt-4">
         {agents.map((agent, idx) => (
           <AgentCard
-            key={agent.name + idx}
-            name={agent.name}
-            status={agent.status}
-            description={agent.description}
+            key={(agent.agent_name || "") + idx}
+            name={ agent.agent_name || "Unnamed Agent"}
+            status={agent.status === false ? "Disabled" : "Active"}
+            description={agent.description || agent.criteria || agent.guidelines || agent.classifier_prompt || agent.evaluators_prompt || "No description"}
             icon={icon}
           >
-            <svg onClick={() => handleEditOpenForm(agent)}
+            <svg className="cursor-pointer" onClick={() => handleEditOpenForm(agent)}
               width="19"
               height="19"
               viewBox="0 0 19 19"
@@ -142,66 +142,57 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
                 </clipPath>
               </defs>
             </svg>
-            {poweredOff[agent.id] ? (
-              <button onClick={() => handlePowerClick(agent.id)}
-                className="text-blue-500 hover:text-blue-700 focus:outline-none"
-                title="Powered Off"
-              >
-                <FaPlay />
-              </button>
-            ) : (
-              <svg
-                onClick={() => handlePowerClick(agent.id)}
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                style={{ cursor: 'pointer' }}
-              >
-                <g clipPath="url(#clip0_1_10435)">
-                  <path
-                    d="M7.80078 1.36621V7.84164"
-                    stroke="#394560"
-                    strokeWidth="1.5541"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M11.9452 4.34473C12.7589 5.15876 13.3134 6.19552 13.5387 7.32426C13.7639 8.453 13.6499 9.62317 13.211 10.6872C12.7721 11.7512 12.028 12.6615 11.0724 13.3031C10.1169 13.9448 8.99275 14.2892 7.84175 14.2928C6.69076 14.2964 5.56446 13.9591 4.60492 13.3234C3.64537 12.6877 2.89553 11.7822 2.44998 10.7209C2.00442 9.65965 1.88309 8.49021 2.10129 7.36008C2.31949 6.22995 2.86745 5.18974 3.67607 4.37063"
-                    stroke="#394560"
-                    strokeWidth="1.5541"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </g>
-                <defs>
-                  <clipPath id="clip0_1_10435">
-                    <rect
-                      width="15.541"
-                      height="15.541"
-                      fill="white"
-                      transform="translate(0.0302734 0.0712891)"
+            <button onClick={() => handlePowerClick(agent._id, agent.status)}
+              className={agent.status === false ? "text-blue-500 hover:text-blue-700 focus:outline-none" : ""}
+              title={agent.status === false ? "Powered Off" : "Powered On"}
+            >
+              {agent.status === false ? <FaPlay /> : (
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  style={{ cursor: 'pointer' }}
+                >
+                  <g clipPath="url(#clip0_1_10435)">
+                    <path
+                      d="M7.80078 1.36621V7.84164"
+                      stroke="#394560"
+                      strokeWidth="1.5541"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     />
-                  </clipPath>
-                </defs>
-              </svg>
-            )}
+                    <path
+                      d="M11.9452 4.34473C12.7589 5.15876 13.3134 6.19552 13.5387 7.32426C13.7639 8.453 13.6499 9.62317 13.211 10.6872C12.7721 11.7512 12.028 12.6615 11.0724 13.3031C10.1169 13.9448 8.99275 14.2892 7.84175 14.2928C6.69076 14.2964 5.56446 13.9591 4.60492 13.3234C3.64537 12.6877 2.89553 11.7822 2.44998 10.7209C2.00442 9.65965 1.88309 8.49021 2.10129 7.36008C2.31949 6.22995 2.86745 5.18974 3.67607 4.37063"
+                      stroke="#394560"
+                      strokeWidth="1.5541"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </g>
+                  <defs>
+                    <clipPath id="clip0_1_10435">
+                      <rect
+                        width="15.541"
+                        height="15.541"
+                        fill="white"
+                        transform="translate(0.0302734 0.0712891)"
+                      />
+                    </clipPath>
+                  </defs>
+                </svg>
+              )}
+            </button>
           </AgentCard>
         ))}
       </div>
-      {isAddFormOpen && (
-        <ClassificationAgentForm
-          mode="add"
-          onCancel={() => setIsAddFormOpen(false)}
-          onSubmit={() => setIsAddFormOpen(false)}
-        />
-      )}
+      
       {isEditFormOpen && editingAgent && (
         <ClassificationAgentForm
           mode="edit"
-          initialValues={editingAgent}
-          agentId={editingAgent.id}
+          initialValues={{ ...editingAgent, status: editingAgent?.status === false ? "Disabled" : "Active" }}
+          agentId={editingAgent._id}
           onCancel={() => {
             setIsEditFormOpen(false);
             setEditingAgent(null);
@@ -220,7 +211,7 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
             setDeletingAgent(null);
           }}
           onConfirm={handleDeleteConfirm}
-          agentName={deletingAgent.name}
+          agentName={deletingAgent?.agent_name}
         />
       )}
     </div>

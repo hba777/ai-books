@@ -3,10 +3,10 @@ from typing import Optional, Literal
 
 
 class AgentConfigModel(BaseModel):
-    id: str = Field(..., alias="_id")  # Map MongoDB _id to string
+    id: Optional[str] = Field(default=None, alias="_id")  # Map MongoDB _id to string
     agent_name: str
     description: str
-    type: Literal["classifcation", "analysis"]
+    type: Literal["classification", "analysis"]
     criteria: Optional[str] = None      
     guidelines: Optional[str] = None    
     status: Optional[bool] = False

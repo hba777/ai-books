@@ -1,7 +1,7 @@
 import api from '../lib/api';
 
 export interface Agent {
-  id: string;
+  _id: string;
   agent_name: string;
   description: string;
   type: string;
@@ -19,13 +19,13 @@ export const getAllAgents = async (): Promise<{ agents: Agent[] }> => {
 };
 
 // Create a new agent
-export const createAgent = async (agentData: Omit<Agent, 'id'>): Promise<Agent> => {
+export const createAgent = async (agentData: Omit<Agent, '_id'>): Promise<Agent> => {
   const response = await api.post('/agents/', agentData);
   return response.data;
 };
 
 // Update an agent
-export const updateAgent = async (agentId: string, agentData: Omit<Agent, 'id'>): Promise<Agent> => {
+export const updateAgent = async (agentId: string, agentData: Omit<Agent, '_id'>): Promise<Agent> => {
   const response = await api.put(`/agents/${agentId}`, agentData);
   return response.data;
 };
@@ -33,5 +33,11 @@ export const updateAgent = async (agentId: string, agentData: Omit<Agent, 'id'>)
 // Delete an agent
 export const deleteAgent = async (agentId: string): Promise<{ detail: string; agent_id?: string }> => {
   const response = await api.delete(`/agents/${agentId}`);
+  return response.data;
+};
+
+// Power toggle agent (patch status)
+export const powerToggleAgent = async (agentId: string, status: boolean): Promise<Agent> => {
+  const response = await api.patch(`/agents/${agentId}`, { status });
   return response.data;
 };

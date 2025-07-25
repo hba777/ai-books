@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import api from "@/lib/api";
 
 interface AgentFormValues {
-  name: string;
+  agent_name: string;
   status: "Active" | "Disabled";
   description: string;
   basicPrompt: string;
+  agentId?: string; // for edit
+
 }
 
 interface ClassificationAgentFormProps {
@@ -13,11 +14,11 @@ interface ClassificationAgentFormProps {
   mode: "add" | "edit";
   onSubmit?: (values: AgentFormValues) => void;
   onCancel: () => void;
-  agentId?: string; // for edit
+  agentId?: string
 }
 
 const defaultValues: AgentFormValues = {
-  name: "",
+  agent_name: "",
   status: "Active",
   description: "",
   basicPrompt: "",
@@ -28,12 +29,13 @@ const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
   mode,
   onSubmit,
   onCancel,
-  agentId,
+  agentId
+
 }) => {
   const [values, setValues] = useState<AgentFormValues>({ ...defaultValues, ...initialValues });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  agentId = ""
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setValues((prev) => ({ ...prev, [name]: value }));
@@ -44,14 +46,9 @@ const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
     setLoading(true);
     setError(null);
     try {
-      if (mode === "add") {
-        await api.post("/agents", values);
-      } else if (mode === "edit" && agentId) {
-        await api.put(`/agents/${agentId}`, values);
-      }
       onSubmit?.(values);
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Something went wrong");
+      setError("Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -63,14 +60,14 @@ const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
         className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-2xl flex flex-col gap-4 border-t-4 border-blue-500"
         onSubmit={handleSubmit}
       >
-        <h2 className="text-2xl font-bold mb-2">{mode === "add" ? "Add Agent" : `Edit Agent: ${values.name}`}</h2>
+        <h2 className="text-2xl font-bold mb-2">{mode === "add" ? "Add Agent" : `Edit Agent: ${values.agent_name}`}</h2>
         <div className="flex gap-4">
           <div className="flex-1 flex flex-col gap-2">
             <label className="font-semibold">Agent Name</label>
             <input
               className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              name="name"
-              value={values.name}
+              name="agent_name"
+              value={values.agent_name}
               onChange={handleChange}
               required
             />

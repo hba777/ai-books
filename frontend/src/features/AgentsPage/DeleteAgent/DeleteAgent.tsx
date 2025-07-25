@@ -4,7 +4,7 @@ interface DeleteAgentProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  agentName?: string;
+  agentName: string;
 }
 
 const DeleteAgent: React.FC<DeleteAgentProps> = ({ open, onClose, onConfirm, agentName }) => {
