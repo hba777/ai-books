@@ -39,7 +39,7 @@ const viewOptions = [
 ];
 
 const BookTable: React.FC<BookTableProps> = ({ filterOptions }) => {
-  const { books } = useBooks(); // <- use context directly
+  const { books } = useBooks(); 
 
   const [view, setView] = useState<"table" | "grid" | null>(null);
 

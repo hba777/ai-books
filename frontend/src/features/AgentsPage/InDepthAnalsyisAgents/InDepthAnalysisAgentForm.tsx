@@ -1,13 +1,13 @@
 import React, { useState } from "react";
-import api from "@/lib/api";
+import { useAgents } from "@/context/AgentsContext"; // <-- Import the hook
 
 interface AgentFormValues {
-  name: string;
+  agent_name: string;
   status: "Active" | "Disabled";
   description: string;
-  basicPrompt: string;
-  policyGuidelines: string;
-  knowledgeBases: string;
+  criteria: string;
+  guidelines: string;
+  knowledge_base: string;
 }
 
 interface InDepthAnalysisAgentFormProps {
@@ -19,12 +19,12 @@ interface InDepthAnalysisAgentFormProps {
 }
 
 const defaultValues: AgentFormValues = {
-  name: "",
+  agent_name: "",
   status: "Active",
   description: "",
-  basicPrompt: "",
-  policyGuidelines: "",
-  knowledgeBases: "",
+  criteria: "",
+  guidelines: "",
+  knowledge_base: "",
 };
 
 const InDepthAnalysisAgentForm: React.FC<InDepthAnalysisAgentFormProps> = ({
@@ -37,6 +37,7 @@ const InDepthAnalysisAgentForm: React.FC<InDepthAnalysisAgentFormProps> = ({
   const [values, setValues] = useState<AgentFormValues>({ ...defaultValues, ...initialValues });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { updateAgent } = useAgents(); 
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -48,14 +49,20 @@ const InDepthAnalysisAgentForm: React.FC<InDepthAnalysisAgentFormProps> = ({
     setLoading(true);
     setError(null);
     try {
-      if (mode === "add") {
-        await api.post("/agents", values);
-      } else if (mode === "edit" && agentId) {
-        await api.put(`/agents/${agentId}`, values);
+      if (mode === "edit" && agentId) {
+        await updateAgent(agentId, {
+          agent_name: values.agent_name,
+          status: values.status === "Active",
+          description: values.description,
+          type: "analysis",
+          criteria: values.criteria, // Change Later
+          guidelines: values.guidelines,
+          knowledge_base: values.knowledge_base //Change Later 
+        });
       }
       onSubmit?.(values);
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Something went wrong");
+      setError("Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -67,14 +74,14 @@ const InDepthAnalysisAgentForm: React.FC<InDepthAnalysisAgentFormProps> = ({
         className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-3xl flex flex-col gap-4 border-t-4 border-blue-500"
         onSubmit={handleSubmit}
       >
-        <h2 className="text-2xl font-bold mb-2">{mode === "add" ? "Add Agent" : `Edit Agent: ${values.name}`}</h2>
+        <h2 className="text-2xl font-bold mb-2">{mode === "add" ? "Add Agent" : `Edit Agent: ${values.agent_name}`}</h2>
         <div className="flex gap-4">
           <div className="flex-1 flex flex-col gap-2">
             <label className="font-semibold">Agent Name</label>
             <input
               className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              name="name"
-              value={values.name}
+              name="agent_name"
+              value={values.agent_name}
               onChange={handleChange}
               required
             />
@@ -107,8 +114,8 @@ const InDepthAnalysisAgentForm: React.FC<InDepthAnalysisAgentFormProps> = ({
           <label className="font-semibold">Basic Prompt</label>
           <textarea
             className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            name="basicPrompt"
-            value={values.basicPrompt}
+            name="criteria"
+            value={values.criteria}
             onChange={handleChange}
             rows={2}
             required
@@ -118,8 +125,8 @@ const InDepthAnalysisAgentForm: React.FC<InDepthAnalysisAgentFormProps> = ({
           <label className="font-semibold">Policy Guidelines</label>
           <textarea
             className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            name="policyGuidelines"
-            value={values.policyGuidelines}
+            name="guidelines"
+            value={values.guidelines}
             onChange={handleChange}
             rows={2}
             required
@@ -129,8 +136,8 @@ const InDepthAnalysisAgentForm: React.FC<InDepthAnalysisAgentFormProps> = ({
           <label className="font-semibold">Knowledge Bases</label>
           <input
             className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            name="knowledgeBases"
-            value={values.knowledgeBases}
+            name="knowledge_base"
+            value={values.knowledge_base}
             onChange={handleChange}
             required
           />

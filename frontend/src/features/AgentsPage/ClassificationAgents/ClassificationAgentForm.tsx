@@ -1,11 +1,13 @@
 import React, { useState } from "react";
-import api from "@/lib/api";
+import { useAgents } from "@/context/AgentsContext"; // <-- Import the hook
 
 interface AgentFormValues {
-  name: string;
+  agent_name: string;
   status: "Active" | "Disabled";
   description: string;
-  basicPrompt: string;
+  classifier_prompt: string;
+  agentId?: string; // for edit
+
 }
 
 interface ClassificationAgentFormProps {
@@ -13,14 +15,14 @@ interface ClassificationAgentFormProps {
   mode: "add" | "edit";
   onSubmit?: (values: AgentFormValues) => void;
   onCancel: () => void;
-  agentId?: string; // for edit
+  agentId?: string
 }
 
 const defaultValues: AgentFormValues = {
-  name: "",
+  agent_name: "",
   status: "Active",
   description: "",
-  basicPrompt: "",
+  classifier_prompt: "",
 };
 
 const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
@@ -28,11 +30,13 @@ const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
   mode,
   onSubmit,
   onCancel,
-  agentId,
+  agentId
+
 }) => {
   const [values, setValues] = useState<AgentFormValues>({ ...defaultValues, ...initialValues });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { updateAgent } = useAgents(); // <-- Get updateAgent from context
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -44,14 +48,18 @@ const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
     setLoading(true);
     setError(null);
     try {
-      if (mode === "add") {
-        await api.post("/agents", values);
-      } else if (mode === "edit" && agentId) {
-        await api.put(`/agents/${agentId}`, values);
+      if (mode === "edit" && agentId) {
+        await updateAgent(agentId, {
+          agent_name: values.agent_name,
+          status: values.status === "Active",
+          description: values.description,
+          type: "classification",
+          classifier_prompt: values.classifier_prompt,
+        });
       }
       onSubmit?.(values);
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Something went wrong");
+      setError("Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -63,14 +71,14 @@ const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
         className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-2xl flex flex-col gap-4 border-t-4 border-blue-500"
         onSubmit={handleSubmit}
       >
-        <h2 className="text-2xl font-bold mb-2">{mode === "add" ? "Add Agent" : `Edit Agent: ${values.name}`}</h2>
+        <h2 className="text-2xl font-bold mb-2">{mode === "add" ? "Add Agent" : `Edit Agent: ${values.agent_name}`}</h2>
         <div className="flex gap-4">
           <div className="flex-1 flex flex-col gap-2">
             <label className="font-semibold">Agent Name</label>
             <input
               className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              name="name"
-              value={values.name}
+              name="agent_name"
+              value={values.agent_name}
               onChange={handleChange}
               required
             />
@@ -103,8 +111,8 @@ const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
           <label className="font-semibold">Basic Prompt</label>
           <textarea
             className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            name="basicPrompt"
-            value={values.basicPrompt}
+            name="classifier_prompt"
+            value={values.classifier_prompt}
             onChange={handleChange}
             rows={2}
             required

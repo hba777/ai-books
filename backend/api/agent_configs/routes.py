@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from models.agent_configs import AgentConfigModel
 from utils.jwt_utils import get_user_from_cookie
 from db.mongo import get_agent_configs_collection
@@ -28,7 +28,9 @@ def get_all_agents():
 )
 def create_agent(agent: AgentConfigModel):
     collection = get_agent_configs_collection()
-    agent_dict = agent.dict(by_alias=True, exclude={"_id"})
+    agent_dict = agent.dict(by_alias=True, exclude_none=True)
+    if "_id" in agent_dict:
+        del agent_dict["_id"]
     result = collection.insert_one(agent_dict)
     agent_dict["_id"] = str(result.inserted_id)
     return AgentConfigResponse(**agent_dict)
@@ -40,7 +42,7 @@ def create_agent(agent: AgentConfigModel):
 )
 def update_agent(agent_id: str, agent: AgentConfigModel):
     collection = get_agent_configs_collection()
-    update_data = agent.dict(by_alias=True, exclude={"_id"})
+    update_data = agent.dict(by_alias=True, exclude={"id", "_id"})
     result = collection.find_one_and_update(
         {"_id": ObjectId(agent_id)},
         {"$set": update_data},
@@ -63,3 +65,21 @@ def delete_agent(agent_id: str):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Agent not found")
     return AgentDeleteResponse(detail="Agent deleted successfully", agent_id=agent_id)
+
+@router.patch(
+    "/{agent_id}",
+    response_model=AgentConfigResponse,
+    dependencies=[Depends(get_user_from_cookie)]
+)
+def power_off_agent(agent_id: str, status: bool = Body(..., embed=True)):
+    collection = get_agent_configs_collection()
+    new_status = not status
+    result = collection.find_one_and_update(
+        {"_id": ObjectId(agent_id)},
+        {"$set": {"status": new_status}},
+        return_document=True
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    result["_id"] = str(result["_id"])
+    return AgentConfigResponse(**result)
