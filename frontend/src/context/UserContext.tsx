@@ -20,6 +20,28 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Fetch user on mount to persist session
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      setLoading(true);
+      try {
+        const res = await api.get("/users/me");
+        if (res.data && res.data.username) {
+          setUser({
+            username: res.data.username,
+            role: res.data.role
+          });
+        } else {
+          setUser(null);
+        }
+      } catch (err) {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
 
   const logout = async () => {
     setUser(null);

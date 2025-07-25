@@ -4,8 +4,13 @@ from pydantic import BaseModel, Field
 class AgentConfigResponse(BaseModel):
     id: str = Field(..., alias="_id")
     agent_name: str
-    criteria: str
-    guidelines: str
+    description: str
+    type: str
+    criteria: Optional[str] = None
+    guidelines: Optional[str] = None
+    status: Optional[bool] = False
+    evaluators_prompt: Optional[str] = None
+    classifier_prompt: Optional[str] = None
 
 class AgentConfigListResponse(BaseModel):
     agents: List[AgentConfigResponse]

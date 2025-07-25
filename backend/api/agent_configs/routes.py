@@ -28,7 +28,7 @@ def get_all_agents():
 )
 def create_agent(agent: AgentConfigModel):
     collection = get_agent_configs_collection()
-    agent_dict = agent.dict(by_alias=True, exclude={"_id"})
+    agent_dict = agent.dict(by_alias=True, exclude={"id", "_id"})
     result = collection.insert_one(agent_dict)
     agent_dict["_id"] = str(result.inserted_id)
     return AgentConfigResponse(**agent_dict)
@@ -40,7 +40,7 @@ def create_agent(agent: AgentConfigModel):
 )
 def update_agent(agent_id: str, agent: AgentConfigModel):
     collection = get_agent_configs_collection()
-    update_data = agent.dict(by_alias=True, exclude={"_id"})
+    update_data = agent.dict(by_alias=True, exclude={"id", "_id"})
     result = collection.find_one_and_update(
         {"_id": ObjectId(agent_id)},
         {"$set": update_data},
