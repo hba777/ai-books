@@ -108,7 +108,7 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
                 </clipPath>
               </defs>
             </svg>
-            <svg onClick={() => handleDeleteOpen(agent)}
+            <svg className="cursor-pointer" onClick={() => handleDeleteOpen(agent)}
               width="19"
               height="19"
               viewBox="0 0 19 19"
@@ -191,7 +191,10 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
       {isEditFormOpen && editingAgent && (
         <ClassificationAgentForm
           mode="edit"
-          initialValues={{ ...editingAgent, status: editingAgent?.status === false ? "Disabled" : "Active" }}
+          initialValues={
+            { ...editingAgent,
+               classifier_prompt: editingAgent.classifier_prompt ?? "",
+               status: editingAgent?.status === false ? "Disabled" : "Active" }}
           agentId={editingAgent._id}
           onCancel={() => {
             setIsEditFormOpen(false);

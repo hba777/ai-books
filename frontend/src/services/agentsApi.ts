@@ -10,6 +10,7 @@ export interface Agent {
   status?: boolean;
   evaluators_prompt?: string | null;
   classifier_prompt?: string | null;
+  knowledge_base?: string | null;
 }
 
 // Get all agents

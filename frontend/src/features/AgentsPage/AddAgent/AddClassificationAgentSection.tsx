@@ -27,7 +27,7 @@ const AddClassificationAgentSection: React.FC<AddClassificationAgentSectionProps
       agent_name: values.agent_name,
       description: values.description,
       status: values.status === "Active",
-      classifier_prompt: values.basicPrompt,
+      classifier_prompt: values.classifier_prompt,
     };
   
   

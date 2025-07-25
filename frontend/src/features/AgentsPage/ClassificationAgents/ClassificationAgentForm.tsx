@@ -5,7 +5,7 @@ interface AgentFormValues {
   agent_name: string;
   status: "Active" | "Disabled";
   description: string;
-  basicPrompt: string;
+  classifier_prompt: string;
   agentId?: string; // for edit
 
 }
@@ -22,7 +22,7 @@ const defaultValues: AgentFormValues = {
   agent_name: "",
   status: "Active",
   description: "",
-  basicPrompt: "",
+  classifier_prompt: "",
 };
 
 const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
@@ -54,7 +54,7 @@ const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
           status: values.status === "Active",
           description: values.description,
           type: "classification",
-          classifier_prompt: values.basicPrompt,
+          classifier_prompt: values.classifier_prompt,
         });
       }
       onSubmit?.(values);
@@ -111,8 +111,8 @@ const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
           <label className="font-semibold">Basic Prompt</label>
           <textarea
             className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            name="basicPrompt"
-            value={values.basicPrompt}
+            name="classifier_prompt"
+            value={values.classifier_prompt}
             onChange={handleChange}
             rows={2}
             required

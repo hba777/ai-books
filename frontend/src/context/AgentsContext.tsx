@@ -7,7 +7,7 @@ import {
   deleteAgent as apiDeleteAgent,
   powerToggleAgent as apiPowerToggleAgent
 } from '../services/agentsApi';
-
+import { useUser } from "../context/UserContext";
 interface AgentsContextType {
   agents: Agent[];
   loading: boolean;
@@ -21,6 +21,7 @@ interface AgentsContextType {
 const AgentsContext = createContext<AgentsContextType | undefined>(undefined);
 
 export const AgentsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, loading: userLoading } = useUser(); 
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -28,6 +29,7 @@ export const AgentsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setLoading(true);
     try {
       const res = await getAllAgents();
+      console.log("Agents", res.agents);
       setAgents(res.agents);
     } finally {
       setLoading(false);
@@ -59,8 +61,12 @@ export const AgentsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   useEffect(() => {
-    fetchAgents();
-  }, []);
+    if (!userLoading && user) {
+      fetchAgents();
+    } else if (!userLoading && !user) {
+      setAgents([]); // clear if logged out
+    }
+  }, [user, userLoading]);;
 
   return (
     <AgentsContext.Provider value={{ agents, loading, fetchAgents, createAgent, updateAgent, deleteAgent, powerToggleAgent }}>

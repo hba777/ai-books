@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { getAllBooks, createBook as apiCreateBook, getBookById, getBookFile } from "../services/booksApi";
+import { useUser } from "../context/UserContext";
 
 interface Book {
   _id: string;
@@ -27,6 +28,8 @@ const BookContext = createContext<BookContextType | undefined>(undefined);
 
 export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [books, setBooks] = useState<Book[]>([]);
+  const { user, loading: userLoading } = useUser(); 
+
 
   const fetchBooks = async () => {
     const res = await getAllBooks();
@@ -47,8 +50,12 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    fetchBooks();
-  }, []);
+    if (!userLoading && user) {
+      fetchBooks();
+    } else if (!userLoading && !user) {
+      setBooks([]); // clear if logged out
+    }
+  }, [user, userLoading]);
 
   return (
     <BookContext.Provider value={{
