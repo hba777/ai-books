@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useAgents } from "@/context/AgentsContext"; // <-- Import the hook
 
 interface AgentFormValues {
   agent_name: string;
@@ -35,7 +36,8 @@ const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
   const [values, setValues] = useState<AgentFormValues>({ ...defaultValues, ...initialValues });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  agentId = ""
+  const { updateAgent } = useAgents(); // <-- Get updateAgent from context
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setValues((prev) => ({ ...prev, [name]: value }));
@@ -46,6 +48,15 @@ const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
     setLoading(true);
     setError(null);
     try {
+      if (mode === "edit" && agentId) {
+        await updateAgent(agentId, {
+          agent_name: values.agent_name,
+          status: values.status === "Active",
+          description: values.description,
+          type: "classification",
+          classifier_prompt: values.basicPrompt,
+        });
+      }
       onSubmit?.(values);
     } catch (err: any) {
       setError("Something went wrong");
