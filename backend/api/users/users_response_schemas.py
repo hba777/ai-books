@@ -5,6 +5,7 @@ class UserResponse(BaseModel):
     id: Optional[str]
     username: str
     role: str
+    department: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -18,8 +19,10 @@ class LoginResponse(BaseModel):
     username: str
     token: str 
     role: str
+    department: Optional[str] = None
 
 class RegisterRequest(BaseModel):
     username: str
     password: str
     role: Optional[str] = "user"
+    department: Optional[str] = None

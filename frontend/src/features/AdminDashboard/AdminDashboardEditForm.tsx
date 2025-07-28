@@ -1,11 +1,8 @@
 import React, { useState } from "react";
 import api from "../../lib/api";
+import { User } from "../../context/UserContext"
 
-interface User {
-  id: string;
-  username: string;
-  role: string;
-}
+
 
 interface AdminDashboardEditFormProps {
   user: User | null;
@@ -23,6 +20,7 @@ const AdminDashboardEditForm: React.FC<AdminDashboardEditFormProps> = ({
   const [username, setUsername] = useState(user?.username || "");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState(user?.role || "user");
+  const [department, setDepartment] = useState(user?.department || "");
   const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,6 +28,7 @@ const AdminDashboardEditForm: React.FC<AdminDashboardEditFormProps> = ({
     setUsername(user?.username || "");
     setRole(user?.role || "user");
     setPassword("");
+    setDepartment(user?.department || "");
     setError(null);
   }, [user, open]);
 
@@ -40,7 +39,7 @@ const AdminDashboardEditForm: React.FC<AdminDashboardEditFormProps> = ({
     setFormLoading(true);
     setError(null);
     try {
-      const update: any = { username, role };
+      const update: any = { username, role, department };
       if (password) update.password = password;
       await api.patch(`/users/${user.id}`, update);
       onUserUpdated();
@@ -80,6 +79,13 @@ const AdminDashboardEditForm: React.FC<AdminDashboardEditFormProps> = ({
             placeholder="New Password (leave blank to keep current)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+          />
+          <input
+            className="border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            type="department"
+            placeholder="Department"
+            value={department}
+            onChange={(e) => setDepartment(e.target.value)}
           />
           <select
             className="border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"

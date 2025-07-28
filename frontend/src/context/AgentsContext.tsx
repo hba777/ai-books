@@ -29,7 +29,6 @@ export const AgentsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setLoading(true);
     try {
       const res = await getAllAgents();
-      console.log("Agents", res.agents);
       setAgents(res.agents);
     } finally {
       setLoading(false);
@@ -38,7 +37,6 @@ export const AgentsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const createAgent = async (agent: Omit<Agent, '_id' | 'type'>, type: 'classification' | 'analysis') => {
     const newAgent = await apiCreateAgent({ ...agent, type });
-    console.log("Agent", agent);
     await fetchAgents();
     return newAgent;
   };

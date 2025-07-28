@@ -1,20 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { getAllBooks, createBook as apiCreateBook, getBookById, getBookFile } from "../services/booksApi";
-import { useUser } from "../context/UserContext";
+import { 
+  getAllBooks, 
+  createBook as apiCreateBook, 
+  getBookById, 
+  getBookFile,
+  assignDepartments as apiAssignDepartments,
+  addFeedback as apiAddFeedback,
+  Book,
 
-interface Book {
-  _id: string;
-  doc_name: string;
-  author: string;
-  date: string;
-  category: string;
-  reference: string;
-  status: string;
-  summary: string;
-  labels?: string[] | null;    
-  startDate?: string | null; 
-  endDate?: string | null;  
-}
+} from "../services/booksApi";
+import { useUser } from "../context/UserContext";
 
 interface BookContextType {
   books: Book[];
@@ -22,6 +17,8 @@ interface BookContextType {
   createBook: (formData: FormData) => Promise<void>;
   getBookById: (bookId: string) => Promise<Book>;
   getBookFile: (bookId: string) => Promise<Blob>;
+  assignDepartments: (bookId: string, departments: string[]) => Promise<void>;
+  addFeedback: (bookId: string, comment: string) => Promise<void>;
 }
 
 const BookContext = createContext<BookContextType | undefined>(undefined);
@@ -29,7 +26,6 @@ const BookContext = createContext<BookContextType | undefined>(undefined);
 export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [books, setBooks] = useState<Book[]>([]);
   const { user, loading: userLoading } = useUser(); 
-
 
   const fetchBooks = async () => {
     const res = await getAllBooks();
@@ -49,6 +45,17 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return await getBookFile(bookId);
   };
 
+  const assignDepartments = async (bookId: string, departments: string[]) => {
+    await apiAssignDepartments(bookId, departments);
+    await fetchBooks(); // Refresh books to get updated data
+  };
+
+  const addFeedback = async (bookId: string, comment: string) => {
+    await apiAddFeedback(bookId, comment);
+    await fetchBooks(); // Refresh books to get updated data
+  };
+
+
   useEffect(() => {
     if (!userLoading && user) {
       fetchBooks();
@@ -63,7 +70,9 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       fetchBooks,
       createBook,
       getBookById: fetchBookById,
-      getBookFile: fetchBookFile
+      getBookFile: fetchBookFile,
+      assignDepartments,
+      addFeedback,
     }}>
       {children}
     </BookContext.Provider>

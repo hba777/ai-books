@@ -7,12 +7,8 @@ import AdminDashboardForm from "@/features/AdminDashboard/AdminDashboardForm";
 import AdminDashboardTable from "@/features/AdminDashboard/AdminDashboardTable";
 import AdminDashboardDeletePopUp from "@/features/AdminDashboard/AdminDashboardDeletePopUp";
 import AdminDashboardEditForm from "@/features/AdminDashboard/AdminDashboardEditForm";
+import { User } from "../context/UserContext"
 
-interface User {
-  id: string;
-  username: string;
-  role: string;
-}
 
 const AdminSettings: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);

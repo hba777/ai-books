@@ -1,6 +1,32 @@
 import React from "react";
+import { Book } from "../../services/booksApi";
 
-const SeeInfo: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
+interface SeeInfoProps {
+  onClose?: () => void;
+  book: Book;
+}
+
+const SeeInfo: React.FC<SeeInfoProps> = ({ onClose, book }) => {
+  // Format dates for display
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "Not specified";
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  // Format labels for display
+  const formatLabels = (labels: string[] | null | undefined) => {
+    if (!labels || labels.length === 0) return "No labels assigned";
+    return labels.join(", ");
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-3xl relative border-t-4 border-blue-500">
@@ -10,7 +36,7 @@ const SeeInfo: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
             <label className="block text-gray-700 text-sm font-semibold mb-1">Book Title</label>
             <input
               className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 font-semibold"
-              value="The Kite Runner"
+              value={book.doc_name}
               readOnly
             />
           </div>
@@ -18,7 +44,7 @@ const SeeInfo: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
             <label className="block text-gray-700 text-sm font-semibold mb-1">Author Name</label>
             <input
               className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 font-semibold"
-              value="Khalid Hussaini"
+              value={book.author}
               readOnly
             />
           </div>
@@ -26,7 +52,7 @@ const SeeInfo: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
             <label className="block text-gray-700 text-sm font-semibold mb-1">Date Submitted</label>
             <input
               className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 font-semibold"
-              value="05/07/2025"
+              value={formatDate(book.date)}
               readOnly
             />
           </div>
@@ -34,7 +60,7 @@ const SeeInfo: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
             <label className="block text-gray-700 text-sm font-semibold mb-1">Start Process Date</label>
             <input
               className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 font-semibold"
-              value="05/07/2025"
+              value={formatDate(book.startDate)}
               readOnly
             />
           </div>
@@ -42,7 +68,7 @@ const SeeInfo: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
             <label className="block text-gray-700 text-sm font-semibold mb-1">End Process Date</label>
             <input
               className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 font-semibold"
-              value="05/07/2025"
+              value={formatDate(book.endDate)}
               readOnly
             />
           </div>
@@ -50,7 +76,7 @@ const SeeInfo: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
             <label className="block text-gray-700 text-sm font-semibold mb-1">General Category</label>
             <input
               className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 font-semibold"
-              value="History"
+              value={book.category}
               readOnly
             />
           </div>
@@ -58,7 +84,7 @@ const SeeInfo: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
             <label className="block text-gray-700 text-sm font-semibold mb-1">Classification Labels</label>
             <input
               className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 font-semibold"
-              value="Geo-Political, Religious, AI/IT/CS, Operational"
+              value={formatLabels(book.labels)}
               readOnly
             />
           </div>
@@ -69,6 +95,7 @@ const SeeInfo: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
             className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-gray-700"
             placeholder="Max 200 words"
             rows={3}
+            value={book.summary}
             readOnly
           />
         </div>

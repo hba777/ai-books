@@ -11,11 +11,12 @@ ALGORITHM = "HS256"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/token")
 
 
-def create_access_token(user_id: str, username: str, role: str, expires_delta: timedelta = None) -> str:
+def create_access_token(user_id: str, username: str, role: str, department: str = None, expires_delta: timedelta = None) -> str:
     payload = {
         "sub": username,
         "id": user_id,
-        "role": role
+        "role": role,
+        "department": department
     }
 
     # Only add expiration if explicitly requested
@@ -35,9 +36,11 @@ def get_user_from_cookie(access_token: str = Cookie(None)):
         username: str = payload.get("sub")
         user_id: str = payload.get("id")
         role: str = payload.get("role")
+        department: str = payload.get("department")
+
         if username is None or user_id is None or role is None:
             raise HTTPException(status_code=401, detail="Could not validate credentials")
-        return UserResponse(id=user_id, username=username, role=role)
+        return UserResponse(id=user_id, username=username, role=role, department=department)
     except ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired")
     except JWTError:

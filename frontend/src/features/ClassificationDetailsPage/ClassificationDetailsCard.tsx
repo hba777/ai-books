@@ -6,7 +6,6 @@ const mockClasses = [
   { name: "Political", count: 500 },
   { name: "Geo-Political", count: 500 },
   { name: "Religious", count: 500 },
-  { name: "Maths", count: 500 },
 ];
 
 interface ClassificationDetailsCardProps {

@@ -6,6 +6,7 @@ import PDFViewerActual from "@/features/ClassificationDetailsPage/PDFViewer";
 import SeeInfo from "@/features/ClassificationDetailsPage/SeeInfo";
 import { useRouter } from "next/router";
 import { useBooks } from "@/context/BookContext";
+import { Book } from "@/services/booksApi";
 
 const ClassifcationDetails: React.FC = () => {
   const [showSeeInfo, setShowSeeInfo] = useState(false);
@@ -14,7 +15,7 @@ const ClassifcationDetails: React.FC = () => {
     direction: "next" | "prev";
   } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [book, setBook] = useState<any>(null); // Replace `any` with Book interface
+  const [book, setBook] = useState<Book>(); 
   const [fileUrl, setFileUrl] = useState<string | null>(null);
 
   const router = useRouter();
@@ -35,6 +36,7 @@ const ClassifcationDetails: React.FC = () => {
       const fileBlob = await getBookFile(id as string);
       objectUrl = URL.createObjectURL(fileBlob);
       setFileUrl(objectUrl);
+      console.log("Object Url", objectUrl)
     } catch (err) {
       console.error("Failed to fetch book or file:", err);
     } finally {
@@ -44,12 +46,8 @@ const ClassifcationDetails: React.FC = () => {
 
   fetchData();
 
-  return () => {
-    if (objectUrl) {
-      URL.revokeObjectURL(objectUrl);
-    }
-  };
-}, [id]);
+  return;
+}, []);
 
 
   if (loading) {
@@ -111,7 +109,7 @@ const ClassifcationDetails: React.FC = () => {
             </div>
 
             {/* Right Column */}
-            <div className="flex-1">
+            <div className="flex-2">
               {fileUrl ? (
                 <PDFViewerActual
                   jumpToHighlight={jumpToHighlight}
@@ -126,7 +124,7 @@ const ClassifcationDetails: React.FC = () => {
             </div>
           </div>
 
-          {showSeeInfo && <SeeInfo onClose={() => setShowSeeInfo(false)} />}
+          {showSeeInfo && book && <SeeInfo onClose={() => setShowSeeInfo(false)} book={book} />}
         </div>
       </main>
     </div>

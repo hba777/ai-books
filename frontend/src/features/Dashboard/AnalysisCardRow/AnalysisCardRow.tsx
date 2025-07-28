@@ -3,7 +3,7 @@ import AnalysisCard from "./AnalysisCard";
 
 const AnalysisCardRow: React.FC = () => {
   return (
-    <div className="flex flex-row gap-3 ml-2 w-full mx-auto mt-4">
+    <div className="flex w-full mx-auto mt-4 justify-around">
       <AnalysisCard
         value={245}
         label="Total In-Depth Reviewed Books"

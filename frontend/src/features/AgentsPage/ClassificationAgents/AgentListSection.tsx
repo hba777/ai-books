@@ -194,6 +194,7 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
           initialValues={
             { ...editingAgent,
                classifier_prompt: editingAgent.classifier_prompt ?? "",
+               evaluators_prompt: editingAgent.evaluators_prompt ?? "",
                status: editingAgent?.status === false ? "Disabled" : "Active" }}
           agentId={editingAgent._id}
           onCancel={() => {

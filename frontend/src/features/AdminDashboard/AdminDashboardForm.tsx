@@ -1,13 +1,6 @@
 import React, { useState } from "react";
-import { FiPlus } from "react-icons/fi";
 import api from "../../lib/api";
-import Header from "@/components/Header/Header";
-
-interface User {
-  id: string;
-  username: string;
-  role: string;
-}
+import { User } from "../../context/UserContext"
 
 interface AdminDashboardFormProps {
   users: User[];
@@ -28,13 +21,14 @@ const AdminDashboardForm: React.FC<AdminDashboardFormProps> = ({
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<string>("user");
+  const [department, setDepartment] = useState("");
   const [formLoading, setFormLoading] = useState(false);
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormLoading(true);
     try {
-      await api.post("/users/register", { username, password, role });
+      await api.post("/users/register", { username, password, role, department });
       setUsername("");
       setPassword("");
       setRole("user");
@@ -125,6 +119,14 @@ const AdminDashboardForm: React.FC<AdminDashboardFormProps> = ({
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
               </select>
+              <input
+                className="border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                type="text"
+                placeholder="Department"
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                required
+              />
               <button
                 type="submit"
                 className="py-2 px-6 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500  text-white font-semibold hover:bg-blue-700 transition disabled:opacity-50"

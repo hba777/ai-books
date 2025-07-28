@@ -2,11 +2,14 @@ from fastapi import APIRouter, Depends, status, UploadFile, File, Form, HTTPExce
 from fastapi.responses import StreamingResponse
 from typing import List, Optional
 from models.documents import BookModel
+from models.user import User
 from utils.jwt_utils import get_user_from_cookie
 from db.mongo import books_collection, fs
 from .schemas import BookResponse, BookDeleteResponse
 import json
 from bson import ObjectId
+from datetime import datetime
+
 
 router = APIRouter(prefix="/books", tags=["Books"])
 
@@ -126,7 +129,42 @@ def get_book_file(book_id: str):
         "Content-Disposition": f'attachment; filename="{file_obj.filename}"'
     })
 
+# Assign book to departmnent
+@router.put("/{book_id}/assign", dependencies=[Depends(get_user_from_cookie)])
+async def assign_departments(book_id: str, departments: List[str]):
+    result = await books_collection.update_one(
+        {"_id": ObjectId(book_id)},
+        {"$set": {"assigned_departments": departments}}
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Book not found or no change")
+    return {"message": "Departments assigned successfully"}
 
+# Add Feedback to book
+@router.post("/books/{book_id}/feedback")
+async def add_feedback(book_id: str, comment: str, user: User):
+    # Check if user department is assigned to book
+    book = await books_collection.find_one({"_id": ObjectId(book_id)})
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+
+    if user.department not in book.get("assigned_departments", []):
+        raise HTTPException(status_code=403, detail="Not allowed to give feedback")
+
+    feedback = {
+        "user_id": user.id,
+        "username": user.username,
+        "department": user.department,
+        "comment": comment,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+    await books_collection.update_one(
+        {"_id": ObjectId(book_id)},
+        {"$push": {"feedback": feedback}}
+    )
+
+    return {"message": "Feedback added successfully"}
 # Delete all books
 @router.delete(
     "/",
