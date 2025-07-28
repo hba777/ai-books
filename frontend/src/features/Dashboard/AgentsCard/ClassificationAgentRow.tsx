@@ -1,12 +1,9 @@
 import React from 'react';
+import { Agent } from '../../../services/agentsApi';
 
-const agents = [
-  { name: 'Research Agent', status: 'Active' },
-  { name: 'Research Agent', status: 'Inactive' },
-  { name: 'Research Agent', status: 'Active' },
-  { name: 'Research Agent', status: 'Active' },
-  { name: 'Research Agent', status: 'Active' },
-];
+interface ClassificationAgentRowProps {
+  agents: Agent[];
+}
 
 const icon = (
 <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -19,17 +16,17 @@ const icon = (
 </svg>
 );
 
-const ClassificationAgentRow: React.FC = () => (
+const ClassificationAgentRow: React.FC<ClassificationAgentRowProps> = ({ agents }) => (
   <div className="flex gap-4 w-full">
-    {agents.map((agent, idx) => (
-      <div key={idx} className="flex flex-col bg-[#EFF6FF] rounded-xl p-4 min-w-[200px] max-w-[220px] h-35 shadow-sm relative overflow-hidden border border-[#2563EB]">
+    {agents.map((agent) => (
+      <div key={agent._id} className="flex flex-col bg-[#EFF6FF] rounded-xl p-4 min-w-[200px] max-w-[220px] h-35 shadow-sm relative overflow-hidden border border-[#2563EB]">
         <div className="flex flex-col gap-3 mb-1 mt-2">
           <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-[#2563EB]">
             {icon}
           </div>
-          <div className="font-semibold text-gray-800 text-base">{agent.name}</div>
+          <div className="font-semibold text-gray-800 text-base">{agent.agent_name}</div>
         </div>
-        <div className="text-xs text-gray-500">{agent.status}</div>
+        <div className="text-xs text-gray-500">{agent.status ? 'Active' : 'Inactive'}</div>
       </div>
     ))}
   </div>

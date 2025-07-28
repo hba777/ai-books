@@ -1,12 +1,9 @@
 import React from "react";
+import { Agent } from '../../../services/agentsApi';
 
-const agents = [
-  { name: "Research Agent", status: "Active" },
-  { name: "Research Agent", status: "Active" },
-  { name: "Research Agent", status: "Active" },
-  { name: "Research Agent", status: "Active" },
-  { name: "Research Agent", status: "Active" },
-];
+interface InDepthAnalysisAgentRowProps {
+  agents: Agent[];
+}
 
 const icon = (
   <svg
@@ -61,11 +58,11 @@ const icon = (
   </svg>
 );
 
-const InDepthAnalysisAgentRow: React.FC = () => (
+const InDepthAnalysisAgentRow: React.FC<InDepthAnalysisAgentRowProps> = ({ agents }) => (
   <div className="flex gap-4 w-full">
-    {agents.map((agent, idx) => (
+    {agents.map((agent) => (
       <div
-        key={idx}
+        key={agent._id}
         className="flex flex-col bg-[#efe9fc] rounded-xl p-4 min-w-[200px] max-w-[220px] h-35 shadow-sm relative overflow-hidden"
       >
         <div className="flex flex-col gap-3 mb-1 mt-2">
@@ -73,10 +70,10 @@ const InDepthAnalysisAgentRow: React.FC = () => (
             {icon}
           </div>
           <div className="font-semibold text-gray-800 text-base">
-            {agent.name}
+            {agent.agent_name}
           </div>
         </div>
-        <div className="text-xs text-gray-500 ">{agent.status}</div>
+        <div className="text-xs text-gray-500 ">{agent.status ? 'Active' : 'Inactive'}</div>
       </div>
     ))}
   </div>
