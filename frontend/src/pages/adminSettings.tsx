@@ -94,7 +94,7 @@ const AdminSettings: React.FC = () => {
     setEditUser(null);
   };
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-blue-50 to-purple-100">
+    <div className="min-h-screen flex bg-[#f7f9fc]">
       <Sidebar />
       <main className="flex-1 flex flex-col">
       <AdminDashboardHeader />
