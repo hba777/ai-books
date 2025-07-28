@@ -1,10 +1,5 @@
 import React from "react";
-
-interface User {
-  id: string;
-  username: string;
-  role: string;
-}
+import { User } from "../../context/UserContext"
 
 interface AdminDashboardTableProps {
   users: User[];
@@ -31,6 +26,9 @@ const AdminDashboardTable: React.FC<AdminDashboardTableProps> = ({
               Role
             </th>
             <th className="py-3 px-6 text-center text-xs font-bold text-black uppercase tracking-wider">
+              Department
+            </th>
+            <th className="py-3 px-6 text-center text-xs font-bold text-black uppercase tracking-wider">
               Actions
             </th>
           </tr>
@@ -44,10 +42,13 @@ const AdminDashboardTable: React.FC<AdminDashboardTableProps> = ({
               <td className="py-3 px-6 capitalize text-gray-700">
                 {user.role}
               </td>
+              <td className="py-3 px-6 capitalize text-gray-700 text-center">
+                {user.department}
+              </td>
               <td className="py-3 px-6 text-center">
                 <div className="flex items-center justify-center ">
                   <button
-                    className="py-1 px-4 rounded text-sm font-semibold flex items-center "
+                    className="py-1 px-4 rounded text-sm font-semibold flex items-center cursor-pointer "
                     onClick={() => onEditUser(user)}
                     disabled={loading}
                   >
@@ -85,7 +86,7 @@ const AdminDashboardTable: React.FC<AdminDashboardTableProps> = ({
                     </span>
                   </button>
                   <button
-                    className="py-1 px-4 rounded text-sm font-semibold flex items-center "
+                    className="py-1 px-4 rounded text-sm font-semibold flex items-center cursor-pointer "
                     onClick={() => onDeleteUser(user.id)}
                     disabled={loading}
                   >

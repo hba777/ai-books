@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import api from "../lib/api";
 
-type User = {
+export type User = {
+  id: string
   username: string;
   role: string;
-  // add other user fields if needed
+  department: string;
 };
 
 type UserContextType = {
@@ -28,8 +29,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const res = await api.get("/users/me");
         if (res.data && res.data.username) {
           setUser({
+            id: res.data.id,
             username: res.data.username,
-            role: res.data.role
+            role: res.data.role,
+            department: res.data.department
           });
         } else {
           setUser(null);
@@ -61,8 +64,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await api.get("/users/me");
       if (res.data && res.data.username) {
         setUser({
+          id: res.data.id,
           username: res.data.username,
-          role: res.data.role
+          role: res.data.role,
+          department: res.data.department
         });
       } else {
         setUser(null);

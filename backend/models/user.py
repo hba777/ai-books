@@ -7,15 +7,14 @@ class User(BaseModel):
     password: str
     token: Optional[str] = None
     role: str
+    department: Optional[str] = None  # New field
 
     class Config:
         validate_by_name = True
         arbitrary_types_allowed = True
-        json_encoders = {
-            # Add custom encoders if needed
-        }
 
 class UserCreate(BaseModel):
     username: str
     password: str
     role: Optional[str] = "user" 
+    department: Optional[str] = None
