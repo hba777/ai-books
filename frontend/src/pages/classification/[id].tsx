@@ -112,7 +112,7 @@ const ClassifcationDetails: React.FC = () => {
             </div>
 
             {/* Right Column */}
-            <div className="flex-1">
+            <div className="flex-2">
               {fileUrl ? (
                 <PDFViewerActual
                   jumpToHighlight={jumpToHighlight}
@@ -127,7 +127,7 @@ const ClassifcationDetails: React.FC = () => {
             </div>
           </div>
 
-          {showSeeInfo && <SeeInfo onClose={() => setShowSeeInfo(false)} />}
+          {showSeeInfo && book && <SeeInfo onClose={() => setShowSeeInfo(false)} book={book} />}
         </div>
       </main>
     </div>
