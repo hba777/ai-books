@@ -7,7 +7,7 @@ import AdminDashboardForm from "@/features/AdminDashboard/AdminDashboardForm";
 import AdminDashboardTable from "@/features/AdminDashboard/AdminDashboardTable";
 import AdminDashboardDeletePopUp from "@/features/AdminDashboard/AdminDashboardDeletePopUp";
 import AdminDashboardEditForm from "@/features/AdminDashboard/AdminDashboardEditForm";
-import { User } from "../context/UserContext"
+import { User, useUser } from "../context/UserContext"
 
 
 const AdminSettings: React.FC = () => {
@@ -21,6 +21,7 @@ const AdminSettings: React.FC = () => {
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [showEditUserModal, setShowEditUserModal] = useState(false);
   const [editUser, setEditUser] = useState<User | null>(null);
+  const { deleteUser } = useUser();
 
   useEffect(() => {
     fetchUsers();
@@ -60,7 +61,7 @@ const AdminSettings: React.FC = () => {
     setError(null);
     setSuccess(null);
     try {
-      await api.delete(`/users/${deleteUserId}`);
+      await deleteUser(deleteUserId);
       toast.success("User deleted successfully!");
       fetchUsers();
       setTimeout(() => setSuccess(null), 2000);

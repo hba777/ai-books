@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useBooks } from "../../context/BookContext";
+import { useRouter } from "next/router";
 
 const DEPARTMENTS = [
   "Political",
@@ -13,11 +15,22 @@ const DEPARTMENTS = [
 interface AssignDepartmentFormProps {
   open: boolean;
   onClose: () => void;
-  onAssign: (departments: string[]) => void;
+  assignedDepartments: string[];
 }
 
-const AssignDepartmentForm: React.FC<AssignDepartmentFormProps> = ({ open, onClose, onAssign }) => {
+const AssignDepartmentForm: React.FC<AssignDepartmentFormProps> = ({ open, onClose, assignedDepartments }) => {
   const [selected, setSelected] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  
+  const { assignDepartments } = useBooks();
+  const router = useRouter();
+  const { id: bookId } = router.query;
+
+  useEffect(() => {
+    if (open) {
+      setSelected(assignedDepartments);
+    }
+  }, [open, assignedDepartments]);
 
   if (!open) return null;
 
@@ -27,10 +40,22 @@ const AssignDepartmentForm: React.FC<AssignDepartmentFormProps> = ({ open, onClo
     );
   };
 
-  const handleAssign = () => {
-    onAssign(selected);
-    setSelected([]);
-    onClose();
+  const handleAssign = async () => {
+    if (!bookId || typeof bookId !== 'string') {
+      console.error("Invalid book ID");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await assignDepartments(bookId, selected);
+      setSelected([]);
+      onClose();
+    } catch (error) {
+      console.error("Failed to assign departments:", error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -49,6 +74,9 @@ const AssignDepartmentForm: React.FC<AssignDepartmentFormProps> = ({ open, onClo
                   className="accent-blue-500 w-4 h-4"
                 />
                 {dept}
+                {assignedDepartments.includes(dept) && (
+                  <span className="ml-1 text-xs text-green-600">(Assigned)</span>
+                )}
               </label>
             ))}
           </div>
@@ -57,15 +85,16 @@ const AssignDepartmentForm: React.FC<AssignDepartmentFormProps> = ({ open, onClo
           <button
             className="px-6 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-semibold hover:bg-gray-100 transition"
             onClick={onClose}
+            disabled={submitting}
           >
             Cancel
           </button>
           <button
-            className="px-6 py-2 rounded-lg text-white font-semibold bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition"
+            className="px-6 py-2 rounded-lg text-white font-semibold bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleAssign}
-            disabled={selected.length === 0}
+            disabled={selected.length === 0 || submitting}
           >
-            Assign to Department
+            {submitting ? "Assigning..." : "Assign to Department"}
           </button>
         </div>
       </div>

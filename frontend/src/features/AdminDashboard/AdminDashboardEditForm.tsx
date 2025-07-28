@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import api from "../../lib/api";
-import { User } from "../../context/UserContext"
+import { User, useUser } from "../../context/UserContext"
 
 
 
@@ -23,6 +23,7 @@ const AdminDashboardEditForm: React.FC<AdminDashboardEditFormProps> = ({
   const [department, setDepartment] = useState(user?.department || "");
   const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { editUser } = useUser();
 
   React.useEffect(() => {
     setUsername(user?.username || "");
@@ -41,7 +42,7 @@ const AdminDashboardEditForm: React.FC<AdminDashboardEditFormProps> = ({
     try {
       const update: any = { username, role, department };
       if (password) update.password = password;
-      await api.patch(`/users/${user.id}`, update);
+      await editUser(user.id, update);
       onUserUpdated();
       onClose();
     } catch (err: any) {
