@@ -6,7 +6,8 @@ interface AgentFormValues {
   status: "Active" | "Disabled";
   description: string;
   classifier_prompt: string;
-  agentId?: string; // for edit
+  evaluators_prompt: string;
+  agentId?: string; 
 
 }
 
@@ -23,6 +24,7 @@ const defaultValues: AgentFormValues = {
   status: "Active",
   description: "",
   classifier_prompt: "",
+  evaluators_prompt: ""
 };
 
 const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
@@ -55,6 +57,7 @@ const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
           description: values.description,
           type: "classification",
           classifier_prompt: values.classifier_prompt,
+          evaluators_prompt: values.evaluators_prompt
         });
       }
       onSubmit?.(values);
@@ -108,11 +111,22 @@ const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
           />
         </div>
         <div className="flex flex-col gap-2">
-          <label className="font-semibold">Basic Prompt</label>
+          <label className="font-semibold">Classifier Prompt</label>
           <textarea
             className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
             name="classifier_prompt"
             value={values.classifier_prompt}
+            onChange={handleChange}
+            rows={2}
+            required
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="font-semibold">Evaluators Prompt</label>
+          <textarea
+            className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            name="evaluators_prompt"
+            value={values.evaluators_prompt}
             onChange={handleChange}
             rows={2}
             required
