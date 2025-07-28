@@ -7,7 +7,7 @@ class BookModel(BaseModel):
     doc_name: str                               # corresponds to title in frontend
     author: str
     date: str                                   
-    status: str = "Pending"                     # Default status. Pending, In Progress, Completed, Assigned
+    status: str = "Pending"                     # Default status. Pending, In Progress, Completed, Assigned, Classified
     category: str
     reference: str
     summary: str                                # Can store abstract_summary
