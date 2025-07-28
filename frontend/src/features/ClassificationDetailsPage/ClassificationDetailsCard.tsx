@@ -1,12 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import AssignDepartmentForm from "./AssignDepartmentForm";
-
-const mockClasses = [
-  { name: "Maths", count: 500 },
-  { name: "Political", count: 500 },
-  { name: "Geo-Political", count: 500 },
-  { name: "Religious", count: 500 },
-];
+import AssignedDepartments from "./AssignedDepartments";
+import { useRouter } from "next/router";
+import { useBooks } from "../../context/BookContext";
 
 interface ClassificationDetailsCardProps {
   onSeeInfo?: () => void;
@@ -14,27 +10,31 @@ interface ClassificationDetailsCardProps {
 }
 
 const getToday = () => {
-  const d = new Date();
-  return d.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
+  const today = new Date();
+  return today.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
   });
 };
 
 const ClassificationDetailsCard: React.FC<ClassificationDetailsCardProps> = ({ onSeeInfo, onJumpToHighlight }) => {
-  const [assignModalOpen, setAssignModalOpen] = React.useState(false);
-  const [assignedDepartments, setAssignedDepartments] = React.useState<{ name: string; date: string }[]>([]);
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const router = useRouter();
+  const { id: bookId } = router.query;
+  const { books } = useBooks();
 
-  const handleAssign = (departments: string[]) => {
-    const today = getToday();
-    setAssignedDepartments((prev) => [
-      ...prev,
-      ...departments.filter(
-        (d) => !prev.some((ad) => ad.name === d)
-      ).map((d) => ({ name: d, date: today })),
-    ]);
-  };
+  // Get the current book data
+  const currentBook = books.find(book => book._id === bookId);
+  const assignedDepartments = currentBook?.assigned_departments || [];
+  const feedback = currentBook?.feedback || [];
+
+  const mockClasses = [
+    { name: "Maths", count: 12 },
+    { name: "AI/CS", count: 8 },
+    { name: "Political", count: 15 },
+    { name: "Religious", count: 6 },
+  ];
 
   return (
     <div className="w-[370px] bg-white rounded-2xl shadow p-0 mt-8 ml-2 border border-blue-200 border-t-4 border-t-blue-500">
@@ -91,6 +91,8 @@ const ClassificationDetailsCard: React.FC<ClassificationDetailsCardProps> = ({ o
             </div>
           ))}
         </div>
+        
+        {/* Assigned Departments Section */}
         <div className="border-t border-gray-200 pt-4 mt-2">
           <div className="flex items-center justify-between mb-2">
             <span className="font-semibold text-gray-700">
@@ -103,24 +105,21 @@ const ClassificationDetailsCard: React.FC<ClassificationDetailsCardProps> = ({ o
               Assign to Department
             </button>
           </div>
-          <div className="flex flex-col gap-2 mt-1">
-            {assignedDepartments.length === 0 ? (
-              <span className="text-gray-400 text-sm">There is no Department assigned yet.</span>
-            ) : (
-              assignedDepartments.map((dept, idx) => (
-                <div key={idx} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
-                  <span className="font-semibold text-gray-700">{dept.name}</span>
-                  <span className="text-xs text-blue-600 font-semibold">Assigned Date: {dept.date}</span>
-                </div>
-              ))
-            )}
-          </div>
+          
+          {bookId && typeof bookId === 'string' && (
+            <AssignedDepartments 
+              assignedDepartments={assignedDepartments}
+              bookId={bookId}
+              feedback={feedback}
+            />
+          )}
         </div>
       </div>
+      
       <AssignDepartmentForm
         open={assignModalOpen}
         onClose={() => setAssignModalOpen(false)}
-        onAssign={handleAssign}
+        assignedDepartments={assignedDepartments}
       />
     </div>
   );

@@ -13,9 +13,11 @@ type UserContextType = {
   loading: boolean;
   logout: () => Promise<void>;
   login: (username: string, password: string) => Promise<void>;
+  deleteUser: (userId: string) => Promise<void>;
+  editUser: (userId: string, update: Partial<User>) => Promise<void>;
 };
 
-const UserContext = createContext<UserContextType>({ user: null, loading: true, logout: async () => {}, login: async () => {} });
+const UserContext = createContext<UserContextType>({ user: null, loading: true, logout: async () => {}, login: async () => {}, deleteUser: async () => {}, editUser: async () => {} });
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -80,8 +82,32 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const deleteUser = async (userId: string) => {
+    await api.delete(`/users/${userId}`);
+    // If the deleted user is the current user, log out
+    if (user && user.id === userId) {
+      await logout();
+    }
+  };
+
+  const editUser = async (userId: string, update: Partial<User>) => {
+    await api.patch(`/users/${userId}`, update);
+    // If the edited user is the current user, refresh user info
+    if (user && user.id === userId) {
+      const res = await api.get("/users/me");
+      if (res.data && res.data.username) {
+        setUser({
+          id: res.data.id,
+          username: res.data.username,
+          role: res.data.role,
+          department: res.data.department
+        });
+      }
+    }
+  };
+
   return (
-    <UserContext.Provider value={{ user, loading, logout, login }}>
+    <UserContext.Provider value={{ user, loading, logout, login, deleteUser, editUser }}>
       {children}
     </UserContext.Provider>
   );

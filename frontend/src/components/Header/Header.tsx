@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { LuBell } from "react-icons/lu";
 import { useRouter } from "next/router";
-import api from "../../lib/api";
 import { useUser } from "../../context/UserContext";
 
 // Header with search, bell, and profile picture
