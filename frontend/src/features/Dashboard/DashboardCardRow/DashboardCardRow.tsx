@@ -1,11 +1,19 @@
 import React from "react";
 import DashboardStatCard from "./DashboardStatCard";
+import { useBooks } from "@/context/BookContext";
 
 const DashboardCardRow: React.FC = () => {
+  const { books } = useBooks();
+  const totalBooks = books.length;
+  // const totalProcessed = books.filter((book) => book.status === "Processed").length;
+  const totalClassified = books.filter((book) => book.status === "Classified").length;
+  const totalPending = books.filter((book) => book.status === "Pending").length;
+  const totalAssigned = books.filter((book) => book.status === "Assigned").length;
+
   return (
     <div className="flex gap-10 w-full justify-center mt-6 mb-8">
       <DashboardStatCard
-        value={245}
+        value={totalBooks}
         label="Books Uploaded"
         subtitle=""
         bgColor={["#3B82F6", "#2563EB"]}
@@ -42,7 +50,7 @@ const DashboardCardRow: React.FC = () => {
         }
       />
       <DashboardStatCard
-        value={67}
+        value={totalClassified}
         label="Total Classified"
         subtitle=""
         bgColor={["#22C55E", "#16A34A"]}
@@ -84,7 +92,7 @@ const DashboardCardRow: React.FC = () => {
         }
       />
       <DashboardStatCard
-        value={78}
+        value={totalPending}
         label="Pending Classification"
         subtitle=""
         bgColor={["#F97316", "#EA580C"]}
@@ -128,7 +136,7 @@ const DashboardCardRow: React.FC = () => {
         }
       />
       <DashboardStatCard
-        value={245}
+        value={totalAssigned}
         label="Total Assigned"
         subtitle=""
         bgColor={["#A855F7", "#9333EA"]}
