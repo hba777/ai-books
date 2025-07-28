@@ -36,6 +36,7 @@ const ClassifcationDetails: React.FC = () => {
       const fileBlob = await getBookFile(id as string);
       objectUrl = URL.createObjectURL(fileBlob);
       setFileUrl(objectUrl);
+      console.log("Object Url", objectUrl)
     } catch (err) {
       console.error("Failed to fetch book or file:", err);
     } finally {
@@ -45,12 +46,8 @@ const ClassifcationDetails: React.FC = () => {
 
   fetchData();
 
-  return () => {
-    if (objectUrl) {
-      URL.revokeObjectURL(objectUrl);
-    }
-  };
-}, [id]);
+  return;
+}, []);
 
 
   if (loading) {
