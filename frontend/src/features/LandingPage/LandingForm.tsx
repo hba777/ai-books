@@ -103,7 +103,7 @@ const LandingForm: React.FC = () => {
           {error && <div className="text-red-400 text-sm text-center mb-2">{error}</div>}
           <button
             type="submit"
-            className="w-full py-2 rounded-lg bg-[#2563EB] hover:bg-blue-700 text-white font-semibold transition flex items-center justify-center text-base"
+            className="w-full py-2 rounded-lg bg-[#2563EB] hover:bg-blue-700 text-white font-semibold transition flex items-center justify-center text-base cursor-pointer"
             disabled={loading}
           >
             {loading ? 'Logging in...' : 'Login'}

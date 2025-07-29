@@ -6,6 +6,7 @@ import PDFViewerActual from "@/features/ClassificationDetailsPage/PDFViewer";
 import SeeInfo from "@/features/ClassificationDetailsPage/SeeInfo";
 import { useRouter } from "next/router";
 import { useBooks } from "@/context/BookContext";
+import { useUser } from "@/context/UserContext";
 import { Book } from "@/services/booksApi";
 
 const ClassifcationDetails: React.FC = () => {
@@ -17,38 +18,65 @@ const ClassifcationDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [book, setBook] = useState<Book>(); 
   const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [currentBlobUrl, setCurrentBlobUrl] = useState<string | null>(null);
 
   const router = useRouter();
   const { id } = router.query; // URL: /classification/[id]
   const { getBookById, getBookFile } = useBooks();
+  const { user, loading: userLoading } = useUser();
 
   // Fetch book details and file when `id` is available
   useEffect(() => {
-  if (!id) return;
+    if (!id || userLoading || !user) return;
 
-  let objectUrl: string | null = null;
+    let objectUrl: string | null = null;
+    let isCancelled = false;
 
-  const fetchData = async () => {
-    try {
-      const bookData = await getBookById(id as string);
-      setBook(bookData);
+    const fetchData = async () => {
+      try {
+        const bookData = await getBookById(id as string);
+        if (isCancelled) return;
+        setBook(bookData);
 
-      const fileBlob = await getBookFile(id as string);
-      objectUrl = URL.createObjectURL(fileBlob);
-      setFileUrl(objectUrl);
-      console.log("Object Url", objectUrl)
-    } catch (err) {
-      console.error("Failed to fetch book or file:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+        const fileBlob = await getBookFile(id as string);
+        if (isCancelled) return;
+        objectUrl = URL.createObjectURL(fileBlob);
+        setFileUrl(objectUrl);
+        setCurrentBlobUrl(objectUrl);
+        console.log("Object Url", objectUrl);
+              } catch (err: any) {
+          if (isCancelled) return;
+          console.error("Failed to fetch book or file:", err);
+          // If it's an authentication error, redirect to login
+          if (err.response?.status === 401) {
+            router.push('/');
+          }
+        } finally {
+        if (!isCancelled) {
+          setLoading(false);
+        }
+      }
+    };
 
-  fetchData();
+    fetchData();
 
-  return;
-}, []);
+    // Cleanup function to revoke blob URL when component unmounts
+    return () => {
+      isCancelled = true;
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [id, getBookById, getBookFile, user, userLoading, router]);
 
+  // Cleanup blob URL when component unmounts or when fileUrl changes
+  useEffect(() => {
+    return () => {
+      if (currentBlobUrl) {
+        URL.revokeObjectURL(currentBlobUrl);
+      }
+    };
+  }, [currentBlobUrl]);
 
   if (loading) {
     return (

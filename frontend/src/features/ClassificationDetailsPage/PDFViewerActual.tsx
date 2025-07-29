@@ -69,13 +69,7 @@ const PDFViewerActual: React.FC<PDFViewerActualProps> = ({
       win.onload = () => win.print();
     }
   };
-  useEffect(() => {
-  return () => {
-    if (fileUrl?.startsWith("blob:")) {
-      URL.revokeObjectURL(fileUrl);
-    }
-  };
-}, [fileUrl]);
+
 
   useEffect(() => {
     if (jumpToHighlight) {
@@ -128,7 +122,7 @@ const PDFViewerActual: React.FC<PDFViewerActualProps> = ({
   }, [pageNumber, pendingHighlightId]);
 
   return (
-  <div className="flex-1 flex flex-col ml-6 max-w-3xl min-w-[400px] h-180 pt-0 mt-0">
+  <div className="flex-1 flex flex-col ml-6 max-w-3xl min-w-[500px] h-180 pt-0 mt-0">
     {/* Toolbar */}
     <div className="flex items-center justify-between border-b pb-2 mb-4 bg-black/80 mt-0 pt-0">
       {/* File name left */}
