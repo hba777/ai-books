@@ -1,13 +1,14 @@
 import React, { useState } from "react";
-import { useAgents } from "@/context/AgentsContext"; // <-- Import the hook
+import { useAgents } from "@/context/AgentsContext";
+import { KnowledgeBaseItem } from "@/services/agentsApi";
+import KnowledgeBaseForm from "./KnowledgeBaseForm";
 
 interface AgentFormValues {
   agent_name: string;
   status: "Active" | "Disabled";
-  description: string;
   criteria: string;
   guidelines: string;
-  knowledge_base: string;
+  knowledge_base: Omit<KnowledgeBaseItem, '_id'>[];
 }
 
 interface InDepthAnalysisAgentFormProps {
@@ -21,10 +22,9 @@ interface InDepthAnalysisAgentFormProps {
 const defaultValues: AgentFormValues = {
   agent_name: "",
   status: "Active",
-  description: "",
   criteria: "",
   guidelines: "",
-  knowledge_base: "",
+  knowledge_base: [],
 };
 
 const InDepthAnalysisAgentForm: React.FC<InDepthAnalysisAgentFormProps> = ({
@@ -53,11 +53,10 @@ const InDepthAnalysisAgentForm: React.FC<InDepthAnalysisAgentFormProps> = ({
         await updateAgent(agentId, {
           agent_name: values.agent_name,
           status: values.status === "Active",
-          description: values.description,
           type: "analysis",
-          criteria: values.criteria, // Change Later
+          criteria: values.criteria,
           guidelines: values.guidelines,
-          knowledge_base: values.knowledge_base //Change Later 
+          knowledge_base: values.knowledge_base
         });
       }
       onSubmit?.(values);
@@ -100,16 +99,7 @@ const InDepthAnalysisAgentForm: React.FC<InDepthAnalysisAgentFormProps> = ({
             </select>
           </div>
         </div>
-        <div className="flex flex-col gap-2">
-          <label className="font-semibold">Description</label>
-          <input
-            className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            name="description"
-            value={values.description}
-            onChange={handleChange}
-            required
-          />
-        </div>
+        
         <div className="flex flex-col gap-2">
           <label className="font-semibold">Basic Prompt</label>
           <textarea
@@ -134,12 +124,10 @@ const InDepthAnalysisAgentForm: React.FC<InDepthAnalysisAgentFormProps> = ({
         </div>
         <div className="flex flex-col gap-2">
           <label className="font-semibold">Knowledge Bases</label>
-          <input
-            className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            name="knowledge_base"
+          <KnowledgeBaseForm
             value={values.knowledge_base}
-            onChange={handleChange}
-            required
+            onChange={(newValue) => setValues(prev => ({ ...prev, knowledge_base: newValue }))}
+            isNested={true}
           />
         </div>
         {error && <div className="text-red-500 text-sm">{error}</div>}

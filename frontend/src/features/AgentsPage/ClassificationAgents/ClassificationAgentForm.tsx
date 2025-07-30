@@ -4,7 +4,6 @@ import { useAgents } from "@/context/AgentsContext"; // <-- Import the hook
 interface AgentFormValues {
   agent_name: string;
   status: "Active" | "Disabled";
-  description: string;
   classifier_prompt: string;
   evaluators_prompt: string;
   agentId?: string; 
@@ -22,7 +21,6 @@ interface ClassificationAgentFormProps {
 const defaultValues: AgentFormValues = {
   agent_name: "",
   status: "Active",
-  description: "",
   classifier_prompt: "",
   evaluators_prompt: ""
 };
@@ -54,7 +52,6 @@ const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
         await updateAgent(agentId, {
           agent_name: values.agent_name,
           status: values.status === "Active",
-          description: values.description,
           type: "classification",
           classifier_prompt: values.classifier_prompt,
           evaluators_prompt: values.evaluators_prompt
@@ -100,16 +97,7 @@ const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
             </select>
           </div>
         </div>
-        <div className="flex flex-col gap-2">
-          <label className="font-semibold">Description</label>
-          <input
-            className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            name="description"
-            value={values.description}
-            onChange={handleChange}
-            required
-          />
-        </div>
+      
         <div className="flex flex-col gap-2">
           <label className="font-semibold">Classifier Prompt</label>
           <textarea

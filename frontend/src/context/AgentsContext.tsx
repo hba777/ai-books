@@ -1,11 +1,15 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   Agent,
+  KnowledgeBaseItem,
+  CreateAgentData,
+  UpdateAgentData,
   getAllAgents,
   createAgent as apiCreateAgent,
   updateAgent as apiUpdateAgent,
   deleteAgent as apiDeleteAgent,
-  powerToggleAgent as apiPowerToggleAgent
+  powerToggleAgent as apiPowerToggleAgent,
+  testAgent as apiTestAgent
 } from '../services/agentsApi';
 import { useUser } from "../context/UserContext";
 interface AgentsContextType {
@@ -13,9 +17,21 @@ interface AgentsContextType {
   loading: boolean;
   fetchAgents: () => Promise<void>;
   createAgent: (agent: Omit<Agent, '_id' | 'type'>, type: 'classification' | 'analysis') => Promise<Agent>;
-  updateAgent: (id: string, agent: Omit<Agent, '_id'>) => Promise<Agent>;
+  createAgentWithKnowledgeBase: (
+    agent: Omit<Agent, '_id' | 'type'>, 
+    type: 'classification' | 'analysis',
+    knowledgeBaseItems?: Omit<KnowledgeBaseItem, '_id'>[]
+  ) => Promise<Agent>;
+  updateAgent: (id: string, agent: UpdateAgentData) => Promise<Agent>;
   deleteAgent: (id: string) => Promise<void>;
   powerToggleAgent: (id: string, status: boolean) => Promise<Agent>;
+  testAgent: (id: string, text: string) => Promise<{
+    message: string;
+    agent_id: string;
+    agent_name: string;
+    test_text: string;
+    result: string;
+  }>;
 }
 
 const AgentsContext = createContext<AgentsContextType | undefined>(undefined);
@@ -41,7 +57,24 @@ export const AgentsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return newAgent;
   };
 
-  const updateAgent = async (id: string, agent: Omit<Agent, '_id'>) => {
+  // Helper function to create agent with knowledge base items
+  const createAgentWithKnowledgeBase = async (
+    agent: Omit<Agent, '_id' | 'type'>, 
+    type: 'classification' | 'analysis',
+    knowledgeBaseItems?: Omit<KnowledgeBaseItem, '_id'>[]
+  ) => {
+    const agentData = {
+      ...agent,
+      type,
+      knowledge_base: knowledgeBaseItems || []
+    };
+    console.log("Agent Data", agentData);
+    const newAgent = await apiCreateAgent(agentData);
+    await fetchAgents();
+    return newAgent;
+  };
+
+  const updateAgent = async (id: string, agent: UpdateAgentData) => {
     const updated = await apiUpdateAgent(id, agent);
     await fetchAgents();
     return updated;
@@ -58,6 +91,10 @@ export const AgentsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return updated;
   };
 
+  const testAgent = async (id: string, text: string) => {
+    return await apiTestAgent(id, text);
+  };
+
   useEffect(() => {
     if (!userLoading && user) {
       fetchAgents();
@@ -67,7 +104,17 @@ export const AgentsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [user, userLoading]);;
 
   return (
-    <AgentsContext.Provider value={{ agents, loading, fetchAgents, createAgent, updateAgent, deleteAgent, powerToggleAgent }}>
+    <AgentsContext.Provider value={{ 
+      agents, 
+      loading, 
+      fetchAgents, 
+      createAgent, 
+      createAgentWithKnowledgeBase,
+      updateAgent, 
+      deleteAgent, 
+      powerToggleAgent,
+      testAgent
+    }}>
       {children}
     </AgentsContext.Provider>
   );

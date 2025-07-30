@@ -2,7 +2,9 @@ import React, { useState } from "react";
 import AgentCard from "./AgentCard";
 import ClassificationAgentForm from "./ClassificationAgentForm";
 import DeleteAgent from "../DeleteAgent/DeleteAgent";
+import TestAgentForm from "../TestAgent/TestAgentForm";
 import { FaPlay } from "react-icons/fa";
+import { IoIosInformationCircleOutline } from "react-icons/io";
 import { toast } from "react-toastify";
 import { Agent as BackendAgent } from "@/services/agentsApi";
 import AddClassificationAgentSection from "../AddAgent/AddClassificationAgentSection";
@@ -11,7 +13,6 @@ import { useAgents } from "@/context/AgentsContext";
 interface Agent extends BackendAgent {
   _id: string
   agent_name: string;
-  description: string;
 }
 
 interface AgentListSectionProps {
@@ -32,6 +33,8 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [deletingAgent, setDeletingAgent] = useState<Agent | null>(null);
+  const [isTestOpen, setIsTestOpen] = useState(false);
+  const [testingAgent, setTestingAgent] = useState<Agent | null>(null);
  
   const handleEditOpenForm = (agent: Agent) => {
     setEditingAgent(agent);
@@ -54,6 +57,11 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
       }
     }
   };
+
+  const handleTestOpen = (agent: Agent) => {
+    setTestingAgent(agent);
+    setIsTestOpen(true);
+  };
   const handlePowerClick = async (agentId: string, currentStatus: boolean | undefined) => {
     try {
       await powerToggleAgent(agentId, !!currentStatus);
@@ -75,7 +83,6 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
             key={(agent.agent_name || "") + idx}
             name={ agent.agent_name || "Unnamed Agent"}
             status={agent.status === false ? "Disabled" : "Active"}
-            description={agent.description || agent.criteria || agent.guidelines || agent.classifier_prompt || agent.evaluators_prompt || "No description"}
             icon={icon}
           >
             <svg className="cursor-pointer" onClick={() => handleEditOpenForm(agent)}
@@ -184,6 +191,12 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
                 </svg>
               )}
             </button>
+            <IoIosInformationCircleOutline 
+              className="cursor-pointer text-blue-500 hover:text-blue-700" 
+              size={20}
+              onClick={() => handleTestOpen(agent)}
+              title="Test Agent"
+            />
           </AgentCard>
         ))}
       </div>
@@ -216,6 +229,17 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
           }}
           onConfirm={handleDeleteConfirm}
           agentName={deletingAgent?.agent_name}
+        />
+      )}
+      {isTestOpen && testingAgent && (
+        <TestAgentForm
+          agentId={testingAgent._id}
+          agentName={testingAgent.agent_name}
+          open={isTestOpen}
+          onClose={() => {
+            setIsTestOpen(false);
+            setTestingAgent(null);
+          }}
         />
       )}
     </div>
