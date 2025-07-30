@@ -5,7 +5,7 @@ services:
     container_name: mongo-db-container
     restart: unless-stopped
     ports:
-      - "27017:27017"
+      - "27016:27016"
     volumes:
       - mongo-data:/data/db
 
