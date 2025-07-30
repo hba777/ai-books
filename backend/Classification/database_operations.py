@@ -12,21 +12,15 @@ from backend.db.mongo import (
 
 load_dotenv(override=True)
 
-def insert_document(file_path: str, chunks: list, summary: str):
-    """Insert the chunked documents into MongoDB"""
-    doc_id = str(uuid.uuid4())
-    doc_name = file_path.split("/")[-1]
-    print(f"Working on document: {doc_name}")
-
+def insert_document(doc_id: str, chunks: list, summary: str):
+    
     books_collection = get_books_collection()
     chunks_collection = get_chunks_collection()
 
-    books_collection.insert_one({
-        "doc_id": doc_id,
-        "doc_name": doc_name,
-        "summary": summary,
-        "status": "in_progress"
-    })
+    books_collection.update_one(
+        {"_id": doc_id},               # Match document by _id
+        {"$set": {"summary": summary}} # Set the new summary
+    )
 
     chunk_docs = []
     for i, chunk in enumerate(chunks):
@@ -40,7 +34,6 @@ def insert_document(file_path: str, chunks: list, summary: str):
         })
 
     chunks_collection.insert_many(chunk_docs)
-    print(f"Saved file: {doc_name} in database!")
     return doc_id
 
 def fetch_next_pending_chunk(doc_id):

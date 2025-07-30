@@ -23,19 +23,19 @@ def splits(text: str):
     
     return splitter.split_text(text)
 
-def index(file_path):
+def index(file_path, doc_id):
     """Save the documents in the database"""
     text = parse_to_text(file_path=file_path)
     chunks = splits(text)
     print(f"Split the documents in {len(chunks)} paragraphs.")
     summary = summarize_pdf(chunks)
-    indexed_doc_id = insert_document(file_path=file_path, chunks=chunks, summary=summary)
+    indexed_doc_id = insert_document(doc_id, chunks=chunks, summary=summary)
 
     return indexed_doc_id
 
 #################################################################################
 
-files = [r"The Lost War.pdf"]
-for file in files:
-    doc_id = index(file)
-    print(f"Document '{doc_id}' indexed!")
+# files = [r"The Lost War.pdf"]
+# for file in files:
+#     doc_id = index(file)
+#     print(f"Document '{doc_id}' indexed!")
