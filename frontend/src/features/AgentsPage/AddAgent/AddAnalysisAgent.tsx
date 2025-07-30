@@ -31,7 +31,6 @@ const AddAnalysisAgentSection: React.FC<AddAnalysisAgentSectionProps> = ({
       guidelines: values.guidelines,
     };
     try {
-      console.log("Payload", payload);
 
       await createAgentWithKnowledgeBase(payload, "analysis", values.knowledge_base);
       setShowForm(false);

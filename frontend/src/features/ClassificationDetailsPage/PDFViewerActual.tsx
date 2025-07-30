@@ -73,7 +73,6 @@ const PDFViewerActual: React.FC<PDFViewerActualProps> = ({
 
   useEffect(() => {
     if (jumpToHighlight) {
-      console.log(jumpToHighlight);
       // Find all highlights for the class across all pages
       const highlights = sampleHighlights.filter(
         (h) => h.class === jumpToHighlight.className
