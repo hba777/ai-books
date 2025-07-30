@@ -68,7 +68,6 @@ export const AgentsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       type,
       knowledge_base: knowledgeBaseItems || []
     };
-    console.log("Agent Data", agentData);
     const newAgent = await apiCreateAgent(agentData);
     await fetchAgents();
     return newAgent;
