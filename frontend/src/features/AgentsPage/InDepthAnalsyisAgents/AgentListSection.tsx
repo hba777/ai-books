@@ -83,8 +83,8 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
       <div className="mt-4">
         {agents.map((agent, idx) => (
           <AgentCard
-            key={(agent.name || agent.agent_name || "") + idx}
-            name={agent.name || agent.agent_name || "Unnamed Agent"}
+            key={(agent.agent_name || "") + idx}
+            name={agent.agent_name || "Unnamed Agent"}
             status={agent.status === false ? "Disabled" : "Active"}
             icon={icon}
           >
@@ -218,7 +218,8 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
             agent_name: editingAgent.agent_name,
             criteria: editingAgent.criteria ?? "",
             guidelines: editingAgent.guidelines ?? "",
-            status: editingAgent.status === false ? "Disabled" : "Active"
+            status: editingAgent.status === false ? "Disabled" : "Active",
+            knowledge_base: editingAgent.knowledge_base ?? []
           }}
           agentId={editingAgent._id}
           onCancel={() => {

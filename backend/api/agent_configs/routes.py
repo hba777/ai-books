@@ -66,46 +66,63 @@ def create_agent(agent: AgentConfigModel):
 )
 def update_agent(agent_id: str, agent: AgentConfigModel):
     collection = get_agent_configs_collection()
+
+    # Convert incoming data to dict
     update_data = agent.dict(by_alias=True, exclude={"id", "_id"})
-    
-    # Handle knowledge_base items - create or update them in kb_data_collection
-    if "knowledge_base" in update_data and update_data["knowledge_base"]:
-        updated_kb_items = []
-        for kb_item in update_data["knowledge_base"]:
-            kb_item_copy = kb_item.copy()
-            
-            if "_id" in kb_item_copy:
-                # Update existing knowledge base item
-                kb_id = kb_item_copy["_id"]
-                del kb_item_copy["_id"]  # Remove _id for update
-                
-                # Update in kb_data_collection
-                kb_data_collection.find_one_and_update(
-                    {"_id": ObjectId(kb_id)},
-                    {"$set": kb_item_copy},
-                    return_document=True
-                )
-                kb_item_copy["_id"] = kb_id
-            else:
-                # Create new knowledge base item
-                kb_result = kb_data_collection.insert_one(kb_item_copy)
-                kb_item_copy["_id"] = str(kb_result.inserted_id)
-            
-            updated_kb_items.append(kb_item_copy)
-        
-        # Update agent_dict with the updated knowledge base items
-        update_data["knowledge_base"] = updated_kb_items
-    
+
+    # Fetch existing agent to compare KB items
+    existing_agent = collection.find_one({"_id": ObjectId(agent_id)})
+    if not existing_agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    existing_kb_ids = {
+        str(item["_id"]) for item in existing_agent.get("knowledge_base", [])
+    }
+
+    new_kb_items = update_data.get("knowledge_base", [])
+
+    # Collect IDs from new KB items (those being updated)
+    new_kb_ids = {item["_id"] for item in new_kb_items if "_id" in item}
+
+    # --- DELETE removed KB items ---
+    kb_ids_to_delete = existing_kb_ids - new_kb_ids
+    for kb_id in kb_ids_to_delete:
+        kb_data_collection.delete_one({"_id": ObjectId(kb_id)})
+
+    # --- CREATE / UPDATE KB items ---
+    updated_kb_items = []
+    for kb_item in new_kb_items:
+        kb_item_copy = kb_item.copy()
+
+        if "_id" in kb_item_copy:
+            # Update existing KB
+            kb_id = kb_item_copy["_id"]
+            del kb_item_copy["_id"]
+
+            kb_data_collection.find_one_and_update(
+                {"_id": ObjectId(kb_id)},
+                {"$set": kb_item_copy},
+                return_document=True
+            )
+            kb_item_copy["_id"] = kb_id
+        else:
+            # Create new KB
+            kb_result = kb_data_collection.insert_one(kb_item_copy)
+            kb_item_copy["_id"] = str(kb_result.inserted_id)
+
+        updated_kb_items.append(kb_item_copy)
+
+    # Set updated KB list
+    update_data["knowledge_base"] = updated_kb_items
+
+    # Update the agent document
     result = collection.find_one_and_update(
         {"_id": ObjectId(agent_id)},
         {"$set": update_data},
         return_document=True
     )
-    if not result:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    
+
     result["_id"] = str(result["_id"])
-    
     return AgentConfigResponse(**result)
 
 @router.post(

@@ -15,7 +15,6 @@ class ReviewDetailModel(BaseModel):
 
 # Main review outcome model
 class ReviewOutcomesModel(BaseModel):
-    id: str = Field(..., alias="_id")  # MongoDB _id as string
     Book_Name: str = Field(..., alias="Book Name")
     Chunk_no: int = Field(..., alias="Chunk no.")
     Chunk_ID: str = Field(..., alias="Chunk_ID")
