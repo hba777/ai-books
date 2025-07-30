@@ -18,7 +18,7 @@ interface BookContextType {
   getBookById: (bookId: string) => Promise<Book>;
   getBookFile: (bookId: string) => Promise<Blob>;
   assignDepartments: (bookId: string, departments: string[]) => Promise<void>;
-  addFeedback: (bookId: string, comment: string) => Promise<void>;
+  addFeedback: (bookId: string, comment: string, department: string) => Promise<void>;
 }
 
 const BookContext = createContext<BookContextType | undefined>(undefined);
@@ -50,8 +50,8 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await fetchBooks(); // Refresh books to get updated data
   };
 
-  const addFeedback = async (bookId: string, comment: string) => {
-    await apiAddFeedback(bookId, comment);
+  const addFeedback = async (bookId: string, comment: string, department: string) => {
+    await apiAddFeedback(bookId, comment, department);
     await fetchBooks(); // Refresh books to get updated data
   };
 

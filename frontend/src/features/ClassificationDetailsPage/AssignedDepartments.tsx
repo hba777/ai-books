@@ -40,7 +40,7 @@ const AssignedDepartments: React.FC<AssignedDepartmentsProps> = ({
     setSubmitting(prev => ({ ...prev, [department]: true }));
     
     try {
-      await addFeedback(bookId, feedbackText[department]);
+      await addFeedback(bookId, feedbackText[department], department);
       setFeedbackText(prev => ({ ...prev, [department]: "" }));
       setShowFeedback(prev => ({ ...prev, [department]: false }));
     } catch (error) {
@@ -48,10 +48,6 @@ const AssignedDepartments: React.FC<AssignedDepartmentsProps> = ({
     } finally {
       setSubmitting(prev => ({ ...prev, [department]: false }));
     }
-  };
-
-  const canGiveFeedback = (department: string) => {
-    return user?.department === department;
   };
 
   if (assignedDepartments.length === 0) {
@@ -71,14 +67,12 @@ const AssignedDepartments: React.FC<AssignedDepartmentsProps> = ({
           <div key={department} className="bg-white rounded-lg p-3 border border-gray-200">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-800">{department}</span>
-              {canGiveFeedback(department) && (
-                <button
-                  onClick={() => handleShowFeedback(department)}
-                  className="text-xs px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
-                >
-                  {showFeedback[department] ? "Cancel" : "Give Feedback"}
-                </button>
-              )}
+              <button
+                onClick={() => handleShowFeedback(department)}
+                className="text-xs px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+              >
+                {showFeedback[department] ? "Cancel" : "Give Feedback"}
+              </button>
             </div>
             {/* Feedback List for this department */}
             {feedback.filter(fb => fb.department === department).length > 0 && (

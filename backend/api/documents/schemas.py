@@ -10,6 +10,7 @@ class FeedbackModel(BaseModel):
 
 class FeedbackRequest(BaseModel):
     comment: str
+    department: str
 
 class BookResponse(BaseModel):
     id: str = Field(alias="_id")       # Internal name `id`, accepts/returns `_id`
