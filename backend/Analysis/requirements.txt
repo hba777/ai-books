@@ -1,0 +1,15 @@
+langchain==0.3.25
+langchain-chroma==0.2.4
+langchain-community==0.3.25
+langchain-core==0.3.65
+langchain-groq==0.3.2
+langgraph==0.4.9
+pymongo==4.12.1
+python-dotenv==1.1.0
+pdfplumber==0.11.7
+tensorflow==2.19.0
+transformers==4.52.4
+fastembed==0.7.1
+langchain_google_genai
+lark
+tf-keras

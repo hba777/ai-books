@@ -9,3 +9,47 @@ passlib
 bcrypt>=4.0.0
 jwt
 python-multipart
+
+# LangChain and LangGraph
+langchain==0.3.25
+langchain-core==0.3.65
+langchain-community==0.3.25
+langchain-chroma==0.2.4
+langchain-docling
+langchain-groq==0.3.2
+langchain-huggingface
+langchain_google_genai
+langgraph==0.4.9
+langgraph-supervisor
+
+# Text Splitting and NLP
+langchain-text-splitters
+sentencepiece
+rouge-score
+lark
+fastembed==0.7.1
+
+# Hugging Face and Transformers
+transformers==4.52.4
+datasets
+huggingface_hub[hf_xet]
+
+# Deep Learning Frameworks
+torch
+tensorflow==2.19.0
+tf-keras
+
+# PDF & Document Processing
+PyMuPDF
+pdfplumber==0.11.7
+pypdf
+pdfkit
+docling
+opik
+
+# Databases
+psycopg2-binary
+pymongo==4.12.1
+
+# Environment Management
+python-dotenv==1.1.0
