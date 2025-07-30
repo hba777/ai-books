@@ -1,5 +1,6 @@
 import React from "react";
 import { useRouter } from "next/router";
+import { useBooks } from "../../context/BookContext";
 
 interface Book {
   _id: string;
@@ -54,6 +55,7 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
     const basePath = router.pathname.startsWith('/analysis') ? '/analysis' : '/classification';
     router.push(`${basePath}/${id}`);
   };
+  const { indexBook } = useBooks();
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
       {books.map((book, idx) => {
@@ -63,14 +65,14 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
           typeof book.percent === "number"
             ? book.percent
             : book.status === "Processed"
-            ? 100
-            : book.status === "Processing"
-            ? 50
-            : book.status === "Assigned"
-            ? 100
-            : book.status === "Pending"
-            ? 0
-            : 0;
+              ? 100
+              : book.status === "Processing"
+                ? 50
+                : book.status === "Assigned"
+                  ? 100
+                  : book.status === "Pending"
+                    ? 0
+                    : 0;
         return (
           <div
             key={book._id}
@@ -108,6 +110,19 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
                   : book.status}
               </span>
               <span className="text-xs text-gray-500 font-bold">{percent}%</span>
+            </div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="font-bold text-lg text-gray-900">{book.doc_name}</div>
+              <button
+                title="Index & Classify"
+                onClick={e => {
+                  e.stopPropagation();
+                  indexBook(book._id);
+                }}
+                className="text-blue-500 hover:text-blue-700 p-1 rounded-full"
+              >
+                <svg width="20" height="20" fill="none" stroke="currentColor"><path d="M5 13l4 4L19 7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              </button>
             </div>
             <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
               <div

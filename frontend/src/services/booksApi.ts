@@ -63,3 +63,9 @@ export async function addFeedback(bookId: string, comment: string, department: s
   const res = await api.post<{ message: string }>(`/books/${bookId}/feedback`, { comment, department });
   return res.data;
 }
+
+// Add after other exports
+export async function indexBook(bookId: string): Promise<{ message: string; indexed_doc_id: string }> {
+  const res = await api.post<{ message: string; indexed_doc_id: string }>(`/chunks/index-book/${bookId}`);
+  return res.data;
+}
