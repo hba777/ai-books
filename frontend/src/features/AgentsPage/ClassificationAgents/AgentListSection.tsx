@@ -11,7 +11,6 @@ import { useAgents } from "@/context/AgentsContext";
 interface Agent extends BackendAgent {
   _id: string
   agent_name: string;
-  description: string;
 }
 
 interface AgentListSectionProps {
@@ -75,7 +74,6 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
             key={(agent.agent_name || "") + idx}
             name={ agent.agent_name || "Unnamed Agent"}
             status={agent.status === false ? "Disabled" : "Active"}
-            description={agent.description || agent.criteria || agent.guidelines || agent.classifier_prompt || agent.evaluators_prompt || "No description"}
             icon={icon}
           >
             <svg className="cursor-pointer" onClick={() => handleEditOpenForm(agent)}

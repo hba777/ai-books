@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Body
-from models.agent_configs import AgentConfigModel, KnowledgeBaseItem
+from models.agent_configs import AgentConfigModel
 from utils.jwt_utils import get_user_from_cookie
 from db.mongo import get_agent_configs_collection, kb_data_collection
 from bson import ObjectId
 
-from .schemas import AgentConfigResponse, AgentConfigListResponse, AgentDeleteResponse, KnowledgeBaseItemResponse
+from .schemas import AgentConfigResponse, AgentConfigListResponse, AgentDeleteResponse
 
 router = APIRouter(prefix="/agents", tags=["Agent Configurations"])
 

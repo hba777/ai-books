@@ -16,7 +16,6 @@ class KnowledgeBaseItem(BaseModel):
 class AgentConfigModel(BaseModel):
     id: Optional[str] = Field(default=None, alias="_id")  # Map MongoDB _id to string
     agent_name: str
-    description: str
     type: Literal["classification", "analysis"]
     criteria: Optional[str] = None      
     guidelines: Optional[str] = None    

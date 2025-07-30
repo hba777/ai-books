@@ -11,7 +11,6 @@ export interface KnowledgeBaseItem {
 export interface Agent {
   _id: string;
   agent_name: string;
-  description: string;
   type: string;
   criteria?: string | null;
   guidelines?: string | null;

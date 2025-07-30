@@ -16,7 +16,6 @@ class KnowledgeBaseItemResponse(BaseModel):
 class AgentConfigResponse(BaseModel):
     id: str = Field(..., alias="_id")
     agent_name: str
-    description: str
     type: str
     criteria: Optional[str] = None
     guidelines: Optional[str] = None
