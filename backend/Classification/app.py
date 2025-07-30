@@ -1,7 +1,6 @@
 """Main pipeline"""
 import os
 import json
-import ast
 import time
 from graph import invoke_graph
 from utility import create_pdf_to_html, extract_classification_info

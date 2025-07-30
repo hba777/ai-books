@@ -8,6 +8,7 @@ from langchain_core.runnables import RunnableLambda
 from models import State
 from knowledge_base import get_relevant_info, retriever, knowledge_list
 from config import MONGO_URI, AGENTS_DB_NAME, AGENTS_COLLECTION_NAME
+from backend.db.mongo import get_agent_configs_collection
 
 # Define a type for agent functions for clear type hinting
 Agent = Callable[[State], Dict]
@@ -306,14 +307,9 @@ def load_agents_from_mongo(llm_model: ChatGroq, eval_llm_model: ChatGroq):
     Loads agent configurations (name, criteria, guidelines) from a MongoDB collection
     and registers them as review agents.
     """
-    client = None
+    collection = get_agent_configs_collection()
     try:
-        client = pymongo.MongoClient(MONGO_URI)
-        db = client[AGENTS_DB_NAME]
-        collection = db[AGENTS_COLLECTION_NAME]
-
         rows = collection.find({})
-
         for doc in rows:
             agent_name = doc.get("agent_name")
             criteria = doc.get("criteria")
@@ -325,11 +321,5 @@ def load_agents_from_mongo(llm_model: ChatGroq, eval_llm_model: ChatGroq):
                 print(f"Agent '{agent_name}' loaded from MongoDB.")
             else:
                 print(f"Error: Missing 'criteria' or 'guidelines' for agent '{agent_name}' in MongoDB document: {doc}")
-    except pymongo.errors.ConnectionFailure as e:
-        print(f"MongoDB connection error for Agents: {e}")
-        print("Please ensure MongoDB server is running on localhost:27017.")
     except Exception as e:
         print(f"An unexpected error occurred during agent loading: {e}")
-    finally:
-        if client:
-            client.close()

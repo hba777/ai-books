@@ -5,7 +5,7 @@ import json
 from pymongo import ASCENDING # Import ASCENDING for sorting
 from dotenv import load_dotenv
 from typing import List, Dict, Any # Import for type hinting
-from backend.db.mongo import (
+from db.mongo import (
     get_books_collection,
     get_chunks_collection,
 )
