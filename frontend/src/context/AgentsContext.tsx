@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   Agent,
+  KnowledgeBaseItem,
+  CreateAgentData,
+  UpdateAgentData,
   getAllAgents,
   createAgent as apiCreateAgent,
   updateAgent as apiUpdateAgent,
@@ -13,7 +16,12 @@ interface AgentsContextType {
   loading: boolean;
   fetchAgents: () => Promise<void>;
   createAgent: (agent: Omit<Agent, '_id' | 'type'>, type: 'classification' | 'analysis') => Promise<Agent>;
-  updateAgent: (id: string, agent: Omit<Agent, '_id'>) => Promise<Agent>;
+  createAgentWithKnowledgeBase: (
+    agent: Omit<Agent, '_id' | 'type'>, 
+    type: 'classification' | 'analysis',
+    knowledgeBaseItems?: Omit<KnowledgeBaseItem, '_id'>[]
+  ) => Promise<Agent>;
+  updateAgent: (id: string, agent: UpdateAgentData) => Promise<Agent>;
   deleteAgent: (id: string) => Promise<void>;
   powerToggleAgent: (id: string, status: boolean) => Promise<Agent>;
 }
@@ -41,7 +49,23 @@ export const AgentsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return newAgent;
   };
 
-  const updateAgent = async (id: string, agent: Omit<Agent, '_id'>) => {
+  // Helper function to create agent with knowledge base items
+  const createAgentWithKnowledgeBase = async (
+    agent: Omit<Agent, '_id' | 'type'>, 
+    type: 'classification' | 'analysis',
+    knowledgeBaseItems?: Omit<KnowledgeBaseItem, '_id'>[]
+  ) => {
+    const agentData = {
+      ...agent,
+      type,
+      knowledge_base: knowledgeBaseItems || []
+    };
+    const newAgent = await apiCreateAgent(agentData);
+    await fetchAgents();
+    return newAgent;
+  };
+
+  const updateAgent = async (id: string, agent: UpdateAgentData) => {
     const updated = await apiUpdateAgent(id, agent);
     await fetchAgents();
     return updated;
@@ -67,7 +91,16 @@ export const AgentsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [user, userLoading]);;
 
   return (
-    <AgentsContext.Provider value={{ agents, loading, fetchAgents, createAgent, updateAgent, deleteAgent, powerToggleAgent }}>
+    <AgentsContext.Provider value={{ 
+      agents, 
+      loading, 
+      fetchAgents, 
+      createAgent, 
+      createAgentWithKnowledgeBase,
+      updateAgent, 
+      deleteAgent, 
+      powerToggleAgent 
+    }}>
       {children}
     </AgentsContext.Provider>
   );
