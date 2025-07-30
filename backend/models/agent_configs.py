@@ -3,7 +3,6 @@ from typing import Optional, Literal, List
 
 
 class KnowledgeBaseItem(BaseModel):
-    id: str = Field(..., alias="_id")  # MongoDB _id as string
     json_data: str
     main_category: str
     sub_category: Optional[str] = None
@@ -14,7 +13,6 @@ class KnowledgeBaseItem(BaseModel):
 
 
 class AgentConfigModel(BaseModel):
-    id: Optional[str] = Field(default=None, alias="_id")  # Map MongoDB _id to string
     agent_name: str
     type: Literal["classification", "analysis"]
     criteria: Optional[str] = None      

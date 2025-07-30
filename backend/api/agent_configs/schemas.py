@@ -12,7 +12,6 @@ class KnowledgeBaseItemResponse(BaseModel):
     class Config:
         populate_by_name = True
 
-
 class AgentConfigResponse(BaseModel):
     id: str = Field(..., alias="_id")
     agent_name: str
@@ -23,9 +22,10 @@ class AgentConfigResponse(BaseModel):
     evaluators_prompt: Optional[str] = None
     classifier_prompt: Optional[str] = None
     knowledge_base: Optional[List[KnowledgeBaseItemResponse]] = None
-
 class AgentConfigListResponse(BaseModel):
     agents: List[AgentConfigResponse]
 
 class AgentDeleteResponse(BaseModel):
     detail: str
+class TestAgentRequest(BaseModel):
+    text: str

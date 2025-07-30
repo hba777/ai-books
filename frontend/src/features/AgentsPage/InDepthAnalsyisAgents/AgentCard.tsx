@@ -3,7 +3,6 @@ import React from "react";
 interface AgentCardProps {
   name: string;
   status: "Active" | "Disabled";
-  description: string;
   icon: React.ReactNode;
   children?: React.ReactNode; // For action buttons
 }
@@ -13,7 +12,7 @@ const statusColors = {
   Disabled: "bg-red-100 text-red-700",
 };
 
-const AgentCard: React.FC<AgentCardProps> = ({ name, status, description, icon, children }) => (
+const AgentCard: React.FC<AgentCardProps> = ({ name, status, icon, children }) => (
   <div className="flex items-center justify-between bg-white rounded-xl shadow p-5 mb-4 w-full">
     <div className="flex items-center gap-4">
       <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-gradient-to-br from-[#C522A7] to-[#A31680]">
@@ -26,7 +25,6 @@ const AgentCard: React.FC<AgentCardProps> = ({ name, status, description, icon, 
           <span className={`text-xs px-2 py-0.5 rounded font-semibold inline-block ${statusColors[status]}`}>{status}</span>
         </span>
         </div>
-        <span className="text-sm text-gray-500 mt-1">{description}</span>
       </div>
     </div>
     <div className="flex items-center gap-2">

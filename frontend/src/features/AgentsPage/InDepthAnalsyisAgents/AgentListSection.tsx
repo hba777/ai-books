@@ -3,7 +3,9 @@ import AddAnalysisAgentSection from "../AddAgent/AddAnalysisAgent";
 import AgentCard from "./AgentCard";
 import InDepthAnalysisAgentForm from "./InDepthAnalysisAgentForm";
 import DeleteAgent from "../DeleteAgent/DeleteAgent";
+import TestAgentForm from "../TestAgent/TestAgentForm";
 import { FaPlay } from "react-icons/fa";
+import { IoIosInformationCircleOutline } from "react-icons/io";
 import { toast } from "react-toastify";
 import { Agent as BackendAgent } from "@/services/agentsApi";
 import { useAgents } from "@/context/AgentsContext";
@@ -11,7 +13,6 @@ import { useAgents } from "@/context/AgentsContext";
 interface Agent extends BackendAgent {
   _id: string
   name?: string;
-  description: string;
 }
 
 interface AgentListSectionProps {
@@ -33,6 +34,8 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [deletingAgent, setDeletingAgent] = useState<Agent | null>(null);
+  const [isTestOpen, setIsTestOpen] = useState(false);
+  const [testingAgent, setTestingAgent] = useState<Agent | null>(null);
 
   const handleOpenForm = () => setisAddFormOpen(true);
   const handleEditOpenform = (agent: Agent) => {
@@ -57,6 +60,11 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
     }
   };
 
+  const handleTestOpen = (agent: Agent) => {
+    setTestingAgent(agent);
+    setIsTestOpen(true);
+  };
+
   const handlePowerClick = async (agentId: string, currentStatus: boolean | undefined) => {
     try {
       await powerToggleAgent(agentId, !!currentStatus);
@@ -70,7 +78,6 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
     <div className="mb-10 w-full">
       <AddAnalysisAgentSection
         title={sectionTitle}
-        description={sectionDescription}
         onAdd={handleOpenForm}
       />
       <div className="mt-4">
@@ -79,7 +86,6 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
             key={(agent.name || agent.agent_name || "") + idx}
             name={agent.name || agent.agent_name || "Unnamed Agent"}
             status={agent.status === false ? "Disabled" : "Active"}
-            description={agent.description || agent.criteria || agent.guidelines || agent.classifier_prompt || agent.evaluators_prompt || "No description"}
             icon={icon}
           >
             <svg className="cursor-pointer" onClick={() => handleEditOpenform(agent)}
@@ -189,6 +195,12 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
                 
               )}
             </button>
+            <IoIosInformationCircleOutline 
+              className="cursor-pointer text-blue-500 hover:text-blue-700" 
+              size={20}
+              onClick={() => handleTestOpen(agent)}
+              title="Test Agent"
+            />
           </AgentCard>
         ))}
       </div>
@@ -203,10 +215,9 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
         <InDepthAnalysisAgentForm
           mode="edit"
           initialValues={{
-            ...editingAgent,
+            agent_name: editingAgent.agent_name,
             criteria: editingAgent.criteria ?? "",
             guidelines: editingAgent.guidelines ?? "",
-            knowledge_base: editingAgent.knowledge_base ?? "",
             status: editingAgent.status === false ? "Disabled" : "Active"
           }}
           agentId={editingAgent._id}
@@ -229,6 +240,17 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
           }}
           onConfirm={handleDeleteConfirm}
           agentName={deletingAgent?.name || deletingAgent?.agent_name}
+        />
+      )}
+      {isTestOpen && testingAgent && (
+        <TestAgentForm
+          agentId={testingAgent._id}
+          agentName={testingAgent.name || testingAgent.agent_name || "Unknown Agent"}
+          open={isTestOpen}
+          onClose={() => {
+            setIsTestOpen(false);
+            setTestingAgent(null);
+          }}
         />
       )}
     </div>

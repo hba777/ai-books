@@ -3,8 +3,9 @@ from models.agent_configs import AgentConfigModel
 from utils.jwt_utils import get_user_from_cookie
 from db.mongo import get_agent_configs_collection, kb_data_collection
 from bson import ObjectId
+from pydantic import BaseModel
 
-from .schemas import AgentConfigResponse, AgentConfigListResponse, AgentDeleteResponse
+from .schemas import AgentConfigResponse, AgentConfigListResponse, AgentDeleteResponse, TestAgentRequest
 
 router = APIRouter(prefix="/agents", tags=["Agent Configurations"])
 
@@ -106,6 +107,28 @@ def update_agent(agent_id: str, agent: AgentConfigModel):
     result["_id"] = str(result["_id"])
     
     return AgentConfigResponse(**result)
+
+@router.post(
+    "/{agent_id}/test",
+    dependencies=[Depends(get_user_from_cookie)]
+)
+def test_agent(agent_id: str, request: TestAgentRequest):
+    collection = get_agent_configs_collection()
+    
+    # Check if agent exists
+    agent = collection.find_one({"_id": ObjectId(agent_id)})
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    # TODO: Implement actual agent testing logic here
+    # This is a placeholder that returns the agent info and the test text
+    return {
+        "message": "Agent test completed",
+        "agent_id": agent_id,
+        "agent_name": agent.get("agent_name", "Unknown"),
+        "test_text": request.text,
+        "result": "Placeholder result - implement actual agent testing logic"
+    }
 
 @router.delete(
     "/{agent_id}",

@@ -59,3 +59,15 @@ export const powerToggleAgent = async (agentId: string, status: boolean): Promis
   const response = await api.patch(`/agents/${agentId}`, { status });
   return response.data;
 };
+
+// Test agent
+export const testAgent = async (agentId: string, text: string): Promise<{
+  message: string;
+  agent_id: string;
+  agent_name: string;
+  test_text: string;
+  result: string;
+}> => {
+  const response = await api.post(`/agents/${agentId}/test`, { text });
+  return response.data;
+};
