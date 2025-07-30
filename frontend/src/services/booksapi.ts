@@ -59,7 +59,7 @@ export async function assignDepartments(bookId: string, departments: string[]): 
 }
 
 // Add feedback to book
-export async function addFeedback(bookId: string, comment: string): Promise<{ message: string }> {
-  const res = await api.post<{ message: string }>(`/books/${bookId}/feedback`, { comment });
+export async function addFeedback(bookId: string, comment: string, department: string): Promise<{ message: string }> {
+  const res = await api.post<{ message: string }>(`/books/${bookId}/feedback`, { comment, department });
   return res.data;
 }

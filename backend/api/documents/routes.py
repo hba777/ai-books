@@ -143,18 +143,15 @@ def assign_departments(book_id: str, departments: List[str]):
 # Add Feedback to book
 @router.post("/{book_id}/feedback")
 def add_feedback(book_id: str, comment: FeedbackRequest, user: User = Depends(get_user_from_cookie)):
-    # Check if user department is assigned to book
     book = books_collection.find_one({"_id": ObjectId(book_id)})
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
 
-    if user.department not in book.get("assigned_departments", []):
-        raise HTTPException(status_code=403, detail="Not allowed to give feedback")
-
+    # Remove department restriction
     feedback = FeedbackModel(
         user_id=user.id,
         username=user.username,
-        department=user.department,
+        department=comment.department,
         comment=comment.comment,
         timestamp=datetime.utcnow().isoformat()
     )

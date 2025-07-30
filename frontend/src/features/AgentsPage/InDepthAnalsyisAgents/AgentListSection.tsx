@@ -48,7 +48,6 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
   };
   const handleDeleteConfirm = async () => {
     if (deletingAgent) {
-      console.log("Deleting agent",deletingAgent)
       try{
       await deleteAgent(deletingAgent?._id);
       setIsDeleteOpen(false);

@@ -59,7 +59,7 @@ const AnalysisDetails: React.FC = () => {
         <Header />
         <div className="flex-1 flex flex-col items-center px-4 py-12 w-full">
           <div className="w-full max-w-7xl">
-            <TopSection bookTitle="The Kite Runner" tags={mockTags} bookId={id as string} onSeeInfo={()=>setShowSeeInfo(true)} />
+            <TopSection bookTitle={book.doc_name} tags={mockTags} bookId={book._id} onSeeInfo={()=>setShowSeeInfo(true)} />
             <AnalysisTable rows={mockRows} />
           </div>
         </div>

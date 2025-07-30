@@ -43,7 +43,6 @@ const ClassifcationDetails: React.FC = () => {
         objectUrl = URL.createObjectURL(fileBlob);
         setFileUrl(objectUrl);
         setCurrentBlobUrl(objectUrl);
-        console.log("Object Url", objectUrl);
               } catch (err: any) {
           if (isCancelled) return;
           console.error("Failed to fetch book or file:", err);
