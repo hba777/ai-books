@@ -1,7 +1,6 @@
 from pydantic import BaseModel, Field
 
 class ChunkModel(BaseModel):
-    id: str = Field(..., alias="_id")  # Handle MongoDB _id as string
     analysis_status: str
     chunk_id: str
     chunk_index: int

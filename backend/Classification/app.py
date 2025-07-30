@@ -6,7 +6,8 @@ import time
 from graph import invoke_graph
 from utility import create_pdf_to_html, extract_classification_info
 from database_operations import fetch_next_pending_chunk, fetch_chunk_context, mark_chunk_as_done, get_chunk_id, save_classification_result, mark_document_done, get_pending_documents
-# from utility import generate_html
+
+
 done = []
 
 def get_text_from_context(context):
@@ -22,7 +23,7 @@ def get_text_from_context(context):
     else:
         return str(context)
 
-def supervisor_loop(doc_id, definition_json_path):
+def supervisor_loop(doc_id, agent_list):
     print("#####-----START-----#####")
     if doc_id in done:
         return doc_id
@@ -43,7 +44,7 @@ def supervisor_loop(doc_id, definition_json_path):
         # Retry until valid JSON is obtained
         while True:
             try:
-                results = invoke_graph(current_text, definition_json_path)
+                results = invoke_graph(current_text, agent_list)
                 if isinstance(results, str):
                     results = json.loads(results)
                 break
@@ -81,9 +82,3 @@ def supervisor_loop(doc_id, definition_json_path):
     print("Loop Ended")
     return doc_id
 
-if __name__ == "__main__":
-    pending_documents = get_pending_documents()
-    # Classify Chunks
-    JSON_PATH = "prompts.json"
-    for doc_id in pending_documents:
-        supervisor_loop(doc_id, JSON_PATH)

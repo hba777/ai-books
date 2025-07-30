@@ -2,17 +2,15 @@
 import os
 import uuid
 import json
-from pymongo import MongoClient, ASCENDING # Import ASCENDING for sorting
+from pymongo import ASCENDING # Import ASCENDING for sorting
 from dotenv import load_dotenv
 from typing import List, Dict, Any # Import for type hinting
+from backend.db.mongo import (
+    get_books_collection,
+    get_chunks_collection,
+)
 
 load_dotenv(override=True)
-
-def create_connection():
-    """Creates and returns MongoDB database instance"""
-    client = MongoClient(os.getenv("MONGO_URI"))
-    db = client[os.getenv("MONGO_DB_NAME")]
-    return db
 
 def insert_document(file_path: str, chunks: list, summary: str):
     """Insert the chunked documents into MongoDB"""
@@ -20,8 +18,10 @@ def insert_document(file_path: str, chunks: list, summary: str):
     doc_name = file_path.split("/")[-1]
     print(f"Working on document: {doc_name}")
 
-    db = create_connection()
-    db.documents.insert_one({
+    books_collection = get_books_collection()
+    chunks_collection = get_chunks_collection()
+
+    books_collection.insert_one({
         "doc_id": doc_id,
         "doc_name": doc_name,
         "summary": summary,
@@ -39,14 +39,14 @@ def insert_document(file_path: str, chunks: list, summary: str):
             "analysis_status": "pending"  # <--- YAHAN YE NAYA FIELD ADD KIYA HAI
         })
 
-    db.chunks.insert_many(chunk_docs)
+    chunks_collection.insert_many(chunk_docs)
     print(f"Saved file: {doc_name} in database!")
     return doc_id
 
 def fetch_next_pending_chunk(doc_id):
     """Fetch the next pending chunk index for the given document."""
-    db = create_connection()
-    chunk = db.chunks.find_one(
+    chunks_collection = get_chunks_collection()
+    chunk = chunks_collection.find_one(
         {"doc_id": doc_id, "status": "pending"},
         sort=[("chunk_index", 1)]
     )
@@ -54,23 +54,23 @@ def fetch_next_pending_chunk(doc_id):
 
 def fetch_chunk_context(doc_id: str, chunk_index: int):
     """Fetch the specified chunk along with its immediate neighbors."""
-    db = create_connection()
-    
+    chunks_collection = get_chunks_collection()
+
     # Fetch current chunk
-    current_chunk_cursor = db.chunks.find(
+    current_chunk_cursor = chunks_collection.find(
         {"doc_id": doc_id, "chunk_index": chunk_index},
         {"text": 1, "_id": 0}
     )
     current_chunk_text = next(current_chunk_cursor, {}).get("text", "")
 
     # Fetch previous and next chunks
-    previous_chunks = list(db.chunks.find(
+    previous_chunks = list(chunks_collection.find(
         {"doc_id": doc_id, "chunk_index": {"$lt": chunk_index}},
         {"text": 1, "_id": 0}
     ).sort("chunk_index", -1).limit(2)) # Get up to 2 previous, sorted descending
     previous_text = " ".join([c["text"] for c in reversed(previous_chunks)]) # Reverse to get correct order
 
-    next_chunks = list(db.chunks.find(
+    next_chunks = list(chunks_collection.find(
         {"doc_id": doc_id, "chunk_index": {"$gt": chunk_index}},
         {"text": 1, "_id": 0}
     ).sort("chunk_index", 1).limit(2)) # Get up to 2 next, sorted ascending
@@ -84,16 +84,16 @@ def fetch_chunk_context(doc_id: str, chunk_index: int):
 
 def mark_chunk_as_done(doc_id, chunk_index):
     """Mark a chunk as done in the database."""
-    db = create_connection()
-    db.chunks.update_one(
+    chunks_collection = get_chunks_collection()
+    chunks_collection.update_one(
         {"doc_id": doc_id, "chunk_index": chunk_index},
         {"$set": {"status": "done"}}
     )
 
 def get_chunk_id(doc_id: str, chunk_index: int):
     """Retrieve chunk_id based on doc_id and chunk_index."""
-    db = create_connection()
-    chunk = db.chunks.find_one(
+    chunks_collection = get_chunks_collection()
+    chunk = chunks_collection.find_one(
         {"doc_id": doc_id, "chunk_index": chunk_index},
         {"chunk_id": 1, "_id": 0}
     )
@@ -101,8 +101,8 @@ def get_chunk_id(doc_id: str, chunk_index: int):
 
 def save_classification_result(chunk_id: str, classification_results: list):
     """Save classification results for a chunk."""
-    db = create_connection()
-    db.chunks.update_one(
+    chunks_collection = get_chunks_collection()
+    chunks_collection.update_one(
         {"chunk_id": chunk_id},
         {"$set": {"classification": classification_results}}
     )
@@ -113,9 +113,9 @@ def extract_results_for_pdf(doc_id: str) -> List[Dict[str, Any]]:
     Returns a list of dictionaries, each representing a classification outcome
     for a chunk, suitable for HTML rendering.
     """
-    db = create_connection()
+    chunks_collection = get_chunks_collection()
     # Fetch all chunks for the given doc_id, sorted by chunk_index
-    chunks_cursor = db.chunks.find(
+    chunks_cursor = chunks_collection.find(
         {"doc_id": doc_id},
         {"_id": 0, "chunk_id": 1, "chunk_index": 1, "text": 1, "classification": 1}
     ).sort("chunk_index", ASCENDING)
@@ -151,12 +151,13 @@ def extract_results_for_pdf(doc_id: str) -> List[Dict[str, Any]]:
 
 def extract_summary_for_pdf(doc_id):
     """Extract summary info for PDF generation."""
-    db = create_connection()
+    books_collection = get_books_collection()
+    chunks_collection = get_chunks_collection()
 
-    doc = db.documents.find_one({"doc_id": doc_id})
+    doc = books_collection.find_one({"doc_id": doc_id})
     doc_name = doc["doc_name"] if doc else "Unknown Document"
 
-    cursor = db.chunks.find({"doc_id": doc_id}, {"classification": 1})
+    cursor = chunks_collection.find({"doc_id": doc_id}, {"classification": 1})
     class_counts = {}
 
     for doc in cursor:
@@ -174,8 +175,8 @@ def extract_summary_for_pdf(doc_id):
 
 def mark_document_done(doc_id):
     """Update the status of a document to 'done'."""
-    db = create_connection()
-    db.documents.update_one(
+    books_collection = get_books_collection()
+    books_collection.update_one(
         {"doc_id": doc_id, "status": "in_progress"},
         {"$set": {"status": "done"}}
     )
@@ -183,16 +184,16 @@ def mark_document_done(doc_id):
 
 def get_pending_documents():
     """Returns a list of doc_id values where status is not 'done'."""
-    db = create_connection()
-    cursor = db.documents.find({"status": {"$ne": "done"}}, {"doc_id": 1})
+    books_collection = get_books_collection()
+    cursor = books_collection.find({"status": {"$ne": "done"}}, {"doc_id": 1})
     return [doc["doc_id"] for doc in cursor]
 
 def get_document_summary(doc_id: str):
     """
     Retrieves summary information for a given document from the 'documents' collection.
     """
-    db = create_connection()
-    document = db.documents.find_one(
+    books_collection = get_books_collection()
+    document = books_collection.find_one(
         {"doc_id": doc_id},
         {"doc_name": 1, "summary": 1, "_id": 0}
     )

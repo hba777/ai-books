@@ -9,16 +9,15 @@ from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
-def create_graph(definition_json_path: str):
+def create_graph(agent_list):
     """Create a LangGraph that integrates multiple subgraphs and runs them in parallel."""
-    with open(definition_json_path, "r", encoding="utf-8") as f:
-        subgraph_data = json.load(f)
+    subgraph_data = agent_list
 
     graph = StateGraph(MessagesState)
 
     subgraph_names = []
     for item in subgraph_data:
-        name = item["name"]
+        name = item["agent_name"]
         classifier_prompt = item["classifier_prompt"]
         evaluator_prompt = item["evaluator_prompt"]
         subgraph = create_subgraph(name, classifier_prompt, evaluator_prompt)
@@ -44,9 +43,9 @@ def create_graph(definition_json_path: str):
     return compiled_graph
 
 
-def invoke_graph(paragraph: str, definition_json_path: str):
+def invoke_graph(paragraph: str, agent_list):
     """Invoke the LangGraph with shared state to generate classification result."""
-    graph = create_graph(definition_json_path)
+    graph = create_graph(agent_list)
 
     # Build initial messages
     messages = []
