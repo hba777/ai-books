@@ -3,7 +3,7 @@ from typing import Literal
 from langchain_core.messages import HumanMessage
 from langgraph.graph import StateGraph, END, MessagesState
 from langgraph.prebuilt import create_react_agent
-from models import LLAMA
+from .models import LLAMA
 
 
 def create_subgraph(name: str, classifier_prompt: str, evaluator_prompt: str):

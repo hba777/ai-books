@@ -1,9 +1,9 @@
 from langgraph.graph import StateGraph, END, START, MessagesState
 from langgraph.checkpoint.memory import InMemorySaver
-from subgraph import create_subgraph
+from .subgraph import create_subgraph
 import json
 import uuid
-from utility import opik_trace
+from .utility import opik_trace
 import os
 from dotenv import load_dotenv
 

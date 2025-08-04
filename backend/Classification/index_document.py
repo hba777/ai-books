@@ -2,8 +2,8 @@
 from langchain_docling import DoclingLoader
 from langchain_docling.loader import ExportType
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from summarization import summarize_pdf
-from database_operations import insert_document
+from .summarization import summarize_pdf
+from .database_operations import insert_document
 
 def parse_to_text(file_path: str):
     """Function to parse and convert document to markdown text"""
@@ -15,8 +15,8 @@ def parse_to_text(file_path: str):
 def splits(text: str):
     """Convert the markdown text into splits"""
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=200,
-        chunk_overlap=50,
+        chunk_size=5000,
+        chunk_overlap=1024,
         length_function=len,
         is_separator_regex=False,
     )

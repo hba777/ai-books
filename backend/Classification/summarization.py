@@ -3,7 +3,7 @@ import re
 import torch
 from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM
 # from database_operations import extract_results_for_pdf # <-- Yeh line hata di gayi thi
-from models import LLAMA
+from .models import LLAMA
 
 # 1. PDF Text Extraction
 def extract_text_from_pdf(pdf_path):

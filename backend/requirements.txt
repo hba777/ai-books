@@ -1,55 +1,55 @@
+# === FastAPI Backend ===
 fastapi
 uvicorn[standard]
 motor
 pydantic
 python-dotenv
-pymongo
 python-jose
 passlib
 bcrypt>=4.0.0
 jwt
 python-multipart
+# === Database ===
+pymongo==4.12.1
+psycopg2-binary
 
-# LangChain and LangGraph
+# === LangChain Ecosystem ===
 langchain==0.3.25
 langchain-core==0.3.65
 langchain-community==0.3.25
 langchain-chroma==0.2.4
-langchain-docling
 langchain-groq==0.3.2
+langchain-google-genai
 langchain-huggingface
-langchain_google_genai
+langchain-text-splitters
+langchain-docling
+
+# === LangGraph ===
 langgraph==0.4.9
 langgraph-supervisor
 
-# Text Splitting and NLP
-langchain-text-splitters
-sentencepiece
-rouge-score
-lark
+# === Embeddings ===
 fastembed==0.7.1
 
-# Hugging Face and Transformers
+# === NLP & Huggingface ===
 transformers==4.52.4
-datasets
 huggingface_hub[hf_xet]
+datasets
+sentencepiece
+rouge-score
 
-# Deep Learning Frameworks
-torch
-tensorflow==2.19.0
-tf-keras
+# === Deep Learning (TensorFlow GPU is auto-enabled if CUDA is present) ===
+tensorflow==2.19.0  # GPU-compatible; ensure CUDA/cuDNN is available at runtime
 
-# PDF & Document Processing
-PyMuPDF
+# === PDF & Document Parsing ===
 pdfplumber==0.11.7
 pypdf
+PyMuPDF
 pdfkit
 docling
 opik
+protobuf==3.20.*
 
-# Databases
-psycopg2-binary
-pymongo==4.12.1
-
-# Environment Management
-python-dotenv==1.1.0
+# === Miscellaneous ===
+lark
+tf-keras

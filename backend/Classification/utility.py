@@ -5,7 +5,7 @@ import pdfkit
 import pandas as pd
 from jinja2 import Template
 from opik.integrations.langchain import OpikTracer
-from database_operations import extract_summary_for_pdf, extract_results_for_pdf, get_document_summary
+from .database_operations import extract_summary_for_pdf, extract_results_for_pdf, get_document_summary
 import json
 from dataclasses import dataclass
 from typing import List, Dict, Any
@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
-config = pdfkit.configuration(wkhtmltopdf=os.getenv("WKHTMLTOPDF_PATH"))
+#config = pdfkit.configuration(wkhtmltopdf=os.getenv("WKHTMLTOPDF_PATH"))
 
 # Define the HumanMessage dataclass (if not already imported from elsewhere)
 @dataclass
@@ -196,7 +196,7 @@ def create_pdf_to_html(doc_id):
 
     # Step 5: Convert to PDF
     output_path = os.path.join(output_dir, f'{doc_id}.pdf')
-    pdfkit.from_file(html_file, output_path, configuration=config)
+    #pdfkit.from_file(html_file, output_path, configuration=config)
 
     print(f"PDF generated at {output_path}")
 
