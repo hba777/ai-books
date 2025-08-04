@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/router";
+import { useBooks } from "../../context/BookContext";
 
 interface Book {
   _id: string;
@@ -25,11 +26,31 @@ const BookTableView: React.FC<BookTableViewProps> = ({
   statusColors,
 }) => {
   const router = useRouter();
+  const { startClassification } = useBooks();
+  const [processingBooks, setProcessingBooks] = useState<Set<string>>(new Set());
+
   const handleRowClick = (id: string) => {
     const basePath = router.pathname.startsWith("/analysis")
       ? "/analysis"
       : "/classification";
     router.push(`${basePath}/${id}`);
+  };
+
+  const handleStartClassification = async (e: React.MouseEvent, bookId: string) => {
+    e.stopPropagation(); // Prevent triggering the row click
+    setProcessingBooks(prev => new Set(prev).add(bookId));
+    
+    try {
+      await startClassification(bookId);
+    } catch (error) {
+      console.error('Error starting classification:', error);
+    } finally {
+      setProcessingBooks(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(bookId);
+        return newSet;
+      });
+    }
   };
   return (
     <div className="bg-white rounded-2xl shadow overflow-x-auto">
@@ -143,6 +164,7 @@ const BookTableView: React.FC<BookTableViewProps> = ({
             </th>
             <th className="py-4 px-6 font-semibold">Date Submitted</th>
             <th className="py-4 px-6 font-semibold">Labels (If Classified)</th>
+            <th className="py-4 px-6 font-semibold">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -180,6 +202,21 @@ const BookTableView: React.FC<BookTableViewProps> = ({
                   )
                 ) : (
                   <span className="text-gray-700 font-bold">-- NIL --</span>
+                )}
+              </td>
+              <td className="py-4 px-6 text-gray-500 whitespace-nowrap">
+                {book.status === "Pending" && (
+                  <button 
+                    onClick={(e) => handleStartClassification(e, book._id)}
+                    disabled={processingBooks.has(book._id)}
+                    className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
+                      processingBooks.has(book._id)
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-blue-500 text-white hover:bg-blue-600'
+                    }`}
+                  >
+                    {processingBooks.has(book._id) ? 'Starting...' : 'Start Classification'}
+                  </button>
                 )}
               </td>
             </tr>

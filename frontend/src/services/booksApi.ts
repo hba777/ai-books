@@ -63,3 +63,9 @@ export async function addFeedback(bookId: string, comment: string, department: s
   const res = await api.post<{ message: string }>(`/books/${bookId}/feedback`, { comment, department });
   return res.data;
 }
+
+// Start classification for a book
+export async function startClassification(bookId: string): Promise<{ message: string; book_id: string; status: string; timestamp: string }> {
+  const res = await api.post<{ message: string; book_id: string; status: string; timestamp: string }>(`/classification/${bookId}/start`);
+  return res.data;
+}
