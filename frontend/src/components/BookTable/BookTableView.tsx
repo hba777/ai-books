@@ -35,6 +35,8 @@ const BookTableView: React.FC<BookTableViewProps> = ({
       : "/classification";
     router.push(`${basePath}/${id}`);
   };
+  const { indexBook } = useBooks();
+
 
   const handleStartClassification = async (e: React.MouseEvent, bookId: string) => {
     e.stopPropagation(); // Prevent triggering the row click
@@ -182,10 +184,9 @@ const BookTableView: React.FC<BookTableViewProps> = ({
               </td>
               <td className="py-4 px-6">
                 <span
-                  className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    statusColors[book.status] ||
+                  className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors[book.status] ||
                     "bg-gray-100 text-gray-500 border border-gray-200"
-                  }`}
+                    }`}
                 >
                   {book.status}
                 </span>
@@ -203,6 +204,19 @@ const BookTableView: React.FC<BookTableViewProps> = ({
                 ) : (
                   <span className="text-gray-700 font-bold">-- NIL --</span>
                 )}
+              </td>
+              <td>
+                <button
+                  title="Index & Classify"
+                  onClick={e => {
+                    e.stopPropagation();
+                    indexBook(book._id);
+                  }}
+                  className="p-2 hover:bg-blue-100 rounded"
+                >
+                  {/* Use any icon you like */}
+                  <svg width="20" height="20" fill="none" stroke="currentColor"><path d="M5 13l4 4L19 7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </button>
               </td>
               <td className="py-4 px-6 text-gray-500 whitespace-nowrap">
                 {book.status === "Pending" && (

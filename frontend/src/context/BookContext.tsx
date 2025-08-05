@@ -6,6 +6,7 @@ import {
   getBookFile,
   assignDepartments as apiAssignDepartments,
   addFeedback as apiAddFeedback,
+  indexBook as apiIndexBook,
   startClassification as apiStartClassification,
   Book,
 
@@ -20,6 +21,7 @@ interface BookContextType {
   getBookFile: (bookId: string) => Promise<Blob>;
   assignDepartments: (bookId: string, departments: string[]) => Promise<void>;
   addFeedback: (bookId: string, comment: string, department: string) => Promise<void>;
+  indexBook: (bookId: string) => Promise<void>;
   startClassification: (bookId: string) => Promise<void>;
 }
 
@@ -57,6 +59,10 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await fetchBooks(); // Refresh books to get updated data
   };
 
+  const indexBook = async (bookId: string) => {
+    await apiIndexBook(bookId);
+    await fetchBooks();
+  };
   const startClassification = async (bookId: string) => {
     await apiStartClassification(bookId);
     await fetchBooks(); // Refresh books to get updated data
@@ -80,6 +86,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       getBookFile: fetchBookFile,
       assignDepartments,
       addFeedback,
+      indexBook
       startClassification,
     }}>
       {children}
