@@ -10,29 +10,29 @@ bcrypt>=4.0.0
 jwt
 python-multipart
 # === Database ===
-pymongo==4.12.1
+pymongo
 psycopg2-binary
 
 # === LangChain Ecosystem ===
-langchain==0.3.25
-langchain-core==0.3.65
-langchain-community==0.3.25
-langchain-chroma==0.2.4
-langchain-groq==0.3.2
+langchain
+langchain-core
+langchain-community
+langchain-chroma
+langchain-groq
 langchain-google-genai
 langchain-huggingface
 langchain-text-splitters
 langchain-docling
 
 # === LangGraph ===
-langgraph==0.4.9
+langgraph==0.5.3
 langgraph-supervisor
 
 # === Embeddings ===
 fastembed==0.7.1
 
 # === NLP & Huggingface ===
-transformers==4.52.4
+transformers
 huggingface_hub[hf_xet]
 datasets
 sentencepiece
