@@ -46,10 +46,11 @@ def index_book(book_id: str, background_tasks: BackgroundTasks):
 @router.post("/classifyBook/{book_id}")
 def index_book(book_id: str):
     agent_configs_collection = get_agent_configs_collection()
-    agents = list(agent_configs_collection.find({}, {"_id": 0, "agent_name": 1, "classifier_prompt": 1, "evaluators_prompt": 1}))
-    # supervisor_loop(book_id, agents)
-    compiled=test_agent()
-    print(compiled)
+    agents = list(agent_configs_collection.find(
+        {"type": "classification"},
+        {"_id": 0, "agent_name": 1, "classifier_prompt": 1, "evaluators_prompt": 1}
+    ))
+    supervisor_loop(book_id, agents)
     return {"message": f"Indexing started for book {book_id}", "agents": agents}
 
 @router.get("/", response_model=ChunkListResponse, dependencies=[Depends(get_user_from_cookie)])
@@ -69,21 +70,4 @@ def get_chunks_count():
     chunks_collection = get_chunks_collection()
     count = chunks_collection.count_documents({})
     return {"count": count}
-
-
-from langgraph.prebuilt import create_react_agent
-from Classification.models import LLAMA
-
-def test_agent():
-    agent = create_react_agent(
-        model=LLAMA,
-        tools=[],
-        name="test_agent",
-        prompt="Hello, classify this message."
-    )
-    # Dummy state
-    from langgraph.graph import MessagesState
-    state = {"messages": []}
-    result = agent.invoke(state)
-    print(result)
 

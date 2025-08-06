@@ -11,31 +11,24 @@ load_dotenv(override=True)
 
 def create_graph(agent_list):
     """Create a LangGraph that integrates multiple subgraphs and runs them in parallel."""
-    print("🔧 Starting graph creation")
     subgraph_data = agent_list
 
     graph = StateGraph(MessagesState)
-    print("✅ Initialized parent StateGraph")
 
     subgraph_names = []
     for item in subgraph_data:
         name = item["agent_name"]
-        print(f"🔁 Creating subgraph for: {name}")
         classifier_prompt = item["classifier_prompt"]
         evaluator_prompt = item["evaluators_prompt"]
-
         subgraph = create_subgraph(name, classifier_prompt, evaluator_prompt)
-        print(f"✅ Subgraph '{name}' created")
 
         try:
             graph.add_node(name, subgraph)
-            print(f"✅ Subgraph '{name}' added to parent graph")
         except Exception as e:
             print(f"❌ Error adding subgraph '{name}' to parent graph: {e}")
         subgraph_names.append(name)
 
     for name in subgraph_names:
-        print(f"🔗 Adding edges for subgraph '{name}'")
         graph.add_edge(START, name)
         graph.add_edge(name, END)
 

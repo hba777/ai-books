@@ -86,8 +86,8 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       getBookFile: fetchBookFile,
       assignDepartments,
       addFeedback,
-      indexBook
-      startClassification,
+      indexBook,
+      startClassification
     }}>
       {children}
     </BookContext.Provider>
