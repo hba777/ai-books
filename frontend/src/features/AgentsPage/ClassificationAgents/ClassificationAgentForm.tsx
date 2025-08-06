@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useAgents } from "@/context/AgentsContext"; // <-- Import the hook
-
+import { extractHeadingsAndPoints } from "./EditAgentUtils"  
 interface AgentFormValues {
   agent_name: string;
   status: "Active" | "Disabled";
@@ -24,42 +24,6 @@ const defaultValues: AgentFormValues = {
   classifier_prompt: "",
   evaluators_prompt: ""
 };
-
-export function extractHeadingsAndPoints(prompt: string): { heading: string; points: string[] }[] {
-  // Step 1: Decode the escaped characters (\n -> \n, \\" -> ")
-  const decoded = prompt.replace(/\\n/g, '\n').replace(/\\"/g, '"');
-
-  // Step 2: Split into lines and process headings and points
-  const lines = decoded.split('\n');
-  const result: { heading: string; points: string[] }[] = [];
-  let currentHeading: string | null = null;
-  let currentPoints: string[] = [];
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed === '') continue;
-
-    // Heading: all-caps with colon at end
-    if (/^[A-Z\s]+:$/.test(trimmed)) {
-      if (currentHeading && currentPoints.length > 0) {
-        result.push({ heading: currentHeading, points: currentPoints });
-      }
-      currentHeading = trimmed.replace(/:$/, '');
-      currentPoints = [];
-      continue;
-    }
-    // Point: starts with * or number and dot
-    if (currentHeading && (/^\*/.test(trimmed) || /^\d+\./.test(trimmed))) {
-      currentPoints.push(line); // Use the original line (not trimmed or modified)
-    }
-  }
-  // Add last group if it has points
-  if (currentHeading && currentPoints.length > 0) {
-    result.push({ heading: currentHeading, points: currentPoints });
-  }
-  return result;
-}
-
 
 const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
   initialValues = {},
