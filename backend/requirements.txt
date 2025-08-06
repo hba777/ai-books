@@ -1,11 +1,55 @@
+# === FastAPI Backend ===
 fastapi
 uvicorn[standard]
 motor
 pydantic
 python-dotenv
-pymongo
 python-jose
 passlib
 bcrypt>=4.0.0
 jwt
 python-multipart
+# === Database ===
+pymongo
+psycopg2-binary
+
+# === LangChain Ecosystem ===
+langchain
+langchain-core
+langchain-community
+langchain-chroma
+langchain-groq
+langchain-google-genai
+langchain-huggingface
+langchain-text-splitters
+langchain-docling
+
+# === LangGraph ===
+langgraph==0.5.3
+langgraph-supervisor
+
+# === Embeddings ===
+fastembed==0.7.1
+
+# === NLP & Huggingface ===
+transformers
+huggingface_hub[hf_xet]
+datasets
+sentencepiece
+rouge-score
+
+# === Deep Learning (TensorFlow GPU is auto-enabled if CUDA is present) ===
+tensorflow==2.19.0  # GPU-compatible; ensure CUDA/cuDNN is available at runtime
+
+# === PDF & Document Parsing ===
+pdfplumber==0.11.7
+pypdf
+PyMuPDF
+pdfkit
+docling
+opik
+protobuf==3.20.*
+
+# === Miscellaneous ===
+lark
+tf-keras
