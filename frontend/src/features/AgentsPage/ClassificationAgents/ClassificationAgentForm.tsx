@@ -25,6 +25,42 @@ const defaultValues: AgentFormValues = {
   evaluators_prompt: ""
 };
 
+export function extractHeadingsAndPoints(prompt: string): { heading: string; points: string[] }[] {
+  // Step 1: Decode the escaped characters (\n -> \n, \\" -> ")
+  const decoded = prompt.replace(/\\n/g, '\n').replace(/\\"/g, '"');
+
+  // Step 2: Split into lines and process headings and points
+  const lines = decoded.split('\n');
+  const result: { heading: string; points: string[] }[] = [];
+  let currentHeading: string | null = null;
+  let currentPoints: string[] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed === '') continue;
+
+    // Heading: all-caps with colon at end
+    if (/^[A-Z\s]+:$/.test(trimmed)) {
+      if (currentHeading && currentPoints.length > 0) {
+        result.push({ heading: currentHeading, points: currentPoints });
+      }
+      currentHeading = trimmed.replace(/:$/, '');
+      currentPoints = [];
+      continue;
+    }
+    // Point: starts with * or number and dot
+    if (currentHeading && (/^\*/.test(trimmed) || /^\d+\./.test(trimmed))) {
+      currentPoints.push(line); // Use the original line (not trimmed or modified)
+    }
+  }
+  // Add last group if it has points
+  if (currentHeading && currentPoints.length > 0) {
+    result.push({ heading: currentHeading, points: currentPoints });
+  }
+  return result;
+}
+
+
 const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
   initialValues = {},
   mode,
@@ -37,6 +73,18 @@ const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { updateAgent } = useAgents(); // <-- Get updateAgent from context
+
+  // State for edit mode JSON UI
+  const [classifierHeadingsPoints, setClassifierHeadingsPoints] = useState<{ heading: string; points: string[] }[]>([]);
+  const [evaluatorHeadingsPoints, setEvaluatorHeadingsPoints] = useState<{ heading: string; points: string[] }[]>([]);
+
+  React.useEffect(() => {
+    if (mode === "edit") {
+      setClassifierHeadingsPoints(extractHeadingsAndPoints(values.classifier_prompt));
+      setEvaluatorHeadingsPoints(extractHeadingsAndPoints(values.evaluators_prompt));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, values.classifier_prompt, values.evaluators_prompt]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -98,28 +146,100 @@ const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
           </div>
         </div>
       
-        <div className="flex flex-col gap-2">
-          <label className="font-semibold">Classifier Prompt</label>
-          <textarea
-            className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            name="classifier_prompt"
-            value={values.classifier_prompt}
-            onChange={handleChange}
-            rows={2}
-            required
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label className="font-semibold">Evaluators Prompt</label>
-          <textarea
-            className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            name="evaluators_prompt"
-            value={values.evaluators_prompt}
-            onChange={handleChange}
-            rows={2}
-            required
-          />
-        </div>
+        {mode === "edit" && classifierHeadingsPoints.length > 0 ? (
+          <div className="flex flex-col gap-2 max-h-96 overflow-y-auto">
+            <label className="font-semibold">Classifier Prompt Items</label>
+            <div className="bg-gray-100 rounded p-3 mb-2">
+              {classifierHeadingsPoints.map(({ heading, points }, i) => (
+                <div key={i} className="mb-2">
+                  <div className="font-semibold text-gray-700 whitespace-pre-line">{heading}</div>
+                  {points.map((point, idx) => (
+                    <input
+                      key={idx}
+                      className="border-b border-blue-300 bg-white px-1 py-0.5 focus:outline-none w-full mt-1"
+                      value={point}
+                      onChange={e => {
+                        setClassifierHeadingsPoints(prev => prev.map((h, j) =>
+                          j === i ? { ...h, points: h.points.map((p, k) => k === idx ? e.target.value : p) } : h
+                        ));
+                      }}
+                    />
+                  ))}
+                  <button
+                    type="button"
+                    className="ml-2 text-blue-500 hover:text-blue-700 text-lg font-bold mt-2"
+                    onClick={() => setClassifierHeadingsPoints(prev => prev.map((h, j) =>
+                      j === i ? { ...h, points: [...h.points, ''] } : h
+                    ))}
+                    title="Add item"
+                  >
+                    +
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        {mode === "add" && (
+          <div className="flex flex-col gap-2">
+            <label className="font-semibold">Classifier Prompt</label>
+            <textarea
+              className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              name="classifier_prompt"
+              value={values.classifier_prompt}
+              onChange={handleChange}
+              rows={4}
+              required
+            />
+          </div>
+        )}
+        {mode === "edit" && evaluatorHeadingsPoints.length > 0 ? (
+          <div className="flex flex-col gap-2 max-h-96 overflow-y-auto">
+            <label className="font-semibold">Evaluator Prompt Items</label>
+            <div className="bg-gray-100 rounded p-3 mb-2">
+              {evaluatorHeadingsPoints.map(({ heading, points }, i) => (
+                <div key={i} className="mb-2">
+                  <div className="font-semibold text-gray-700 whitespace-pre-line">{heading}</div>
+                  {points.map((point, idx) => (
+                    <input
+                      key={idx}
+                      className="border-b border-blue-300 bg-white px-1 py-0.5 focus:outline-none w-full mt-1"
+                      value={point}
+                      onChange={e => {
+                        setEvaluatorHeadingsPoints(prev => prev.map((h, j) =>
+                          j === i ? { ...h, points: h.points.map((p, k) => k === idx ? e.target.value : p) } : h
+                        ));
+                      }}
+                    />
+                  ))}
+                  <button
+                    type="button"
+                    className="ml-2 text-blue-500 hover:text-blue-700 text-lg font-bold mt-2"
+                    onClick={() => setEvaluatorHeadingsPoints(prev => prev.map((h, j) =>
+                      j === i ? { ...h, points: [...h.points, ''] } : h
+                    ))}
+                    title="Add item"
+                  >
+                    +
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        {mode === "add" && (
+          <div className="flex flex-col gap-2">
+            <label className="font-semibold">Evaluator Prompt</label>
+            <textarea
+              className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              name="evaluators_prompt"
+              value={values.evaluators_prompt}
+              onChange={handleChange}
+              rows={4}
+              required
+            />
+          </div>
+        )}
         {error && <div className="text-red-500 text-sm">{error}</div>}
         <div className="flex justify-end gap-4 mt-4">
           <button

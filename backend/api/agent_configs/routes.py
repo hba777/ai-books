@@ -67,53 +67,58 @@ def create_agent(agent: AgentConfigModel):
 def update_agent(agent_id: str, agent: AgentConfigModel):
     collection = get_agent_configs_collection()
 
-    # Convert incoming data to dict
+    # Convert incoming data to dict (excluding id fields)
     update_data = agent.dict(by_alias=True, exclude={"id", "_id"})
 
-    # Fetch existing agent to compare KB items
+    # Fetch existing agent to compare KB items if needed
     existing_agent = collection.find_one({"_id": ObjectId(agent_id)})
     if not existing_agent:
         raise HTTPException(status_code=404, detail="Agent not found")
 
-    existing_kb_ids = {
-        str(item["_id"]) for item in existing_agent.get("knowledge_base", [])
-    }
+    # Only perform KB operations if type is NOT 'classification'
+    if agent.type != "classification":
+        existing_kb_ids = {
+            str(item["_id"]) for item in existing_agent.get("knowledge_base", [])
+        }
 
-    new_kb_items = update_data.get("knowledge_base", [])
+        new_kb_items = update_data.get("knowledge_base", [])
 
-    # Collect IDs from new KB items (those being updated)
-    new_kb_ids = {item["_id"] for item in new_kb_items if "_id" in item}
+        # Collect IDs from new KB items (those being updated)
+        new_kb_ids = {item["_id"] for item in new_kb_items if "_id" in item}
 
-    # --- DELETE removed KB items ---
-    kb_ids_to_delete = existing_kb_ids - new_kb_ids
-    for kb_id in kb_ids_to_delete:
-        kb_data_collection.delete_one({"_id": ObjectId(kb_id)})
+        # --- DELETE removed KB items ---
+        kb_ids_to_delete = existing_kb_ids - new_kb_ids
+        for kb_id in kb_ids_to_delete:
+            kb_data_collection.delete_one({"_id": ObjectId(kb_id)})
 
-    # --- CREATE / UPDATE KB items ---
-    updated_kb_items = []
-    for kb_item in new_kb_items:
-        kb_item_copy = kb_item.copy()
+        # --- CREATE / UPDATE KB items ---
+        updated_kb_items = []
+        for kb_item in new_kb_items:
+            kb_item_copy = kb_item.copy()
 
-        if "_id" in kb_item_copy:
-            # Update existing KB
-            kb_id = kb_item_copy["_id"]
-            del kb_item_copy["_id"]
+            if "_id" in kb_item_copy:
+                # Update existing KB
+                kb_id = kb_item_copy["_id"]
+                del kb_item_copy["_id"]
 
-            kb_data_collection.find_one_and_update(
-                {"_id": ObjectId(kb_id)},
-                {"$set": kb_item_copy},
-                return_document=True
-            )
-            kb_item_copy["_id"] = kb_id
-        else:
-            # Create new KB
-            kb_result = kb_data_collection.insert_one(kb_item_copy)
-            kb_item_copy["_id"] = str(kb_result.inserted_id)
+                kb_data_collection.find_one_and_update(
+                    {"_id": ObjectId(kb_id)},
+                    {"$set": kb_item_copy},
+                    return_document=True
+                )
+                kb_item_copy["_id"] = kb_id
+            else:
+                # Create new KB
+                kb_result = kb_data_collection.insert_one(kb_item_copy)
+                kb_item_copy["_id"] = str(kb_result.inserted_id)
 
-        updated_kb_items.append(kb_item_copy)
+            updated_kb_items.append(kb_item_copy)
 
-    # Set updated KB list
-    update_data["knowledge_base"] = updated_kb_items
+        # Set updated KB list in update data
+        update_data["knowledge_base"] = updated_kb_items
+    else:
+        # If type is classification, remove knowledge_base from update_data
+        update_data.pop("knowledge_base", None)
 
     # Update the agent document
     result = collection.find_one_and_update(
@@ -124,6 +129,7 @@ def update_agent(agent_id: str, agent: AgentConfigModel):
 
     result["_id"] = str(result["_id"])
     return AgentConfigResponse(**result)
+
 
 @router.post(
     "/{agent_id}/test",
@@ -170,6 +176,76 @@ def delete_agent(agent_id: str):
     # Delete the agent
     result = collection.delete_one({"_id": ObjectId(agent_id)})
     return AgentDeleteResponse(detail="Agent deleted successfully", agent_id=agent_id)
+@router.put(
+    "/{agent_id}",
+    response_model=AgentConfigResponse,
+    dependencies=[Depends(get_user_from_cookie)]
+)
+def update_agent(agent_id: str, agent: AgentConfigModel):
+    collection = get_agent_configs_collection()
+
+    # Convert incoming data to dict (excluding id fields)
+    update_data = agent.dict(by_alias=True, exclude={"id", "_id"})
+
+    # Fetch existing agent to compare KB items if needed
+    existing_agent = collection.find_one({"_id": ObjectId(agent_id)})
+    if not existing_agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    # Only perform KB operations if type is NOT 'classification'
+    if agent.type != "classification":
+        existing_kb_ids = {
+            str(item["_id"]) for item in existing_agent.get("knowledge_base", [])
+        }
+
+        new_kb_items = update_data.get("knowledge_base", [])
+
+        # Collect IDs from new KB items (those being updated)
+        new_kb_ids = {item["_id"] for item in new_kb_items if "_id" in item}
+
+        # --- DELETE removed KB items ---
+        kb_ids_to_delete = existing_kb_ids - new_kb_ids
+        for kb_id in kb_ids_to_delete:
+            kb_data_collection.delete_one({"_id": ObjectId(kb_id)})
+
+        # --- CREATE / UPDATE KB items ---
+        updated_kb_items = []
+        for kb_item in new_kb_items:
+            kb_item_copy = kb_item.copy()
+
+            if "_id" in kb_item_copy:
+                # Update existing KB
+                kb_id = kb_item_copy["_id"]
+                del kb_item_copy["_id"]
+
+                kb_data_collection.find_one_and_update(
+                    {"_id": ObjectId(kb_id)},
+                    {"$set": kb_item_copy},
+                    return_document=True
+                )
+                kb_item_copy["_id"] = kb_id
+            else:
+                # Create new KB
+                kb_result = kb_data_collection.insert_one(kb_item_copy)
+                kb_item_copy["_id"] = str(kb_result.inserted_id)
+
+            updated_kb_items.append(kb_item_copy)
+
+        # Set updated KB list in update data
+        update_data["knowledge_base"] = updated_kb_items
+    else:
+        # If type is classification, remove knowledge_base from update_data
+        update_data.pop("knowledge_base", None)
+
+    # Update the agent document
+    result = collection.find_one_and_update(
+        {"_id": ObjectId(agent_id)},
+        {"$set": update_data},
+        return_document=True
+    )
+
+    result["_id"] = str(result["_id"])
+    return AgentConfigResponse(**result)
 
 @router.patch(
     "/{agent_id}",
