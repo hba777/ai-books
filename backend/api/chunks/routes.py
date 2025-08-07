@@ -4,9 +4,9 @@ from db.mongo import get_chunks_collection, get_agent_configs_collection, books_
 from .schemas import ChunkResponse, ChunkListResponse
 import tempfile
 from bson import ObjectId
-# from Classification.index_document import index
-# from Classification.app import supervisor_loop
-
+from Classification.index_document import index
+from Classification.app import supervisor_loop
+# 
 router = APIRouter(prefix="/chunks", tags=["Chunks"])
 
 done = []
@@ -28,20 +28,20 @@ def index_book(book_id: str, background_tasks: BackgroundTasks):
         tmp_path = tmp.name
 # 
     # 3. Index the document (this will chunk and store in DB, returns doc_id)
-    # indexed_doc_id = index(tmp_path, book_id)
+    indexed_doc_id = index(tmp_path, book_id)
 # 
     return {
         "message": f"Indexing and classification started for book {book_id}",
-        "indexed_doc_id": "",
+        "indexed_doc_id": indexed_doc_id,
     }
 # 
 # 
-# @router.post("/classifyBook/{book_id}")
-# def index_book(book_id: str, background_tasks: BackgroundTasks):
-#     agent_configs_collection = get_agent_configs_collection()
-#     agents = list(agent_configs_collection.find({}, {"_id": 0, "agent_name": 1, "classifier_prompt": 1, "evaluator_prompt": 1}))
-#     background_tasks.add_task(supervisor_loop, book_id, agents)
-#     return {"message": f"Indexing started for book {book_id}", "agents": agents}
+@router.post("/classifyBook/{book_id}")
+def index_book(book_id: str, background_tasks: BackgroundTasks):
+    agent_configs_collection = get_agent_configs_collection()
+    agents = list(agent_configs_collection.find({}, {"_id": 0, "agent_name": 1, "classifier_prompt": 1, "evaluator_prompt": 1}))
+    background_tasks.add_task(supervisor_loop, book_id, agents)
+    return {"message": f"Indexing started for book {book_id}", "agents": agents}
 
 @router.post("/classifyBook/{book_id}")
 def index_book(book_id: str):
@@ -71,3 +71,8 @@ def get_chunks_count():
     count = chunks_collection.count_documents({})
     return {"count": count}
 
+@router.delete("/", dependencies=[Depends(get_user_from_cookie)])
+def delete_all_chunks():
+    chunks_collection = get_chunks_collection()
+    delete_result = chunks_collection.delete_many({})
+    return {"message": f"Successfully deleted {delete_result.deleted_count} chunks."}

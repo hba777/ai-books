@@ -28,7 +28,8 @@ def insert_document(doc_id: str, chunks: list, summary: str):
             "chunk_id": str(uuid.uuid4()),
             "doc_id": doc_id,
             "chunk_index": i,
-            "text": chunk,
+            "text": chunk.page_content, # <-- Accessing text from the Document object
+            "page_number": chunk.metadata.get("page", None), # <-- Extracting page number from metadata
             "status": "pending",
             "analysis_status": "pending"  # <--- YAHAN YE NAYA FIELD ADD KIYA HAI
         })

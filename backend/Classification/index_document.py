@@ -1,19 +1,28 @@
 """Document chunking and Indexing"""
-from langchain_docling import DoclingLoader
-from langchain_docling.loader import ExportType
+import pdfplumber
+from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from .summarization import summarize_pdf
 from .database_operations import insert_document
 
-def parse_to_text(file_path: str):
-    """Function to parse and convert document to markdown text"""
+def create_chunks_with_page_numbers(file_path: str):
+    """
+    Loads PDF, extracts text and page numbers using pdfplumber, and splits the content into chunks.
+    """
+    documents = []
     print(f"working with file: {file_path.split('/')[-1]}")
-    loader = DoclingLoader(file_path=file_path, export_type=ExportType.MARKDOWN)
-    docs = loader.load()
-    return docs[0].page_content
+    
+    with open(file_path, "rb") as pdf_file:
+        with pdfplumber.open(pdf_file) as pdf:
+            for i, page in enumerate(pdf.pages):
+                text = page.extract_text()
+                if text:
+                    doc = Document(
+                        page_content=text,
+                        metadata={"page": i + 1} # <-- Page number is explicitly added here
+                    )
+                    documents.append(doc)
 
-def splits(text: str):
-    """Convert the markdown text into splits"""
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=5000,
         chunk_overlap=1024,
@@ -21,14 +30,21 @@ def splits(text: str):
         is_separator_regex=False,
     )
     
-    return splitter.split_text(text)
+    # Splitting Document objects preserves the metadata
+    chunks = splitter.split_documents(documents)
+    return chunks
+
 
 def index(file_path, doc_id):
     """Save the documents in the database"""
-    text = parse_to_text(file_path=file_path)
-    chunks = splits(text)
+    chunks = create_chunks_with_page_numbers(file_path=file_path)
     print(f"Split the documents in {len(chunks)} paragraphs.")
-    summary = summarize_pdf(chunks)
+    
+    # The summarization function likely expects a list of text strings, so extract those
+    summary_chunks_text = [chunk.page_content for chunk in chunks]
+    summary = summarize_pdf(summary_chunks_text)
+    
+    # Pass the chunks with metadata to the database function
     indexed_doc_id = insert_document(doc_id, chunks=chunks, summary=summary)
 
     return indexed_doc_id
