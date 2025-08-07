@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { useBooks } from "../../context/BookContext";
-
+import { toast } from "react-toastify"
 interface Book {
   _id: string;
   doc_name: string;
@@ -26,7 +26,7 @@ const BookTableView: React.FC<BookTableViewProps> = ({
   statusColors,
 }) => {
   const router = useRouter();
-  const { startClassification } = useBooks();
+  const {indexBook, startClassification } = useBooks();
   const [processingBooks, setProcessingBooks] = useState<Set<string>>(new Set());
 
   const handleRowClick = (id: string) => {
@@ -35,8 +35,6 @@ const BookTableView: React.FC<BookTableViewProps> = ({
       : "/classification";
     router.push(`${basePath}/${id}`);
   };
-  const { indexBook } = useBooks();
-
 
   const handleStartClassification = async (e: React.MouseEvent, bookId: string) => {
     e.stopPropagation(); // Prevent triggering the row click
@@ -44,8 +42,10 @@ const BookTableView: React.FC<BookTableViewProps> = ({
     
     try {
       await startClassification(bookId);
+      toast.success("Classification Started")
     } catch (error) {
       console.error('Error starting classification:', error);
+      toast.error("Classification Failed")
     } finally {
       setProcessingBooks(prev => {
         const newSet = new Set(prev);
@@ -207,10 +207,11 @@ const BookTableView: React.FC<BookTableViewProps> = ({
               </td>
               <td>
                 <button
-                  title="Index & Classify"
+                  title="Index"
                   onClick={e => {
                     e.stopPropagation();
                     indexBook(book._id);
+                    toast.success("Chunking Started")
                   }}
                   className="p-2 hover:bg-blue-100 rounded"
                 >

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { useBooks } from "../../context/BookContext";
+import { toast } from "react-toastify"
 
 interface Book {
   _id: string;
@@ -66,8 +67,10 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
     
     try {
       await startClassification(bookId);
+      toast.success("Classification Started")
     } catch (error) {
       console.error('Error starting classification:', error);
+      toast.error("Classification Failed")
     } finally {
       setProcessingBooks(prev => {
         const newSet = new Set(prev);
@@ -108,7 +111,7 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
             <div className="flex items-center justify-between mb-2">
               <div className="font-bold text-lg text-gray-900">{book.doc_name}</div>
               <div className="flex items-center gap-2">
-                {book.status === "Unprocessed" && (
+                {book.status === "Pending" && (
                   <button 
                     onClick={(e) => handleStartClassification(e, book._id)}
                     disabled={processingBooks.has(book._id)}
@@ -149,10 +152,11 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
             <div className="flex items-center justify-between mb-2">
               <div className="font-bold text-lg text-gray-900">{book.doc_name}</div>
               <button
-                title="Index & Classify"
+                title="Index"
                 onClick={e => {
                   e.stopPropagation();
                   indexBook(book._id);
+                  toast.success("Indexing Started")
                 }}
                 className="text-blue-500 hover:text-blue-700 p-1 rounded-full"
               >

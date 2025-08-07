@@ -28,31 +28,12 @@ def index_book(book_id: str, background_tasks: BackgroundTasks):
         tmp_path = tmp.name
 # 
     # 3. Index the document (this will chunk and store in DB, returns doc_id)
-    indexed_doc_id = index(tmp_path, book_id)
+    background_tasks.add_task(index, tmp_path, book_id)
 # 
     return {
-        "message": f"Indexing and classification started for book {book_id}",
-        "indexed_doc_id": indexed_doc_id,
+        "message": f"Indexing and classification started for book {book_id}"
     }
 # 
-# 
-@router.post("/classifyBook/{book_id}")
-def index_book(book_id: str, background_tasks: BackgroundTasks):
-    agent_configs_collection = get_agent_configs_collection()
-    agents = list(agent_configs_collection.find({}, {"_id": 0, "agent_name": 1, "classifier_prompt": 1, "evaluator_prompt": 1}))
-    background_tasks.add_task(supervisor_loop, book_id, agents)
-    return {"message": f"Indexing started for book {book_id}", "agents": agents}
-
-@router.post("/classifyBook/{book_id}")
-def index_book(book_id: str):
-    agent_configs_collection = get_agent_configs_collection()
-    agents = list(agent_configs_collection.find(
-        {"type": "classification"},
-        {"_id": 0, "agent_name": 1, "classifier_prompt": 1, "evaluators_prompt": 1}
-    ))
-    # supervisor_loop(book_id, agents)
-    return {"message": f"Indexing started for book {book_id}", "agents": agents}
-
 @router.get("/", response_model=ChunkListResponse, dependencies=[Depends(get_user_from_cookie)])
 def get_all_chunks():
     chunks_collection = get_chunks_collection()
