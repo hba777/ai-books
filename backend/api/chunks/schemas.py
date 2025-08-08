@@ -1,10 +1,11 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional, Dict, Any
 
 class ClassificationResult(BaseModel):
     classification: str
     confidence_score: int
-    criteria_matched: List[str]
+    criteria_matched: Any
+    name: str
 
 class ChunkResponse(BaseModel):
     id: Optional[str] = Field(alias="_id")  # Maps MongoDB's _id to id

@@ -30,11 +30,11 @@ def supervisor_loop(doc_id, agent_list):
     while True:
         time.sleep(int(os.getenv("DELAY")))
         chunk_index = fetch_next_pending_chunk(doc_id)
-        # if chunk_index is None:
+        if chunk_index is None:
             # print(f"Indexing of document: {doc_id} complete!\nAll chunks processed.")
             # create_pdf_to_html(doc_id)
-            # mark_document_done(doc_id)
-            # break
+            mark_document_done(doc_id)
+            break
 
         print(f"Processing chunk {chunk_index}...")
         context = fetch_chunk_context(doc_id, chunk_index)

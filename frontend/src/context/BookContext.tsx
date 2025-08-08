@@ -99,7 +99,6 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Connect to WebSocket for progress updates
       const ws = connectToProgressWebSocket(bookId, (progress: number, total?: number, done?: number, rawData?: any) => {
-        console.log('[BookContext] WebSocket progress update:', { progress, total, done, rawData });
         setActiveClassifications(prev => 
           prev.map(classification => 
             classification.book_id === bookId 
@@ -110,6 +109,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // If progress is 100%, remove from active classifications after a delay
         if (progress === 100) {
+          fetchBooks()
           setTimeout(() => {
             setActiveClassifications(prev => 
               prev.filter(classification => classification.book_id !== bookId)

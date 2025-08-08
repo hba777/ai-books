@@ -61,7 +61,7 @@ const ProcessingCard: React.FC = () => {
                   Classifying: {classification.book_name || 'Unknown Book'}
                 </span>
                 <span className="text-sm font-medium text-gray-600">
-                  {classification.progress}%
+                   {classification.progress}%
                 </span>
               </div>
               {/* Progress Bar */}

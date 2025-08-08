@@ -4,7 +4,8 @@ from typing import List, Optional, Dict, Any
 class ClassificationResult(BaseModel):
     classification: str
     confidence_score: int
-    criteria_matched: List[str]
+    criteria_matched: Any
+    name: str
 
 class ChunkModel(BaseModel):
     id: Optional[str] = Field(alias="_id")  # Maps MongoDB's _id to id
