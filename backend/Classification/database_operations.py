@@ -4,36 +4,52 @@ import uuid
 import json
 from pymongo import ASCENDING # Import ASCENDING for sorting
 from dotenv import load_dotenv
-from typing import List, Dict, Any # Import for type hinting
+from typing import List, Dict, Any 
+from bson import ObjectId
 from db.mongo import (
     get_books_collection,
     get_chunks_collection,
 )
+import asyncio
+from api.chunks.websocket_manager import get_client
 
 load_dotenv(override=True)
 
 def insert_document(doc_id: str, chunks: list, summary: str):
-    
     books_collection = get_books_collection()
     chunks_collection = get_chunks_collection()
 
-    books_collection.update_one(
-        {"_id": doc_id},               # Match document by _id
-        {"$set": {"summary": summary}} # Set the new summary
-    )
-
+    # Prepare chunk documents
     chunk_docs = []
     for i, chunk in enumerate(chunks):
         chunk_docs.append({
             "chunk_id": str(uuid.uuid4()),
             "doc_id": doc_id,
             "chunk_index": i,
-            "text": chunk,
+            "text": chunk.page_content,
+            "page_number": chunk.metadata.get("page", None),
             "status": "pending",
-            "analysis_status": "pending"  # <--- YAHAN YE NAYA FIELD ADD KIYA HAI
+            "analysis_status": "pending"
         })
 
+    # Insert all chunks
     chunks_collection.insert_many(chunk_docs)
+
+    books_collection.update_one(
+        {"_id": ObjectId(doc_id)},
+        {"$set": {
+            "summary": summary,
+            "status": "Pending"
+        }}
+    )
+
+    # Notify frontend via websocket that indexing is done
+    try:
+        from api.chunks.websocket import notify_indexing_done
+        asyncio.run(notify_indexing_done(doc_id))
+    except Exception as e:
+        print(f"[WebSocket Notify] Failed to notify for doc_id {doc_id}: {e}")
+
     return doc_id
 
 def fetch_next_pending_chunk(doc_id):
@@ -82,6 +98,26 @@ def mark_chunk_as_done(doc_id, chunk_index):
         {"doc_id": doc_id, "chunk_index": chunk_index},
         {"$set": {"status": "done"}}
     )
+    total = get_total_chunks(doc_id)
+    done = get_done_chunks_count(doc_id) 
+    progress = int((done / total) * 100)
+    notify_client(doc_id, progress, total, done)
+
+def notify_client(book_id: str, progress: int, total: int, done: int):
+    ws = get_client(book_id)
+    if ws:
+        try:
+            asyncio.run(ws.send_json({"progress": progress, "total": total, "done": done}))
+        except Exception as e:
+            print(f"Failed to send to client: {e}")
+
+def get_total_chunks(doc_id):
+    chunks_collection = get_chunks_collection()
+    return chunks_collection.count_documents({"doc_id": doc_id})
+
+def get_done_chunks_count(doc_id):
+    chunks_collection = get_chunks_collection()
+    return chunks_collection.count_documents({"doc_id": doc_id, "status": "done"})
 
 def get_chunk_id(doc_id: str, chunk_index: int):
     """Retrieve chunk_id based on doc_id and chunk_index."""
@@ -93,13 +129,17 @@ def get_chunk_id(doc_id: str, chunk_index: int):
     return chunk["chunk_id"] if chunk else None
 
 def save_classification_result(chunk_id: str, classification_results: list):
-    """Save classification results for a chunk."""
+    """Save classification results for a chunk and mark status as complete."""
     chunks_collection = get_chunks_collection()
     chunks_collection.update_one(
         {"chunk_id": chunk_id},
-        {"$set": {"classification": classification_results}}
+        {
+            "$set": {
+                "classification": classification_results
+            }
+        }
     )
-
+ 
 def extract_results_for_pdf(doc_id: str) -> List[Dict[str, Any]]:
     """
     Extracts relevant chunk data and classification results for PDF generation.

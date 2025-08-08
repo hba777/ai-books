@@ -24,6 +24,82 @@ export interface Feedback {
   timestamp: string;
 }
 
+export interface ClassificationProgress {
+  book_id: string;
+  progress: number;
+  total?: number;
+  done?: number;
+  book_name?: string;
+}
+
+// WebSocket connection for progress tracking
+export function connectToProgressWebSocket(
+  bookId: string,
+  onProgress: (progress: number, total?: number, done?: number, rawData?: any) => void
+): WebSocket {
+
+  const wsUrl = `ws://${process.env.NEXT_PUBLIC_BACKEND_HOST}/ws/progress/${bookId}`;
+  
+  const ws = new WebSocket(wsUrl);
+  
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      console.log('[WebSocket] Received progress data:', data);
+      if (data.progress !== undefined) {
+        onProgress(data.progress, data.total, data.done, data);
+      }
+    } catch (error) {
+      console.error('Error parsing WebSocket message:', error);
+    }
+  };
+  
+  ws.onerror = (error) => {
+    console.error('WebSocket error:', error);
+  };
+  
+  ws.onclose = () => {
+    console.log('WebSocket connection closed');
+  };
+  
+  return ws;
+}
+
+export function connectToIndexProgressWebSocket(
+  bookId: string,
+  onDone: () => void
+): WebSocket {
+  const wsUrl = `ws://${process.env.NEXT_PUBLIC_BACKEND_HOST}/ws/index-progress/${bookId}`;
+
+
+  console.log(`[WebSocket] Connecting to: ${wsUrl}`);
+  
+  const ws = new WebSocket(wsUrl);
+
+  ws.onopen = () => {
+    console.log('[WebSocket] Connection established');
+  };
+
+  ws.onmessage = (event) => {
+    console.log('[WebSocket] Message received:', event.data);
+    if (event.data === 'done') {
+      console.log('[WebSocket] Done signal received');
+      onDone();
+      ws.close();
+    }
+  };
+
+  ws.onerror = (error) => {
+    console.error('[WebSocket] Error:', error);
+  };
+
+  ws.onclose = (event) => {
+    console.log('[WebSocket] Connection closed', event);
+  };
+
+  return ws;
+}
+
 
 export async function getAllBooks(): Promise<Book[]> {
   const res = await api.get<Book[]>('/books/');

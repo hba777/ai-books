@@ -170,8 +170,21 @@ def add_feedback(book_id: str, comment: FeedbackRequest, user: User = Depends(ge
     dependencies=[Depends(get_user_from_cookie)]
 )
 def delete_all_books():
+    # Get all books to find their file_ids
+    books = list(books_collection.find({}))
+    
+    # Delete all files from GridFS
+    for book in books:
+        if "file_id" in book:
+            try:
+                fs.delete(book["file_id"])
+            except Exception as e:
+                # Log the error but don't fail the deletion
+                print(f"Error deleting file from GridFS: {e}")
+    
+    # Delete all books from MongoDB
     result = books_collection.delete_many({})
-    return BookDeleteResponse(detail=f"Deleted {result.deleted_count} books.")
+    return BookDeleteResponse(detail=f"Deleted {result.deleted_count} books and their associated files.")
 
 # Delete book by ID
 @router.delete(
@@ -181,8 +194,50 @@ def delete_all_books():
     dependencies=[Depends(get_user_from_cookie)]
 )
 def delete_book_by_id(book_id: str):
+    # First get the book to find its file_id
+    book = books_collection.find_one({"_id": ObjectId(book_id)})
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    
+    # Delete from GridFS if file_id exists
+    if "file_id" in book:
+        try:
+            fs.delete(book["file_id"])
+        except Exception as e:
+            # Log the error but don't fail the deletion
+            print(f"Error deleting file from GridFS: {e}")
+    
+    # Delete from MongoDB
     result = books_collection.delete_one({"_id": ObjectId(book_id)})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Book not found")
     return BookDeleteResponse(detail="Book deleted successfully.")
+
+
+# Delete all files from GridFS
+@router.delete(
+    "/files/gridfs",
+    response_model=BookDeleteResponse,
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_cookie)]
+)
+def delete_all_gridfs_files():
+    try:
+        # Get all file IDs from GridFS
+        file_ids = []
+        for grid_file in fs.find():
+            file_ids.append(grid_file._id)
+        
+        # Delete all files from GridFS
+        deleted_count = 0
+        for file_id in file_ids:
+            try:
+                fs.delete(file_id)
+                deleted_count += 1
+            except Exception as e:
+                print(f"Error deleting file {file_id} from GridFS: {e}")
+        
+        return BookDeleteResponse(detail=f"Deleted {deleted_count} files from GridFS.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting files from GridFS: {str(e)}")
 

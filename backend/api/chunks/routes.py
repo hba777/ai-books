@@ -4,8 +4,8 @@ from db.mongo import get_chunks_collection, get_agent_configs_collection, books_
 from .schemas import ChunkResponse, ChunkListResponse
 import tempfile
 from bson import ObjectId
-# from Classification.index_document import index
-# from Classification.app import supervisor_loop
+from Classification.index_document import index
+from api.chunks.websocket import notify_indexing_done
 
 router = APIRouter(prefix="/chunks", tags=["Chunks"])
 
@@ -17,41 +17,29 @@ def index_book(book_id: str, background_tasks: BackgroundTasks):
     book = books_collection.find_one({"_id": ObjectId(book_id)})
     if not book or "file_id" not in book:
         raise HTTPException(status_code=404, detail="Book or file not found")
-    if book.get("status", "").lower() != "pending":
-        raise HTTPException(status_code=400, detail="Book status must be 'Pending' to index.")
+    if book.get("status", "").lower() != "unprocessed":
+        raise HTTPException(status_code=400, detail="Book status must be 'unprocessed' to index.")
+    
     file_id = book["file_id"]
-# 
-    # 2. Retrieve the file from GridFS and write to a temp file
+
+    # 2. Update book status to 'Indexing'
+    books_collection.update_one(
+        {"_id": ObjectId(book_id)},
+        {"$set": {"status": "Indexing"}}
+    )
+
+    # 3. Retrieve the file from GridFS and write to a temp file
     file_obj = fs.get(file_id)
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         tmp.write(file_obj.read())
         tmp_path = tmp.name
-# 
-    # 3. Index the document (this will chunk and store in DB, returns doc_id)
-    # indexed_doc_id = index(tmp_path, book_id)
-# 
-    return {
-        "message": f"Indexing and classification started for book {book_id}",
-        "indexed_doc_id": "",
-    }
-# 
-# 
-# @router.post("/classifyBook/{book_id}")
-# def index_book(book_id: str, background_tasks: BackgroundTasks):
-#     agent_configs_collection = get_agent_configs_collection()
-#     agents = list(agent_configs_collection.find({}, {"_id": 0, "agent_name": 1, "classifier_prompt": 1, "evaluator_prompt": 1}))
-#     background_tasks.add_task(supervisor_loop, book_id, agents)
-#     return {"message": f"Indexing started for book {book_id}", "agents": agents}
 
-@router.post("/classifyBook/{book_id}")
-def index_book(book_id: str):
-    agent_configs_collection = get_agent_configs_collection()
-    agents = list(agent_configs_collection.find(
-        {"type": "classification"},
-        {"_id": 0, "agent_name": 1, "classifier_prompt": 1, "evaluators_prompt": 1}
-    ))
-    # supervisor_loop(book_id, agents)
-    return {"message": f"Indexing started for book {book_id}", "agents": agents}
+    # 4. Add background task
+    background_tasks.add_task(index, tmp_path, book_id)
+
+    return {
+        "message": f"Indexing and classification started for book {book_id}"
+    }
 
 @router.get("/", response_model=ChunkListResponse, dependencies=[Depends(get_user_from_cookie)])
 def get_all_chunks():
@@ -71,3 +59,8 @@ def get_chunks_count():
     count = chunks_collection.count_documents({})
     return {"count": count}
 
+@router.delete("/", dependencies=[Depends(get_user_from_cookie)])
+def delete_all_chunks():
+    chunks_collection = get_chunks_collection()
+    delete_result = chunks_collection.delete_many({})
+    return {"message": f"Successfully deleted {delete_result.deleted_count} chunks."}

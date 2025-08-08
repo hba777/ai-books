@@ -95,7 +95,7 @@ const UploadButtonForm: React.FC<{ open: boolean; onClose: () => void }> = ({
   formData.append("date", bookForm.date);
   formData.append("category", bookForm.category);
   formData.append("reference", bookForm.reference);
-  formData.append("status", "Pending");
+  formData.append("status", "Unprocessed");
   formData.append("summary", bookForm.abstract_summary);
   formData.append("labels", JSON.stringify([]));
   formData.append("startDate", "");
