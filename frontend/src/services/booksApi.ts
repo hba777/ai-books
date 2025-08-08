@@ -66,6 +66,29 @@ export function connectToProgressWebSocket(
   return ws;
 }
 
+export function connectToIndexProgressWebSocket(
+  bookId: string,
+  onDone: () => void
+): WebSocket {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const host = window.location.host;
+  const wsUrl = `${protocol}//${host}/ws/index-progress/${bookId}`;
+  const ws = new WebSocket(wsUrl);
+  ws.onmessage = (event) => {
+    if (event.data === 'done') {
+      onDone();
+      ws.close();
+    }
+  };
+  ws.onerror = (error) => {
+    console.error('Indexing WebSocket error:', error);
+  };
+  ws.onclose = () => {
+    console.log('Indexing WebSocket connection closed');
+  };
+  return ws;
+}
+
 export async function getAllBooks(): Promise<Book[]> {
   const res = await api.get<Book[]>('/books/');
   return res.data;

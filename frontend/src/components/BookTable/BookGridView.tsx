@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { useBooks } from "../../context/BookContext";
 import { toast } from "react-toastify"
+import { useClassificationContext } from '../../features/ClassificationPage/ClassificationCardRow/ClassificationContext';
 
 interface Book {
   _id: string;
@@ -53,7 +54,7 @@ const statusStyles: Record<string, { border: string; bar: string; text: string }
 const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
   const router = useRouter();
   const { startClassification } = useBooks();
-  const [processingBooks, setProcessingBooks] = useState<Set<string>>(new Set());
+  const { isAnyBookProcessing } = useClassificationContext();
 
   const handleBookClick = (id: string) => {
     const basePath = router.pathname.startsWith('/analysis') ? '/analysis' : '/classification';
@@ -63,7 +64,6 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
 
   const handleStartClassification = async (e: React.MouseEvent, bookId: string) => {
     e.stopPropagation(); // Prevent triggering the card click
-    setProcessingBooks(prev => new Set(prev).add(bookId));
     
     try {
       await startClassification(bookId);
@@ -72,11 +72,7 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
       console.error('Error starting classification:', error);
       toast.error("Classification Failed")
     } finally {
-      setProcessingBooks(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(bookId);
-        return newSet;
-      });
+
     }
   };
   return (
@@ -110,20 +106,23 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
             </div>
             <div className="flex items-center justify-between mb-2">
               <div className="font-bold text-lg text-gray-900">{book.doc_name}</div>
-              <div className="flex items-center gap-2">
-                {book.status === "Pending" && (
-                  <button 
-                    onClick={(e) => handleStartClassification(e, book._id)}
-                    disabled={processingBooks.has(book._id)}
-                    className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
-                      processingBooks.has(book._id)
-                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        : 'bg-blue-500 text-white hover:bg-blue-600'
-                    }`}
-                  >
-                    {processingBooks.has(book._id) ? 'Starting...' : 'Start Classification'}
-                  </button>
-                )}
+              <div className="flex items-center gap-2">                <button
+                  onClick={(e) => handleStartClassification(e, book._id)}
+                  disabled={isAnyBookProcessing || book.status !== "Pending"}
+                  className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
+                    isAnyBookProcessing || book.status !== "Pending"
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                  }`}
+                >
+                  {book.status === "Pending"
+                    ? "Start Classification"
+                    : book.status === "Processing"
+                      ? "Processing..."
+                      : book.status === "Indexing"
+                        ? "Indexing..."
+                        : "Not Available"}
+                </button>
                 <button className="text-gray-400 hover:text-gray-600 p-1 rounded-full">
                   <span className="text-2xl">&#8942;</span>
                 </button>
@@ -158,6 +157,7 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
                   indexBook(book._id);
                   toast.success("Indexing Started")
                 }}
+                disabled={isAnyBookProcessing}
                 className="text-blue-500 hover:text-blue-700 p-1 rounded-full"
               >
                 <svg width="20" height="20" fill="none" stroke="currentColor"><path d="M5 13l4 4L19 7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>

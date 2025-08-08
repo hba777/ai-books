@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { useBooks } from "../../context/BookContext";
 import { toast } from "react-toastify"
+import { useClassificationContext } from '../../features/ClassificationPage/ClassificationCardRow/ClassificationContext';
 interface Book {
   _id: string;
   doc_name: string;
@@ -27,7 +28,7 @@ const BookTableView: React.FC<BookTableViewProps> = ({
 }) => {
   const router = useRouter();
   const {indexBook, startClassification } = useBooks();
-  const [processingBooks, setProcessingBooks] = useState<Set<string>>(new Set());
+  const { isAnyBookProcessing } = useClassificationContext();
 
   const handleRowClick = (id: string) => {
     const basePath = router.pathname.startsWith("/analysis")
@@ -38,7 +39,6 @@ const BookTableView: React.FC<BookTableViewProps> = ({
 
   const handleStartClassification = async (e: React.MouseEvent, bookId: string) => {
     e.stopPropagation(); // Prevent triggering the row click
-    setProcessingBooks(prev => new Set(prev).add(bookId));
     
     try {
       await startClassification(bookId);
@@ -47,11 +47,11 @@ const BookTableView: React.FC<BookTableViewProps> = ({
       console.error('Error starting classification:', error);
       toast.error("Classification Failed")
     } finally {
-      setProcessingBooks(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(bookId);
-        return newSet;
-      });
+      // setProcessingBooks(prev => { // This line is removed as per the edit hint
+      //   const newSet = new Set(prev);
+      //   newSet.delete(bookId);
+      //   return newSet;
+      // });
     }
   };
   return (
@@ -213,6 +213,7 @@ const BookTableView: React.FC<BookTableViewProps> = ({
                     indexBook(book._id);
                     toast.success("Chunking Started")
                   }}
+                  disabled={isAnyBookProcessing}
                   className="p-2 hover:bg-blue-100 rounded"
                 >
                   {/* Use any icon you like */}
@@ -220,19 +221,23 @@ const BookTableView: React.FC<BookTableViewProps> = ({
                 </button>
               </td>
               <td className="py-4 px-6 text-gray-500 whitespace-nowrap">
-                {book.status === "Pending" && (
-                  <button 
-                    onClick={(e) => handleStartClassification(e, book._id)}
-                    disabled={processingBooks.has(book._id)}
-                    className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
-                      processingBooks.has(book._id)
-                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        : 'bg-blue-500 text-white hover:bg-blue-600'
-                    }`}
-                  >
-                    {processingBooks.has(book._id) ? 'Starting...' : 'Start Classification'}
-                  </button>
-                )}
+                <button
+                  onClick={(e) => handleStartClassification(e, book._id)}
+                  disabled={isAnyBookProcessing || book.status !== "Pending"}
+                  className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
+                    isAnyBookProcessing || book.status !== "Pending"
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                  }`}
+                >
+                  {book.status === "Pending"
+                    ? "Start Classification"
+                    : book.status === "Processing"
+                      ? "Processing..."
+                      : book.status === "Indexing"
+                        ? "Indexing..."
+                        : "Not Available"}
+                </button>
               </td>
             </tr>
           ))}

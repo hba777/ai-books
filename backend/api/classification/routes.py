@@ -13,10 +13,7 @@ router = APIRouter(prefix="/classification", tags=["Classification"])
 
 @router.post("/{book_id}/start", dependencies=[Depends(get_user_from_cookie)])
 async def start_classification(book_id: str, background_tasks: BackgroundTasks) -> Dict[str, Any]:
-    """
-    Dummy API endpoint to start classification for a book.
-    In a real implementation, this would trigger the classification process.
-    """
+
     try:
         # Validate book_id format
         if not ObjectId.is_valid(book_id):
@@ -32,10 +29,10 @@ async def start_classification(book_id: str, background_tasks: BackgroundTasks) 
         
         # Update book status to "Processing" (dummy update)
         # In real implementation, this would trigger the actual classification
-        # books_collection.update_one(
-        #     {"_id": ObjectId(book_id)},
-        #     {"$set": {"status": "Processing", "startDate": time.strftime("%Y-%m-%d %H:%M:%S")}}
-        # )
+        books_collection.update_one(
+            {"_id": ObjectId(book_id)},
+            {"$set": {"status": "Processing", "startDate": time.strftime("%Y-%m-%d %H:%M:%S")}}
+        )
 
         agent_configs_collection = get_agent_configs_collection()
         agents = list(agent_configs_collection.find(

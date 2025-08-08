@@ -5,8 +5,8 @@ from .schemas import ChunkResponse, ChunkListResponse
 import tempfile
 from bson import ObjectId
 from Classification.index_document import index
-from Classification.app import supervisor_loop
-# 
+from api.chunks.websocket import notify_indexing_done
+
 router = APIRouter(prefix="/chunks", tags=["Chunks"])
 
 done = []
@@ -19,21 +19,33 @@ def index_book(book_id: str, background_tasks: BackgroundTasks):
         raise HTTPException(status_code=404, detail="Book or file not found")
     if book.get("status", "").lower() != "pending":
         raise HTTPException(status_code=400, detail="Book status must be 'Pending' to index.")
+    
     file_id = book["file_id"]
-# 
-    # 2. Retrieve the file from GridFS and write to a temp file
+
+    # 2. Update book status to 'Indexing'
+    books_collection.update_one(
+        {"_id": ObjectId(book_id)},
+        {"$set": {"status": "Indexing"}}
+    )
+
+    # 3. Retrieve the file from GridFS and write to a temp file
     file_obj = fs.get(file_id)
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         tmp.write(file_obj.read())
         tmp_path = tmp.name
-# 
-    # 3. Index the document (this will chunk and store in DB, returns doc_id)
+
+    # 4. Add background task
     background_tasks.add_task(index, tmp_path, book_id)
-# 
+    # Notify frontend via websocket that indexing is done
+    # try:
+    #     notify_indexing_done(book_id)
+    # except Exception as e:
+    #     print(f"[WebSocket Notify] Failed to notify for doc_id {book_id}: {e}")
+
     return {
         "message": f"Indexing and classification started for book {book_id}"
     }
-# 
+
 @router.get("/", response_model=ChunkListResponse, dependencies=[Depends(get_user_from_cookie)])
 def get_all_chunks():
     chunks_collection = get_chunks_collection()

@@ -15,28 +15,44 @@ from api.chunks.websocket_manager import get_client
 load_dotenv(override=True)
 
 def insert_document(doc_id: str, chunks: list, summary: str):
-    
     books_collection = get_books_collection()
     chunks_collection = get_chunks_collection()
 
+    # Update summary
     books_collection.update_one(
-        {"_id": doc_id},               # Match document by _id
-        {"$set": {"summary": summary}} # Set the new summary
+        {"_id": doc_id},
+        {"$set": {"summary": summary}}
     )
 
+    # Prepare chunk documents
     chunk_docs = []
     for i, chunk in enumerate(chunks):
         chunk_docs.append({
             "chunk_id": str(uuid.uuid4()),
             "doc_id": doc_id,
             "chunk_index": i,
-            "text": chunk.page_content, # <-- Accessing text from the Document object
-            "page_number": chunk.metadata.get("page", None), # <-- Extracting page number from metadata
+            "text": chunk.page_content,
+            "page_number": chunk.metadata.get("page", None),
             "status": "pending",
-            "analysis_status": "pending"  # <--- YAHAN YE NAYA FIELD ADD KIYA HAI
+            "analysis_status": "pending"
         })
 
+    # Insert all chunks
     chunks_collection.insert_many(chunk_docs)
+
+    # ✅ Update book status back to "Pending"
+    books_collection.update_one(
+        {"_id": doc_id},
+        {"$set": {"status": "Pending"}}
+    )
+
+    # Notify frontend via websocket that indexing is done
+    try:
+        from api.chunks.websocket import notify_indexing_done
+        notify_indexing_done(doc_id)
+    except Exception as e:
+        print(f"[WebSocket Notify] Failed to notify for doc_id {doc_id}: {e}")
+
     return doc_id
 
 def fetch_next_pending_chunk(doc_id):

@@ -9,6 +9,7 @@ import {
   indexBook as apiIndexBook,
   startClassification as apiStartClassification,
   connectToProgressWebSocket,
+  connectToIndexProgressWebSocket,
   Book,
   ClassificationProgress
 } from "../services/booksApi"
@@ -66,7 +67,9 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const indexBook = async (bookId: string) => {
     await apiIndexBook(bookId);
-    await fetchBooks();
+    connectToIndexProgressWebSocket(bookId, () => {
+      fetchBooks();
+    });
   };
 
   const getBookNameById = (bookId: string): string | undefined => {
