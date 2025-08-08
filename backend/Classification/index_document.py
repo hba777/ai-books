@@ -44,8 +44,9 @@ def index(file_path, doc_id):
     summary_chunks_text = [chunk.page_content for chunk in chunks]
 
     # Convert list of strings into a single summary string
-    summary = "\n\n".join(summary_chunks_text)
+    # summary = "\n\n".join(summary_chunks_text)
 
+    summary = summarize_pdf(summary_chunks_text)
     # Pass the chunks and combined summary to the DB
     indexed_doc_id = insert_document(doc_id, chunks=chunks, summary=summary)
 

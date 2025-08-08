@@ -24,9 +24,6 @@ async def start_classification(book_id: str, background_tasks: BackgroundTasks) 
         if not book:
             raise HTTPException(status_code=404, detail="Book not found")
         
-        # Simulate processing time
-        await asyncio.sleep(1)
-        
         # Update book status to "Processing" (dummy update)
         # In real implementation, this would trigger the actual classification
         books_collection.update_one(

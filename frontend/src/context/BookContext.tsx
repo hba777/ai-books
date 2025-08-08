@@ -110,6 +110,8 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // If progress is 100%, remove from active classifications after a delay
         if (progress === 100) {
+          fetchBooks()
+          console.log("Triggered Classification Fetch")
           setTimeout(() => {
             setActiveClassifications(prev => 
               prev.filter(classification => classification.book_id !== bookId)

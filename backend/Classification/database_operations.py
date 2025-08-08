@@ -207,18 +207,21 @@ def extract_summary_for_pdf(doc_id):
     }
 
 def mark_document_done(doc_id):
-    """Update the status of a document to 'done'."""
+    """Update the status of a document to 'Processed' regardless of current status."""
     books_collection = get_books_collection()
-    books_collection.update_one(
-        {"doc_id": doc_id, "status": "in_progress"},
-        {"$set": {"status": "done"}}
+    result = books_collection.update_one(
+        {"_id": ObjectId(doc_id)},  
+        {"$set": {"status": "Processed"}}
     )
-    print("\n####################\nDocument Marked Done\n####################\n")
+    if result.matched_count == 0:
+        print(f"⚠️ Document with id {doc_id} not found.")
+    print("\n####################\nDocument Marked Processed\n####################\n")
+
 
 def get_pending_documents():
-    """Returns a list of doc_id values where status is not 'done'."""
+    """Returns a list of doc_id values where status is not 'Processed'."""
     books_collection = get_books_collection()
-    cursor = books_collection.find({"status": {"$ne": "done"}}, {"doc_id": 1})
+    cursor = books_collection.find({"status": {"$ne": "Processed"}}, {"doc_id": 1})
     return [doc["doc_id"] for doc in cursor]
 
 def get_document_summary(doc_id: str):
