@@ -24,8 +24,8 @@ def create_chunks_with_page_numbers(file_path: str):
                     documents.append(doc)
 
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=5000,
-        chunk_overlap=1024,
+        chunk_size=10000,
+        chunk_overlap=5000,
         length_function=len,
         is_separator_regex=False,
     )
@@ -40,11 +40,13 @@ def index(file_path, doc_id):
     chunks = create_chunks_with_page_numbers(file_path=file_path)
     print(f"Split the documents in {len(chunks)} paragraphs.")
     
-    # The summarization function likely expects a list of text strings, so extract those
+    # Extract plain text from chunks
     summary_chunks_text = [chunk.page_content for chunk in chunks]
-    summary = summarize_pdf(summary_chunks_text)
-    
-    # Pass the chunks with metadata to the database function
+
+    # Convert list of strings into a single summary string
+    summary = "\n\n".join(summary_chunks_text)
+
+    # Pass the chunks and combined summary to the DB
     indexed_doc_id = insert_document(doc_id, chunks=chunks, summary=summary)
 
     return indexed_doc_id

@@ -36,6 +36,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [activeClassifications, setActiveClassifications] = useState<ClassificationProgress[]>([]);
   const { user, loading: userLoading } = useUser(); 
   const websocketRefs = useRef<Map<string, WebSocket>>(new Map());
+  const wsRef = useRef<WebSocket | null>(null);
 
   const fetchBooks = async () => {
     const res = await getAllBooks();
@@ -67,9 +68,11 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const indexBook = async (bookId: string) => {
     await apiIndexBook(bookId);
-    connectToIndexProgressWebSocket(bookId, () => {
-      fetchBooks();
-    });
+    fetchBooks();
+    wsRef.current = connectToIndexProgressWebSocket(bookId, () => {
+    console.log("Triggered");
+    fetchBooks(); // this should work now
+  });
   };
 
   const getBookNameById = (bookId: string): string | undefined => {

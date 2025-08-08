@@ -4,7 +4,8 @@ import uuid
 import json
 from pymongo import ASCENDING # Import ASCENDING for sorting
 from dotenv import load_dotenv
-from typing import List, Dict, Any # Import for type hinting
+from typing import List, Dict, Any 
+from bson import ObjectId
 from db.mongo import (
     get_books_collection,
     get_chunks_collection,
@@ -17,12 +18,6 @@ load_dotenv(override=True)
 def insert_document(doc_id: str, chunks: list, summary: str):
     books_collection = get_books_collection()
     chunks_collection = get_chunks_collection()
-
-    # Update summary
-    books_collection.update_one(
-        {"_id": doc_id},
-        {"$set": {"summary": summary}}
-    )
 
     # Prepare chunk documents
     chunk_docs = []
@@ -40,16 +35,18 @@ def insert_document(doc_id: str, chunks: list, summary: str):
     # Insert all chunks
     chunks_collection.insert_many(chunk_docs)
 
-    # ✅ Update book status back to "Pending"
     books_collection.update_one(
-        {"_id": doc_id},
-        {"$set": {"status": "Pending"}}
+        {"_id": ObjectId(doc_id)},
+        {"$set": {
+            "summary": summary,
+            "status": "Pending"
+        }}
     )
 
     # Notify frontend via websocket that indexing is done
     try:
         from api.chunks.websocket import notify_indexing_done
-        notify_indexing_done(doc_id)
+        asyncio.run(notify_indexing_done(doc_id))
     except Exception as e:
         print(f"[WebSocket Notify] Failed to notify for doc_id {doc_id}: {e}")
 
@@ -120,7 +117,7 @@ def get_total_chunks(doc_id):
 
 def get_done_chunks_count(doc_id):
     chunks_collection = get_chunks_collection()
-    return chunks_collection.count_documents({"doc_id": doc_id, "status": "complete"})
+    return chunks_collection.count_documents({"doc_id": doc_id, "status": "done"})
 
 def get_chunk_id(doc_id: str, chunk_index: int):
     """Retrieve chunk_id based on doc_id and chunk_index."""

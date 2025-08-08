@@ -36,11 +36,6 @@ def index_book(book_id: str, background_tasks: BackgroundTasks):
 
     # 4. Add background task
     background_tasks.add_task(index, tmp_path, book_id)
-    # Notify frontend via websocket that indexing is done
-    # try:
-    #     notify_indexing_done(book_id)
-    # except Exception as e:
-    #     print(f"[WebSocket Notify] Failed to notify for doc_id {book_id}: {e}")
 
     return {
         "message": f"Indexing and classification started for book {book_id}"

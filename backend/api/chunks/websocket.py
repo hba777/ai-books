@@ -27,8 +27,8 @@ async def websocket_endpoint(websocket: WebSocket, book_id: str):
         if book_id in active_connections and active_connections[book_id] == websocket:
             del active_connections[book_id]
 
-def notify_indexing_done(book_id: str):
-    import asyncio
+async def notify_indexing_done(book_id: str):
     ws = active_connections.get(book_id)
+    print(f"[WebSocket Notify] Sending 'done' to {book_id}")
     if ws:
-        asyncio.create_task(ws.send_text("done"))
+        await ws.send_text("done")
