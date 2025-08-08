@@ -213,9 +213,9 @@ const BookTableView: React.FC<BookTableViewProps> = ({
                     indexBook(book._id);
                     toast.success("Chunking Started")
                   }}
-                  disabled={isAnyBookProcessing || book.status === "Pending"}
+                  disabled={isAnyBookProcessing || book.status === "Pending" || book.status === "Processed"}
                   className={`p-2 rounded ${
-                    isAnyBookProcessing || book.status === "Pending"
+                    isAnyBookProcessing || book.status === "Pending" || book.status === "Processed"
                       ? 'text-gray-400 cursor-not-allowed'
                       : 'hover:bg-blue-100'
                   }`}
@@ -227,9 +227,9 @@ const BookTableView: React.FC<BookTableViewProps> = ({
               <td className="py-4 px-6 text-gray-500 whitespace-nowrap">
                 <button
                   onClick={(e) => handleStartClassification(e, book._id)}
-                  disabled={isAnyBookProcessing || book.status !== "Pending"}
+                  disabled={isAnyBookProcessing || book.status !== "Pending" || book.status === "Processed"}
                   className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
-                    isAnyBookProcessing || book.status !== "Pending"
+                    isAnyBookProcessing || book.status !== "Pending" || book.status === "Processed"
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : 'bg-blue-500 text-white hover:bg-blue-600'
                   }`}
@@ -240,7 +240,9 @@ const BookTableView: React.FC<BookTableViewProps> = ({
                       ? "Processing..."
                       : book.status === "Indexing"
                         ? "Indexing..."
-                        : "Not Available"}
+                        : book.status === "Processed"
+                          ? "Classified"
+                          : "Not Available"}
                 </button>
               </td>
             </tr>

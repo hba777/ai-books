@@ -108,9 +108,9 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
               <div className="font-bold text-lg text-gray-900">{book.doc_name}</div>
               <div className="flex items-center gap-2">                <button
                   onClick={(e) => handleStartClassification(e, book._id)}
-                  disabled={isAnyBookProcessing || book.status !== "Pending"}
+                  disabled={isAnyBookProcessing || book.status !== "Pending" || book.status === "Processed"}
                   className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
-                    isAnyBookProcessing || book.status !== "Pending"
+                    isAnyBookProcessing || book.status !== "Pending" || book.status === "Processed"
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : 'bg-blue-500 text-white hover:bg-blue-600'
                   }`}
@@ -121,7 +121,9 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
                       ? "Processing..."
                       : book.status === "Indexing"
                         ? "Indexing..."
-                        : "Not Available"}
+                        : book.status === "Processed"
+                          ? "Classified"
+                          : "Not Available"}
                 </button>
                 <button className="text-gray-400 hover:text-gray-600 p-1 rounded-full">
                   <span className="text-2xl">&#8942;</span>
@@ -157,9 +159,9 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
                   indexBook(book._id);
                   toast.success("Indexing Started")
                 }}
-                disabled={isAnyBookProcessing || book.status === "Pending"}
+                disabled={isAnyBookProcessing || book.status === "Pending" || book.status === "Processed"}
                 className={`p-1 rounded-full ${
-                  isAnyBookProcessing || book.status === "Pending"
+                  isAnyBookProcessing || book.status === "Pending" || book.status === "Processed"
                     ? 'text-gray-400 cursor-not-allowed'
                     : 'text-blue-500 hover:text-blue-700'
                 }`}

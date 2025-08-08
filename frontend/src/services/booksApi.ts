@@ -72,7 +72,6 @@ export function connectToIndexProgressWebSocket(
   const wsUrl = `ws://${process.env.NEXT_PUBLIC_BACKEND_HOST}/ws/index-progress/${bookId}`;
 
 
-  console.log(`[WebSocket] Connecting to: ${wsUrl}`);
   
   const ws = new WebSocket(wsUrl);
 
