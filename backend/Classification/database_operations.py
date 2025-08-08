@@ -107,7 +107,7 @@ def notify_client(book_id: str, progress: int, total: int, done: int):
     ws = get_client(book_id)
     if ws:
         try:
-            asyncio.create_task(ws.send_json({"progress": progress, "total": total, "done": done}))
+            asyncio.run(ws.send_json({"progress": progress, "total": total, "done": done}))
         except Exception as e:
             print(f"Failed to send to client: {e}")
 

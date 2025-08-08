@@ -39,7 +39,7 @@ const navLinks = [
     subtitle: "Of Books",
   },
   {
-    label: "Model Training",
+    label: "Agents",
     href: "/agents",
     icon: <LuBrain className="text-2xl" />,
     subtitle: "AI Training & Settings",

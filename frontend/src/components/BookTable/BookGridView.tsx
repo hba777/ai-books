@@ -157,8 +157,12 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
                   indexBook(book._id);
                   toast.success("Indexing Started")
                 }}
-                disabled={isAnyBookProcessing}
-                className="text-blue-500 hover:text-blue-700 p-1 rounded-full"
+                disabled={isAnyBookProcessing || book.status === "Pending"}
+                className={`p-1 rounded-full ${
+                  isAnyBookProcessing || book.status === "Pending"
+                    ? 'text-gray-400 cursor-not-allowed'
+                    : 'text-blue-500 hover:text-blue-700'
+                }`}
               >
                 <svg width="20" height="20" fill="none" stroke="currentColor"><path d="M5 13l4 4L19 7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </button>

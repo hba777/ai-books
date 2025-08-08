@@ -37,9 +37,8 @@ export function connectToProgressWebSocket(
   bookId: string,
   onProgress: (progress: number, total?: number, done?: number, rawData?: any) => void
 ): WebSocket {
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const host = window.location.host;
-  const wsUrl = `${protocol}//${host}/ws/progress/${bookId}`;
+
+  const wsUrl = `ws://${process.env.NEXT_PUBLIC_BACKEND_HOST}/ws/progress/${bookId}`;
   
   const ws = new WebSocket(wsUrl);
   

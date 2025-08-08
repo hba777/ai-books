@@ -213,8 +213,12 @@ const BookTableView: React.FC<BookTableViewProps> = ({
                     indexBook(book._id);
                     toast.success("Chunking Started")
                   }}
-                  disabled={isAnyBookProcessing}
-                  className="p-2 hover:bg-blue-100 rounded"
+                  disabled={isAnyBookProcessing || book.status === "Pending"}
+                  className={`p-2 rounded ${
+                    isAnyBookProcessing || book.status === "Pending"
+                      ? 'text-gray-400 cursor-not-allowed'
+                      : 'hover:bg-blue-100'
+                  }`}
                 >
                   {/* Use any icon you like */}
                   <svg width="20" height="20" fill="none" stroke="currentColor"><path d="M5 13l4 4L19 7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>

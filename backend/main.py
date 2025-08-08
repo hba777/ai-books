@@ -41,7 +41,7 @@ from api.review_outcomes.routes import router as review_outcomes_router
 from api.agent_configs.routes import router as agent_configs_router
 from api.knowledge_base.routes import router as knowledge_base_router
 from api.classification.routes import router as classification_router
-
+from api.classification.websocket import router as classifaction_websocket_router
 
 app.include_router(users_router)
 app.include_router(documents_router)
@@ -50,7 +50,9 @@ app.include_router(websocket_router)
 app.include_router(review_outcomes_router)
 app.include_router(agent_configs_router)
 app.include_router(knowledge_base_router)
-app.include_router(classification_router)     
+app.include_router(classification_router)   
+app.include_router(classifaction_websocket_router)     
+
 
 @app.get("/")
 def read_root():

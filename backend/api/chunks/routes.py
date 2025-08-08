@@ -17,8 +17,8 @@ def index_book(book_id: str, background_tasks: BackgroundTasks):
     book = books_collection.find_one({"_id": ObjectId(book_id)})
     if not book or "file_id" not in book:
         raise HTTPException(status_code=404, detail="Book or file not found")
-    if book.get("status", "").lower() != "pending":
-        raise HTTPException(status_code=400, detail="Book status must be 'Pending' to index.")
+    if book.get("status", "").lower() != "unprocessed":
+        raise HTTPException(status_code=400, detail="Book status must be 'unprocessed' to index.")
     
     file_id = book["file_id"]
 
