@@ -6,16 +6,13 @@ import AnalysisTable from "@/features/AnalysisDetailsPage/AnalysisTable/Analysis
 import SeeInfo from "@/features/ClassificationDetailsPage/SeeInfo";
 import { useRouter } from "next/router";
 import { Book } from "@/services/booksApi";
-import { useBooks, ReviewOutcomesResponse } from "@/context/BookContext";
+import { useBooks } from "@/context/BookContext";
 
 const mockTags = ["Political", "Maths", "IT/CS", "Maths", "Maths"];
-
-const PAGE_SIZE = 10;
 
 const AnalysisDetails: React.FC = () => {
   const [showSeeInfo, setShowSeeInfo] = useState(false);
   const [book, setBook] = useState<Book>(); 
-  const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
   const { id } = router.query;
   const { getBookById, reviewOutcomes, fetchReviewOutcomes } = useBooks();
@@ -50,11 +47,6 @@ const AnalysisDetails: React.FC = () => {
     (r) => r.doc_id === book._id || r.Book_Name === book.doc_name
   );
 
-  const totalPages = Math.ceil(bookReviewOutcomes.length / PAGE_SIZE);
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
   return (
     <div className="min-h-screen flex bg-[#f7f9fc]">
       <Sidebar />
@@ -66,9 +58,7 @@ const AnalysisDetails: React.FC = () => {
             {book.status === "Processed" ? (
               <AnalysisTable
                 data={bookReviewOutcomes}
-                currentPage={currentPage}
-                pageSize={PAGE_SIZE}
-                onPageChange={handlePageChange}
+                pageSize={10}
               />
             ) : (
               <div className="flex justify-center items-center h-40 text-xl font-semibold text-gray-500">

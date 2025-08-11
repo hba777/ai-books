@@ -1,11 +1,9 @@
-import React from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { ReviewOutcomesResponse } from "../../../context/BookContext";
 
 interface AnalysisTableProps {
   data: ReviewOutcomesResponse[];
-  currentPage: number;
-  pageSize: number;
-  onPageChange: (page: number) => void;
+  pageSize?: number; // kept for backward compatibility, not used in overall pagination mode
 }
 
 const reviewTables: { key: keyof ReviewOutcomesResponse; title: string }[] = [
@@ -18,73 +16,79 @@ const reviewTables: { key: keyof ReviewOutcomesResponse; title: string }[] = [
   { key: "RhetoricToneReview", title: "Rhetoric & Tone Review" },
 ];
 
-const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, currentPage, pageSize, onPageChange }) => {
-  const totalPages = Math.ceil(data.length / pageSize) || 1;
-  const clampedPage = Math.min(Math.max(currentPage, 1), totalPages);
-  const paginatedData = data.slice((clampedPage - 1) * pageSize, clampedPage * pageSize);
+const AnalysisTable: React.FC<AnalysisTableProps> = ({ data }) => {
+  // Build list of review types that actually have rows
+  const availableTables = useMemo(() => {
+    return reviewTables.filter(({ key }) => data.some((row) => !!(row as any)[key]));
+  }, [data]);
 
-  const renderBool = (v: unknown) => (typeof v === "boolean" ? (v ? "Yes" : "No") : v ?? "-");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const totalPages = Math.max(availableTables.length, 1);
+  const clampedPage = Math.min(Math.max(currentPage, 1), totalPages);
+
+  const currentTable = availableTables[clampedPage - 1];
+  const currentRows = currentTable ? data.filter((row) => !!(row as any)[currentTable.key]) : [];
+
+  const tableTopRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    // Smoothly scroll the table container into view on page change
+    tableTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [clampedPage]);
+
+  const renderBool = (v: unknown): React.ReactNode => {
+    if (typeof v === "boolean") return v ? "Yes" : "No";
+    if (v === null || v === undefined) return "-";
+    return String(v);
+  };
+
+  if (availableTables.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl shadow p-6 text-gray-500">No review data available.</div>
+    );
+  }
 
   return (
-    <div className="flex flex-col gap-8">
-      {reviewTables.map(({ key, title }) => {
-        const hasAnyRows = paginatedData.some((row) => !!(row as any)[key]);
-        return (
-          <div key={String(key)} className="w-full">
-            <h3 className="text-lg font-semibold mb-3">{title}</h3>
-            <div className="bg-white rounded-2xl shadow overflow-x-auto">
-              <table className="min-w-[1000px] text-left">
-                <thead>
-                  <tr className="text-sm border-b bg-[#f7f9fc]">
-                    <th className="py-4 px-6 font-semibold">Confidence</th>
-                    <th className="py-4 px-6 font-semibold">Human Review</th>
-                    <th className="py-4 px-6 font-semibold">Issue Found</th>
-                    <th className="py-4 px-6 font-semibold">Observation</th>
-                    <th className="py-4 px-6 font-semibold">Problematic Text</th>
-                    <th className="py-4 px-6 font-semibold">Recommendation</th>
-                    <th className="py-4 px-6 font-semibold">Status</th>
+    <div className="flex flex-col gap-4">
+      <div className="w-full" ref={tableTopRef}>
+        <h3 className="text-lg font-semibold mb-3">{currentTable.title}</h3>
+        <div className="bg-white rounded-2xl shadow overflow-x-auto">
+          <table className="min-w-[1000px] text-left">
+            <thead>
+              <tr className="text-sm border-b bg-[#f7f9fc]">
+                <th className="py-4 px-6 font-semibold">Confidence</th>
+                <th className="py-4 px-6 font-semibold">Human Review</th>
+                <th className="py-4 px-6 font-semibold">Issue Found</th>
+                <th className="py-4 px-6 font-semibold">Observation</th>
+                <th className="py-4 px-6 font-semibold">Problematic Text</th>
+                <th className="py-4 px-6 font-semibold">Recommendation</th>
+                <th className="py-4 px-6 font-semibold">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentRows.map((row, idx) => {
+                const detail = (row as any)[currentTable.key];
+                return (
+                  <tr key={idx} className={idx % 2 === 1 ? "bg-[#EBEEFF]" : ""}>
+                    <td className="py-6 px-6 text-gray-700 whitespace-nowrap">{detail?.confidence ?? "-"}</td>
+                    <td className="py-6 px-6 text-gray-700 whitespace-nowrap">{renderBool(detail?.human_review)}</td>
+                    <td className="py-6 px-6 text-gray-700 whitespace-nowrap">{renderBool(detail?.issue_found)}</td>
+                    <td className="py-6 px-6 text-gray-700 max-w-[420px] whitespace-normal break-words">{detail?.observation ?? "-"}</td>
+                    <td className="py-6 px-6 text-gray-700 max-w-[420px] whitespace-normal break-words">{detail?.problematic_text ?? "-"}</td>
+                    <td className="py-6 px-6 text-gray-700 whitespace-normal break-words">{detail?.recommendation ?? "-"}</td>
+                    <td className="py-6 px-6 text-gray-700 whitespace-nowrap">{detail?.status ?? "-"}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {hasAnyRows ? (
-                    paginatedData.map((row, idx) => {
-                      const detail = (row as any)[key];
-                      if (!detail) {
-                        return (
-                          <tr key={idx} className={idx % 2 === 1 ? "bg-[#EBEEFF]" : ""}>
-                            <td className="py-6 px-6 text-gray-400" colSpan={7}>-</td>
-                          </tr>
-                        );
-                      }
-                      return (
-                        <tr key={idx} className={idx % 2 === 1 ? "bg-[#EBEEFF]" : ""}>
-                          <td className="py-6 px-6 text-gray-700 whitespace-nowrap">{detail?.confidence ?? "-"}</td>
-                          <td className="py-6 px-6 text-gray-700 whitespace-nowrap">{renderBool(detail?.human_review) as React.ReactNode}</td>
-                          <td className="py-6 px-6 text-gray-700 whitespace-nowrap">{renderBool(detail?.issue_found) as React.ReactNode}</td>
-                          <td className="py-6 px-6 text-gray-700 max-w-[420px] whitespace-normal break-words">{detail?.observation ?? "-"}</td>
-                          <td className="py-6 px-6 text-gray-700 max-w-[420px] whitespace-normal break-words">{detail?.problematic_text ?? "-"}</td>
-                          <td className="py-6 px-6 text-gray-700 whitespace-normal break-words">{detail?.recommendation ?? "-"}</td>
-                          <td className="py-6 px-6 text-gray-700 whitespace-nowrap">{detail?.status ?? "-"}</td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td className="py-6 px-6 text-gray-400" colSpan={7}>No data</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      })}
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-      {/* Pagination Controls */}
+      {/* Overall Pagination Controls (paginate across tables) */}
       <div className="flex justify-end items-center gap-2 p-2">
         <button
-          className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
-          onClick={() => onPageChange(clampedPage - 1)}
+          className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50 cursor-pointer"
+          onClick={() => setCurrentPage(clampedPage - 1)}
           disabled={clampedPage === 1}
         >
           Previous
@@ -93,8 +97,8 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, currentPage, pageSi
           Page {clampedPage} of {totalPages}
         </span>
         <button
-          className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
-          onClick={() => onPageChange(clampedPage + 1)}
+          className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50 cursor-pointer"
+          onClick={() => setCurrentPage(clampedPage + 1)}
           disabled={clampedPage === totalPages}
         >
           Next
