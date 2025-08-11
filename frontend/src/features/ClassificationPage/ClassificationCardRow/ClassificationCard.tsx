@@ -25,7 +25,7 @@ const ClassificationStatCard: React.FC<ClassificationStatCardProps> = ({ value, 
 
   return (
     <div 
-      className={`flex flex-col items-start bg-white rounded-2xl shadow-md p-8 min-w-[270px] max-w-[300px] w-full h-49 relative cursor-pointer transition-all duration-200 ${
+      className={`flex flex-col items-start bg-white rounded-2xl shadow-md p-4 sm:p-6 lg:p-8 w-full min-w-[200px] sm:min-w-[240px] lg:min-w-[270px] max-w-[320px] h-40 sm:h-44 lg:h-49 relative cursor-pointer transition-all duration-200 ${
         isActive ? 'shadow-lg hover:scale-105' : 'hover:shadow-lg hover:scale-105'
       }`}
       style={isActive && Array.isArray(bgColor) && bgColor.length === 2 ? {
@@ -36,18 +36,18 @@ const ClassificationStatCard: React.FC<ClassificationStatCardProps> = ({ value, 
       } : {}}
       onClick={onClick}
     >
-      <div className="flex items-center mb-4">
+      <div className="flex items-center mb-3 sm:mb-4">
         <div
-          className={`w-12 h-12 rounded-xl flex items-center justify-center text-white text-2xl mr-2 overflow-hidden ${iconBgClass}`}
+          className={`w-10 h-10 sm:w-12 sm:h-12 lg:w-12 lg:h-12 rounded-xl flex items-center justify-center text-white text-xl sm:text-2xl lg:text-2xl mr-2 overflow-hidden ${iconBgClass}`}
           style={iconBgStyle}
         >
           {icon}
         </div>
         {badge && <div className="ml-2">{badge}</div>}
       </div>
-      <div className="text-3xl font-bold text-gray-900 mb-1">{value}</div>
-      <div className="text-gray-700 text-base leading-tight">{label}</div>
-      <div className="text-gray-400 text-sm mt-1">{subtitle}</div>
+      <div className="text-2xl sm:text-3xl lg:text-3xl font-bold text-gray-900 mb-1">{value}</div>
+      <div className="text-gray-700 text-sm sm:text-base lg:text-base leading-tight">{label}</div>
+      <div className="text-gray-400 text-xs sm:text-sm lg:text-sm mt-1">{subtitle}</div>
     </div>
   );
 };

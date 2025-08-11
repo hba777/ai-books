@@ -11,7 +11,7 @@ const DashboardCardRow: React.FC = () => {
   const totalAssigned = books.filter((book) => book.status === "Assigned").length;
 
   return (
-    <div className="flex gap-8 w-full justify-center mt-6 mb-8">
+    <div className="flex gap-3 lg:gap-4 w-full justify-center mt-6 mb-8 px-4">
       <DashboardStatCard
         value={totalBooks}
         label="Books Uploaded"

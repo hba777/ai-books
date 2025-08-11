@@ -41,17 +41,17 @@ const cardData = [
 ];
 
 const InDepthAnalysisCardRow: React.FC = () => (
-  <div className="w-full mx-auto flex gap-6 justify-center items-stretch">
+  <div className="w-full mx-auto flex gap-3 lg:gap-4 justify-around items-stretch px-4">
     {cardData.map((card, idx) => (
       <div
         key={idx}
-        className="flex flex-col items-start bg-white rounded-xl shadow-lg p-6 min-w-[380px] max-w-[400px] w-full h-44"
+        className="flex flex-col items-start bg-white rounded-xl shadow-lg p-4 lg:p-6 w-full sm:w-[200px] md:w-[240px] lg:w-[280px] xl:w-[320px] h-36 lg:h-44"
       >
-        <div className={`w-10 h-10 flex items-center justify-center rounded-md mb-3 ${card.iconBg}`}>
-          <span className="text-white text-2xl">{card.icon}</span>
+        <div className={`w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-md mb-2 lg:mb-3 ${card.iconBg}`}>
+          <span className="text-white text-xl lg:text-2xl">{card.icon}</span>
         </div>
-        <div className="text-3xl font-bold text-black mb-1">{card.value}</div>
-        <div className="text-gray-700 text-base leading-tight">{card.label}</div>
+        <div className="text-2xl lg:text-3xl font-bold text-black mb-1">{card.value}</div>
+        <div className="text-gray-700 text-sm lg:text-base leading-tight">{card.label}</div>
       </div>
     ))}
   </div>
