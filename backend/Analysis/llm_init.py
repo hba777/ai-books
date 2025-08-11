@@ -1,22 +1,44 @@
-from langchain_groq import ChatGroq
+from langchain.chat_models import ChatOpenAI
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
-from config import GROQ_API_KEY
+from langchain_community.embeddings import FastEmbedEmbeddings
 import os
 from dotenv import load_dotenv
-from langchain_community.embeddings import FastEmbedEmbeddings
-load_dotenv()
 
-# --- 2. Define your Embedding Model (BGE-Large with FastEmbed) ---
-embeddings = FastEmbedEmbeddings(model_name=os.getenv("embeddings_model"))
+load_dotenv(override=True)
 
-# ─── LLM INITIALIZATION ──────────────────────────────────────────────────────
-# Initialize the ChatGroq language model for review agents
-llm = ChatGroq(temperature=0, model_name=os.getenv("llm_groq"), groq_api_key=GROQ_API_KEY)
-# Use a separate LLM for evaluation if desired, or reuse the main LLM
-eval_llm = ChatGroq(temperature=0.2, model_name=os.getenv("eval_llm1"), groq_api_key=GROQ_API_KEY)
-## For Embedding
-llm1 = ChatGroq(
-    temperature=0,
-    model_name=os.getenv("eval_llm1"),groq_api_key=GROQ_API_KEY
+# --- 1. Define your Embedding Model (BGE-Large with FastEmbed) ---
+embeddings = FastEmbedEmbeddings(model_name=os.getenv("embedding_model"))
+
+
+
+
+
+llm = ChatOpenAI(
+    openai_api_base="http://192.168.18.100:8000/v1",
+   openai_api_key="EMPTY",
+   model_name="llama-3.1-8b-instant"
 )
+
+eval_llm = ChatOpenAI(
+    openai_api_base="http://192.168.18.100:8000/v1",
+    openai_api_key="EMPTY",
+   model_name="llama-3.1-8b-instant"
+)
+
+llm1 = ChatOpenAI(
+    openai_api_base="http://192.168.18.100:8000/v1",
+   openai_api_key="EMPTY",
+   model_name="llama-3.1-8b-instant"
+)
+
+
+
+
+
+
+
+
+
+
+
 

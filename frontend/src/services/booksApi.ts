@@ -32,6 +32,37 @@ export interface ClassificationProgress {
   book_name?: string;
 }
 
+export interface ReviewDetailResponse {
+  confidence?: number;
+  human_review?: boolean;
+  issue_found?: boolean;
+  observation?: string;
+  problematic_text?: string;
+  recommendation?: string;
+  retries?: number;
+  status?: string;
+}
+
+export interface ReviewOutcomesResponse {
+  Book_Name?: string;
+  Chunk_no?: number;
+  Chunk_ID?: string;
+  doc_id?: string;
+  FactCheckingReview?: ReviewDetailResponse;
+  FederalUnityReview?: ReviewDetailResponse;
+  ForeignRelationsReview?: ReviewDetailResponse;
+  HistoricalNarrativeReview?: ReviewDetailResponse;
+  InstitutionalIntegrityReview?: ReviewDetailResponse;
+  NationalSecurityReview?: ReviewDetailResponse;
+  RhetoricToneReview?: ReviewDetailResponse;
+  overall_status?: string;
+  Page_Number?: string;
+  Predicted_Label?: string;
+  Predicted_Label_Confidence?: number;
+  Text_Analyzed?: string;
+  timestamp?: string;
+}
+
 // WebSocket connection for progress tracking
 export function connectToProgressWebSocket(
   bookId: string,
@@ -139,7 +170,7 @@ export async function addFeedback(bookId: string, comment: string, department: s
   return res.data;
 }
 
-// Add after other exports
+// Chunking Book
 export async function indexBook(bookId: string): Promise<{ message: string; indexed_doc_id: string }> {
   const res = await api.post<{ message: string; indexed_doc_id: string }>(`/chunks/index-book/${bookId}`);
   return res.data;
@@ -148,5 +179,10 @@ export async function indexBook(bookId: string): Promise<{ message: string; inde
 // Start classification for a book
 export async function startClassification(bookId: string): Promise<{ message: string; book_id: string; status: string; timestamp: string }> {
   const res = await api.post<{ message: string; book_id: string; status: string; timestamp: string }>(`/classification/${bookId}/start`);
+  return res.data;
+}
+
+export async function getReviewOutcomes(): Promise<ReviewOutcomesResponse[]> {
+  const res = await api.get<ReviewOutcomesResponse[]>("/review_outcomes/");
   return res.data;
 }

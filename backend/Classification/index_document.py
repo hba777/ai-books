@@ -24,8 +24,8 @@ def create_chunks_with_page_numbers(file_path: str):
                     documents.append(doc)
 
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=10000,
-        chunk_overlap=5000,
+        chunk_size=5000,
+        chunk_overlap=1024,
         length_function=len,
         is_separator_regex=False,
     )

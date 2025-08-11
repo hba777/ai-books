@@ -11,7 +11,9 @@ import {
   connectToProgressWebSocket,
   connectToIndexProgressWebSocket,
   Book,
-  ClassificationProgress
+  ClassificationProgress,
+  getReviewOutcomes,
+  ReviewOutcomesResponse
 } from "../services/booksApi"
 import { useUser } from "../context/UserContext";
 
@@ -27,6 +29,8 @@ interface BookContextType {
   indexBook: (bookId: string) => Promise<void>;
   startClassification: (bookId: string) => Promise<void>;
   getBookNameById: (bookId: string) => string | undefined;
+  reviewOutcomes: ReviewOutcomesResponse[];
+  fetchReviewOutcomes: () => Promise<void>;
 }
 
 const BookContext = createContext<BookContextType | undefined>(undefined);
@@ -34,6 +38,7 @@ const BookContext = createContext<BookContextType | undefined>(undefined);
 export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [books, setBooks] = useState<Book[]>([]);
   const [activeClassifications, setActiveClassifications] = useState<ClassificationProgress[]>([]);
+  const [reviewOutcomes, setReviewOutcomes] = useState<ReviewOutcomesResponse[]>([]);
   const { user, loading: userLoading } = useUser(); 
   const websocketRefs = useRef<Map<string, WebSocket>>(new Map());
   const wsRef = useRef<WebSocket | null>(null);
@@ -131,6 +136,11 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const fetchReviewOutcomes = async () => {
+    const res = await getReviewOutcomes();
+    setReviewOutcomes(res);
+  };
+
   // Cleanup WebSocket connections on unmount
   useEffect(() => {
     return () => {
@@ -162,12 +172,16 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addFeedback,
       indexBook,
       startClassification,
-      getBookNameById
+      getBookNameById,
+      reviewOutcomes,
+      fetchReviewOutcomes
     }}>
       {children}
     </BookContext.Provider>
   );
 };
+
+export type { ReviewOutcomesResponse };
 
 export const useBooks = () => {
   const context = useContext(BookContext);

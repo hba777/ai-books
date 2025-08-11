@@ -1,15 +1,14 @@
 from langgraph.graph import START, END, StateGraph
-from models import State
-from llm_init import llm, eval_llm, llm1
-from knowledge_base import knowledge_list, retriever
-from agents import load_agents_from_mongo, available_agents
-from workflow_nodes import main_node, final_report_generator
+from .models import State
+from .llm_init import llm, eval_llm, llm1
+from .knowledge_base import knowledge_list, retriever
+from .agents import load_agents_from_mongo, available_agents
+from .workflow_nodes import main_node, final_report_generator
 # Modified imports to use Pipeline 1 specific chunk retrieval functions
 # Now importing the new functions from pdf_processor
-from pdf_processor import get_first_pipeline1_chunk, get_all_pipeline1_chunks_details, get_next_pending_pipeline1_chunk, get_all_pending_pipeline1_chunks_details
-from config import AGENTS_DB_NAME, AGENTS_COLLECTION_NAME # Assuming config.py is correctly set up for P1 DB
-from database_saver import save_results_to_mongo, clear_results_collection, update_chunk_analysis_status
-from text_classifier import classify_text
+from .pdf_processor import get_first_pipeline1_chunk, get_all_pipeline1_chunks_details, get_next_pending_pipeline1_chunk, get_all_pending_pipeline1_chunks_details
+from .database_saver import save_results_to_mongo, clear_results_collection, update_chunk_analysis_status
+from .text_classifier import classify_text
 
 def run_workflow():
     # Clear the results collection at the beginning of each program execution
@@ -59,14 +58,14 @@ def run_workflow():
     # OPTION 1: Process only the NEXT pending Pipeline 1 chunk
     # Uncomment the following two lines and comment out OPTION 2 to use this.
     # print("\n--- OPTION 1: Executing graph.invoke() for the next PENDING chunk from Pipeline 1 ---")
-    next_pending_chunk = get_next_pending_pipeline1_chunk()
-    documents_to_process = [next_pending_chunk] if next_pending_chunk else []
+    #next_pending_chunk = get_next_pending_pipeline1_chunk()
+    #documents_to_process = [next_pending_chunk] if next_pending_chunk else []
 
 
     # OPTION 2: Process ALL PENDING Pipeline 1 chunks (ACTIVE BY DEFAULT)
     # Uncomment the following two lines and comment out OPTION 1 to use this.
-    #print("\n--- OPTION 2: Executing graph.invoke() for ALL PENDING chunks from Pipeline 1 ---")
-    #documents_to_process = get_all_pending_pipeline1_chunks_details()
+    print("\n--- OPTION 2: Executing graph.invoke() for ALL PENDING chunks from Pipeline 1 ---")
+    documents_to_process = get_all_pending_pipeline1_chunks_details()
 
 
     # --- Common processing loop for selected documents (Pipeline 1 schema) ---
@@ -128,25 +127,35 @@ def run_workflow():
             for agent_name, agent_data in result_with_review.get("main_node_output", {}).items():
                 agent_output = agent_data.get("output", {})
                 
-                is_output_complete = True
-                
-                if not isinstance(agent_output, dict):
-                    is_output_complete = False
-                else:
-                    if not isinstance(agent_output.get("issues_found"), bool):
-                        is_output_complete = False
-                    
-                    if not isinstance(agent_output.get("observation"), str):
-                        is_output_complete = False
-                    
-                    if not isinstance(agent_output.get("recommendation"), str):
-                        is_output_complete = False
-
-                if is_output_complete:
+                # --- MODIFIED LOGIC: First, check for the specific `None` case as per your request ---
+                # This ensures that if the agent returns None for the key fields, the status is 'Complete'.
+                if (
+                    agent_output.get("problematic_text") is None
+                    and agent_output.get("observation") is None
+                    and agent_output.get("recommendation") is None
+                ):
                     agent_analysis_statuses[agent_name] = "Complete"
                 else:
-                    agent_analysis_statuses[agent_name] = "Pending"
-                    overall_chunk_status = "Pending" # If any agent is pending, the overall chunk is pending
+                    # --- EXISTING LOGIC: If it's not the `None` case, run the original validation ---
+                    is_output_complete = True
+                    
+                    if not isinstance(agent_output, dict):
+                        is_output_complete = False
+                    else:
+                        if "issues_found" in agent_output and not isinstance(agent_output.get("issues_found"), bool):
+                            is_output_complete = False
+                        
+                        if "observation" in agent_output and not isinstance(agent_output.get("observation"), str):
+                            is_output_complete = False
+                        
+                        if "recommendation" in agent_output and not isinstance(agent_output.get("recommendation"), str):
+                            is_output_complete = False
+
+                    if is_output_complete:
+                        agent_analysis_statuses[agent_name] = "Complete"
+                    else:
+                        agent_analysis_statuses[agent_name] = "Pending"
+                        overall_chunk_status = "Pending" # If any agent is pending, the overall chunk is pending
 
             save_results_to_mongo(
                 chunk_uuid=p1_chunk_uuid,
@@ -187,6 +196,3 @@ def run_workflow():
 
     else:
         print("No PENDING chunks found from Pipeline 1's configured database and collection to process. All chunks might be processed, or none were pending.")
-
-if __name__ == "__main__":
-    run_workflow()

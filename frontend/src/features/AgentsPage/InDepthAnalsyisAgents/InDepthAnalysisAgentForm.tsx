@@ -101,7 +101,7 @@ const InDepthAnalysisAgentForm: React.FC<InDepthAnalysisAgentFormProps> = ({
         </div>
         
         <div className="flex flex-col gap-2">
-          <label className="font-semibold">Basic Prompt</label>
+          <label className="font-semibold">Criteria</label>
           <textarea
             className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
             name="criteria"

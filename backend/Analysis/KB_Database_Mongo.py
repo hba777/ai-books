@@ -6,8 +6,9 @@ import os
 load_dotenv()
 # --- MongoDB Configuration ---
 MONGO_URI = os.getenv("MONGO_URI")
-MONGO_DB_NAME = os.getenv("MONGO_DB_KB")
-MONGO_COLLECTION_NAME = os.getenv("MONGO_COLLECTION_KB")
+# Use the same database and collection names as defined in mongo.py
+MONGO_DB_NAME = "knowledge_base"  # Same as in mongo.py
+MONGO_COLLECTION_NAME = "kb_data"  # Same as in mongo.py
 
 # --- Configuration: SET YOUR BASE KNOWLEDGE BASE FOLDER PATH HERE ---
 BASE_KB_FOLDER_PATH = 'Knowledge_Base_New' # Aapka existing folder path

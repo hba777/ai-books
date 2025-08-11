@@ -1,14 +1,12 @@
 import json
-import pymongo
 from typing import List, Dict, Callable
 from langgraph.graph import END, StateGraph
 from langchain.prompts import PromptTemplate
 from langchain_groq import ChatGroq
 from langchain_core.runnables import RunnableLambda
-from models import State
-from knowledge_base import get_relevant_info, retriever, knowledge_list
-from config import MONGO_URI, AGENTS_DB_NAME, AGENTS_COLLECTION_NAME
-from backend.db.mongo import get_agent_configs_collection
+from .models import State
+from .knowledge_base import get_relevant_info, retriever, knowledge_list
+from db.mongo import get_agent_configs_collection
 
 # Define a type for agent functions for clear type hinting
 Agent = Callable[[State], Dict]
@@ -227,12 +225,23 @@ DO NOT include any explanation or text outside of the JSON object.
         }
 
     def route_sub_step(state: State) -> str:
+        # User requested new retry logic for "null" responses.
+        max_retries = 3
+        parsed_output = state.get("current_agent_parsed_output", {})
+        
+        # Check for a "null" response (issues_found is false and problematic_text is null)
+        is_null_response = parsed_output.get("issues_found") is False and parsed_output.get("problematic_text") is None
+
         if state.get("current_agent_human_review", False):
             print(f"\n⚠️ {state['current_agent_name']} JSON Decode Error detected. Routing directly to human review.")
             return "human_review_needed_sub_step"
-
-        max_retries = 3
-        if state["current_agent_confidence"] >= 80:
+        elif is_null_response and state["current_agent_retries"] < max_retries:
+            print(f"\n🔄 {state['current_agent_name']} Returned a 'null' response. Retrying... (Attempt {state['current_agent_retries']} of {max_retries})")
+            return "agent_sub_step"
+        elif is_null_response and state["current_agent_retries"] >= max_retries:
+            print(f"\n⚠️ {state['current_agent_name']} Returned a 'null' response after {max_retries} retries. Human review needed.")
+            return "human_review_needed_sub_step"
+        elif state["current_agent_confidence"] >= 80:
             print(f"\n✨ {state['current_agent_name']} Confidence {state['current_agent_confidence']}% is sufficient. Exiting sub-workflow.")
             return "end"
         elif state["current_agent_retries"] < max_retries:
@@ -287,6 +296,13 @@ DO NOT include any explanation or text outside of the JSON object.
         agent_confidence = final_sub_state.get("current_agent_confidence", 0)
         agent_retries = final_sub_state.get("current_agent_retries", 0)
         agent_human_review = final_sub_state.get("current_agent_human_review", False)
+        
+        # Check if the final result is a "null" response and retries were exhausted
+        is_null_response = agent_result.get("issues_found") is False and agent_result.get("problematic_text") is None
+        if agent_human_review and is_null_response:
+             state['review_flag'] = True
+             state['status'] = 'Complete'
+             print(f"\n🚨 Final result was a 'null' response after retries. Setting review_flag to True and status to Complete.")
 
         return {
             review_name: agent_result,
@@ -307,9 +323,11 @@ def load_agents_from_mongo(llm_model: ChatGroq, eval_llm_model: ChatGroq):
     Loads agent configurations (name, criteria, guidelines) from a MongoDB collection
     and registers them as review agents.
     """
-    collection = get_agent_configs_collection()
     try:
+        collection = get_agent_configs_collection()
+
         rows = collection.find({})
+
         for doc in rows:
             agent_name = doc.get("agent_name")
             criteria = doc.get("criteria")

@@ -8,14 +8,6 @@ import { useRouter } from "next/router";
 import { Book } from "@/services/booksApi";
 import { useBooks } from "@/context/BookContext";
 
-const mockRows = [
-  { pageNo: "01", paragraph: "If system integration fails: 'I'm having trouble accessing our scheduling system right now. Let me collect you...", confidence: "54%", observations: "If system integration fails: 'I'm having trouble accessing our scheduling system right now. Let me collect you..." },
-  { pageNo: "234", paragraph: "If system integration fails: 'I'm having trouble accessing our scheduling system right now. Let me collect you...", confidence: "54%", observations: "If system integration fails: 'I'm having trouble accessing our scheduling system right now. Let me collect you..." },
-  { pageNo: "78", paragraph: "If system integration fails: 'I'm having trouble accessing our scheduling system right now. Let me collect you...", confidence: "54%", observations: "If system integration fails: 'I'm having trouble accessing our scheduling system right now. Let me collect you..." },
-  { pageNo: "900", paragraph: "If system integration fails: 'I'm having trouble accessing our scheduling system right now. Let me collect you...", confidence: "54%", observations: "If system integration fails: 'I'm having trouble accessing our scheduling system right now. Let me collect you..." },
-  { pageNo: "25", paragraph: "If system integration fails: 'I'm having trouble accessing our scheduling system right now. Let me collect you...", confidence: "54%", observations: "If system integration fails: 'I'm having trouble accessing our scheduling system right now. Let me collect you..." },
-];
-
 const mockTags = ["Political", "Maths", "IT/CS", "Maths", "Maths"];
 
 const AnalysisDetails: React.FC = () => {
@@ -23,26 +15,24 @@ const AnalysisDetails: React.FC = () => {
   const [book, setBook] = useState<Book>(); 
   const router = useRouter();
   const { id } = router.query;
-  const { getBookById} = useBooks();
+  const { getBookById, reviewOutcomes, fetchReviewOutcomes } = useBooks();
 
   useEffect(() => {
     if (!id) return;
-    
     const fetchData = async () => {
       try {
         const bookData = await getBookById(id as string);
         setBook(bookData);
-  
-       
       } catch (err) {
         console.error("Failed to fetch book or file:", err);
-      } 
+      }
     };
-  
     fetchData();
-  
-    return;
-  }, [id]);
+  }, [id, getBookById]);
+
+  useEffect(() => {
+    fetchReviewOutcomes();
+  }, []);
 
   if (!book) {
     return (
@@ -52,6 +42,11 @@ const AnalysisDetails: React.FC = () => {
     );
   }
 
+  // Filter review outcomes for this book
+  const bookReviewOutcomes = reviewOutcomes.filter(
+    (r) => r.doc_id === book._id || r.Book_Name === book.doc_name
+  );
+
   return (
     <div className="min-h-screen flex bg-[#f7f9fc]">
       <Sidebar />
@@ -60,12 +55,20 @@ const AnalysisDetails: React.FC = () => {
         <div className="flex-1 flex flex-col items-center px-4 py-12 w-full">
           <div className="w-full max-w-7xl">
             <TopSection bookTitle={book.doc_name} tags={mockTags} bookId={book._id} onSeeInfo={()=>setShowSeeInfo(true)} />
-            <AnalysisTable rows={mockRows} />
+            {book.status === "Processed" ? (
+              <AnalysisTable
+                data={bookReviewOutcomes}
+                pageSize={10}
+              />
+            ) : (
+              <div className="flex justify-center items-center h-40 text-xl font-semibold text-gray-500">
+                Analysis Pending
+              </div>
+            )}
           </div>
         </div>
       </main>
       {showSeeInfo && <SeeInfo book={book} onClose={() => setShowSeeInfo(false)} />}
-
     </div>
   );
 };

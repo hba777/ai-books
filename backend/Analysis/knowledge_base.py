@@ -7,34 +7,33 @@ from langchain_core.documents import Document
 from langchain_community.embeddings import FastEmbedEmbeddings
 from langchain.chains.query_constructor.schema import AttributeInfo
 from langchain.retrievers.self_query.base import SelfQueryRetriever
-from config import MONGO_URI, KB_DB_NAME, KB_COLLECTION_NAME, CHROMA_DB_DIRECTORY
-from llm_init import embeddings, llm1
+from langchain_core.exceptions import OutputParserException
+from .config import MONGO_URI, CHROMA_DB_DIRECTORY
+from .llm_init import embeddings, llm1
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from db.mongo import get_kb_data_collection
 
 # --- KNOWLEDGE BASE EXTRACTION AND VECTOR STORE INITIALIZATION ────────────────
 
-def extract_knowledge_from_mongo(db_name: str, collection_name: str) -> List[Dict]:
+def extract_knowledge_from_mongo() -> List[Dict]:
     """
-    Extracts knowledge entries from a MongoDB collection.
+    Extracts knowledge entries from the MongoDB knowledge base collection.
 
     Each entry is expected to have 'topic' and 'json_data' fields, where
     'json_data' is a JSON string containing official_narrative, key_points,
     sensitive_aspects, recommended_terminology, and authoritative_sources.
 
-    Args:
-        db_name (str): The name of the MongoDB database.
-        collection_name (str): The name of the MongoDB collection.
-
     Returns:
         List[Dict]: A list of dictionaries, each representing a knowledge item
                     with parsed fields.
     """
-    client = None
     extracted_knowledge = []
     try:
-        client = pymongo.MongoClient(MONGO_URI)
-        db = client[db_name]
-        collection = db[collection_name]
-
+        # Use the collection from mongo.py
+        collection = get_kb_data_collection()
+        
         rows = collection.find({})
 
         for doc in rows:
@@ -60,17 +59,12 @@ def extract_knowledge_from_mongo(db_name: str, collection_name: str) -> List[Dic
                     print(f"Error processing topic '{topic}': {e}")
             else:
                 print(f"Warning: Skipping document with missing 'topic' or 'json_data': {doc}")
-    except pymongo.errors.ConnectionFailure as e:
-        print(f"MongoDB connection error for KB: {e}")
-        print("Please ensure MongoDB server is running on localhost:27017.")
     except Exception as e:
         print(f"An unexpected error occurred during KB extraction: {e}")
-    finally:
-        if client:
-            client.close()
+    
     return extracted_knowledge
 
-knowledge_list = extract_knowledge_from_mongo(KB_DB_NAME, KB_COLLECTION_NAME)
+knowledge_list = extract_knowledge_from_mongo()
 
 if not os.path.exists(CHROMA_DB_DIRECTORY):
     print(f"Creating and persisting ChromaDB in '{CHROMA_DB_DIRECTORY}'...")
@@ -129,13 +123,18 @@ def get_relevant_info(query: str, k: int = 50) -> List[Dict]:
         print("Retriever not initialized because ChromaDB was not created or loaded.")
         return []
 
-    results = retriever.get_relevant_documents(query, k=k)
+    try:
+        results = retriever.get_relevant_documents(query, k=k)
+    except OutputParserException as e:
+        print(f"Warning: SelfQueryRetriever failed with error: {e}. Falling back to similarity search.")
+        results = vectorstore.similarity_search(query, k=k)
+        
     unique_relevant_info = []
     seen_content = set()
 
     global knowledge_list
     if not knowledge_list:
-        knowledge_list = extract_knowledge_from_mongo(KB_DB_NAME, KB_COLLECTION_NAME)
+        knowledge_list = extract_knowledge_from_mongo()
 
     if results:
         for doc in results:

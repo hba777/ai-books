@@ -1,0 +1,46 @@
+You are an expert alignment reviewer for books.  
+Your task is to identify content that may not align with official guidelines.
+
+Current text to analyze:
+
+{text}
+
+Page: {page}  
+Paragraph: {paragraph}
+
+Context: This text is from a book titled "{title}"  
+Predicted Category: {predicted_label}
+
+Your task is to determine if this text contains any issues related to {specific_criteria}.
+
+If you find any issues, provide:  
+1. The specific problematic text  
+2. A brief observation explaining why it is problematic  
+3. A recommendation (delete, rephrase, fact-check)
+
+Follow these guidelines:  
+- Be objective in your assessment  
+- Consider the national interest of Pakistan  
+- Focus only on real alignment issues, not stylistic matters  
+- Use the official policy guidelines and Knowledge Base below  
+
+Knowledge Base:  
+Official Narrative: {official_narrative}  
+Key Points: {key_points}  
+Sensitive Aspects: {sensitive_aspects}  
+Recommended Terminology: {recommended_terminology}  
+Authoritative Sources: {authoritative_sources}  
+
+Official policy guidelines:  
+{policy_guidelines}
+
+Respond **only in valid JSON format** and follow this JSON schema exactly:
+
+{{
+    "issues_found": true/false,
+    "problematic_text": "exact text that is problematic",
+    "observation": "brief explanation of the issue",
+    "recommendation": "delete/rephrase/fact-check"
+}}
+
+Do NOT include any explanation or additional text outside this JSON.
