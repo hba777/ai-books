@@ -7,6 +7,7 @@ from langchain_core.documents import Document
 from langchain_community.embeddings import FastEmbedEmbeddings
 from langchain.chains.query_constructor.schema import AttributeInfo
 from langchain.retrievers.self_query.base import SelfQueryRetriever
+from langchain_core.exceptions import OutputParserException
 from config import MONGO_URI, KB_DB_NAME, KB_COLLECTION_NAME, CHROMA_DB_DIRECTORY
 from llm_init import embeddings, llm1
 
@@ -129,7 +130,12 @@ def get_relevant_info(query: str, k: int = 50) -> List[Dict]:
         print("Retriever not initialized because ChromaDB was not created or loaded.")
         return []
 
-    results = retriever.get_relevant_documents(query, k=k)
+    try:
+        results = retriever.get_relevant_documents(query, k=k)
+    except OutputParserException as e:
+        print(f"Warning: SelfQueryRetriever failed with error: {e}. Falling back to similarity search.")
+        results = vectorstore.similarity_search(query, k=k)
+        
     unique_relevant_info = []
     seen_content = set()
 

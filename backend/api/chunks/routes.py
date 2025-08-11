@@ -5,7 +5,6 @@ from .schemas import ChunkResponse, ChunkListResponse
 import tempfile
 from bson import ObjectId
 from Classification.index_document import index
-from api.chunks.websocket import notify_indexing_done
 
 router = APIRouter(prefix="/chunks", tags=["Chunks"])
 
