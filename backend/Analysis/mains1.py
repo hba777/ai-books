@@ -197,6 +197,3 @@ def run_workflow():
 
     else:
         print("No PENDING chunks found from Pipeline 1's configured database and collection to process. All chunks might be processed, or none were pending.")
-
-if __name__ == "__main__":
-    run_workflow()

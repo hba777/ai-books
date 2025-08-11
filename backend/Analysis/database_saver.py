@@ -1,40 +1,22 @@
-import pymongo
 from typing import Dict, Any, List # List import remains for general type hinting
-from config import MONGO_URI, PDF_DB_NAME, PDF_COLLECTION_NAME
-import os
-from dotenv import load_dotenv
+from db.mongo import get_chunks_collection, get_review_outcomes_collection
 from datetime import datetime
 from bson.objectid import ObjectId
 
-load_dotenv()
-
-# --- MongoDB Configuration for Final Results ---
-RESULTS_DB_NAME = os.getenv("RESULTS_DB_NAME1")
-RESULTS_COLLECTION_NAME = os.getenv("RESULTS_COLLECTION_NAM1")
-
 def clear_results_collection():
     """
-    Clears all documents from the RESULTS_COLLECTION_NAME in RESULTS_DB_NAME.
+    Clears all documents from the results collection.
     This should be called at the beginning of each program execution to ensure a fresh start.
     """
-    mongo_client = None
     try:
-        mongo_client = pymongo.MongoClient(MONGO_URI)
-        results_db = mongo_client[RESULTS_DB_NAME]
-        results_collection = results_db[RESULTS_COLLECTION_NAME]
+        results_collection = get_review_outcomes_collection()
 
         # Delete all documents in the collection
         delete_result = results_collection.delete_many({})
-        print(f"🧹 Cleared {delete_result.deleted_count} documents from '{RESULTS_DB_NAME}.{RESULTS_COLLECTION_NAME}'.")
+        print(f"🧹 Cleared {delete_result.deleted_count} documents from results collection.")
 
-    except pymongo.errors.ConnectionFailure as e:
-        print(f"❌ MongoDB connection error during clearing: {e}")
-        print("Please ensure your MongoDB server is running on localhost:27017.")
     except Exception as e:
         print(f"❌ An unexpected error occurred while clearing results collection: {e}")
-    finally:
-        if mongo_client:
-            mongo_client.close()
 
 def save_results_to_mongo(
     chunk_uuid: str,
@@ -49,11 +31,8 @@ def save_results_to_mongo(
     agent_analysis_statuses: Dict # This dictionary will now contain statuses for all agents
 ):
     """Saves the comprehensive analysis results of a chunk to a MongoDB collection."""
-    mongo_client = None
     try:
-        mongo_client = pymongo.MongoClient(MONGO_URI)
-        results_db = mongo_client[RESULTS_DB_NAME]
-        results_collection = results_db[RESULTS_COLLECTION_NAME]
+        results_collection = get_review_outcomes_collection()
 
         # Construct the core document with common fields
         result_document = {
@@ -92,16 +71,10 @@ def save_results_to_mongo(
 
         # Insert the document into MongoDB
         results_collection.insert_one(result_document)
-        print(f"✅ Analysis results for chunk ID '{chunk_uuid}' saved to MongoDB in '{RESULTS_DB_NAME}.{RESULTS_COLLECTION_NAME}'.")
+        print(f"✅ Analysis results for chunk ID '{chunk_uuid}' saved to MongoDB in results collection.")
 
-    except pymongo.errors.ConnectionFailure as e:
-        print(f"❌ MongoDB connection error: {e}")
-        print("Please ensure your MongoDB server is running on localhost:27017.")
     except Exception as e:
         print(f"❌ An unexpected error occurred while saving results to MongoDB: {e}")
-    finally:
-        if mongo_client:
-            mongo_client.close()
 
 def update_chunk_analysis_status(doc_id: str, chunk_id: str, analysis_status: str):
     """
@@ -109,11 +82,8 @@ def update_chunk_analysis_status(doc_id: str, chunk_id: str, analysis_status: st
     to reflect the analysis outcome (e.g., 'Complete', 'Pending'). This field is separate from the
     original 'status' field.
     """
-    mongo_client = None
     try:
-        mongo_client = pymongo.MongoClient(MONGO_URI)
-        p1_db = mongo_client[PDF_DB_NAME]
-        chunks_collection = p1_db[PDF_COLLECTION_NAME]
+        chunks_collection = get_chunks_collection()
 
         update_result = chunks_collection.update_one(
             {"doc_id": doc_id, "chunk_id": chunk_id},
@@ -121,15 +91,9 @@ def update_chunk_analysis_status(doc_id: str, chunk_id: str, analysis_status: st
         )
 
         if update_result.matched_count > 0:
-            print(f"✅ Chunk '{chunk_id}' in document '{doc_id}' analysis_status updated to '{analysis_status}' in '{PDF_DB_NAME}.{PDF_COLLECTION_NAME}'.")
+            print(f"✅ Chunk '{chunk_id}' in document '{doc_id}' analysis_status updated to '{analysis_status}' in chunks collection.")
         else:
-            print(f"⚠️ Chunk '{chunk_id}' in document '{doc_id}' not found for analysis_status update in '{PDF_DB_NAME}.{PDF_COLLECTION_NAME}'.")
+            print(f"⚠️ Chunk '{chunk_id}' in document '{doc_id}' not found for analysis_status update in chunks collection.")
 
-    except pymongo.errors.ConnectionFailure as e:
-        print(f"❌ MongoDB connection error during chunk status update: {e}")
-        print("Please ensure your MongoDB server is running on localhost:27017.")
     except Exception as e:
         print(f"❌ An unexpected error occurred while updating chunk status: {e}")
-    finally:
-        if mongo_client:
-            mongo_client.close()
