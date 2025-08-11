@@ -4,8 +4,8 @@ from langgraph.graph import END, StateGraph
 from langchain.prompts import PromptTemplate
 from langchain_groq import ChatGroq
 from langchain_core.runnables import RunnableLambda
-from models import State
-from knowledge_base import get_relevant_info, retriever, knowledge_list
+from .models import State
+from .knowledge_base import get_relevant_info, retriever, knowledge_list
 from db.mongo import get_agent_configs_collection
 
 # Define a type for agent functions for clear type hinting

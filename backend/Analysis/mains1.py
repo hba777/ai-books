@@ -1,15 +1,14 @@
 from langgraph.graph import START, END, StateGraph
-from models import State
-from llm_init import llm, eval_llm, llm1
-from knowledge_base import knowledge_list, retriever
-from agents import load_agents_from_mongo, available_agents
-from workflow_nodes import main_node, final_report_generator
+from .models import State
+from .llm_init import llm, eval_llm, llm1
+from .knowledge_base import knowledge_list, retriever
+from .agents import load_agents_from_mongo, available_agents
+from .workflow_nodes import main_node, final_report_generator
 # Modified imports to use Pipeline 1 specific chunk retrieval functions
 # Now importing the new functions from pdf_processor
-from pdf_processor import get_first_pipeline1_chunk, get_all_pipeline1_chunks_details, get_next_pending_pipeline1_chunk, get_all_pending_pipeline1_chunks_details
-from config import AGENTS_DB_NAME, AGENTS_COLLECTION_NAME # Assuming config.py is correctly set up for P1 DB
-from database_saver import save_results_to_mongo, clear_results_collection, update_chunk_analysis_status
-from text_classifier import classify_text
+from .pdf_processor import get_first_pipeline1_chunk, get_all_pipeline1_chunks_details, get_next_pending_pipeline1_chunk, get_all_pending_pipeline1_chunks_details
+from .database_saver import save_results_to_mongo, clear_results_collection, update_chunk_analysis_status
+from .text_classifier import classify_text
 
 def run_workflow():
     # Clear the results collection at the beginning of each program execution

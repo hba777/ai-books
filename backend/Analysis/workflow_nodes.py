@@ -1,6 +1,6 @@
 from typing import Dict
-from models import State
-from agents import available_agents
+from .models import State
+from .agents import available_agents
 
 # ─── CORE WORKFLOW NODES ─────────────────────────────────────────────────────
 def main_node(state: State) -> Dict:

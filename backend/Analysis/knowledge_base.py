@@ -8,8 +8,8 @@ from langchain_community.embeddings import FastEmbedEmbeddings
 from langchain.chains.query_constructor.schema import AttributeInfo
 from langchain.retrievers.self_query.base import SelfQueryRetriever
 from langchain_core.exceptions import OutputParserException
-from config import MONGO_URI, CHROMA_DB_DIRECTORY
-from llm_init import embeddings, llm1
+from .config import MONGO_URI, CHROMA_DB_DIRECTORY
+from .llm_init import embeddings, llm1
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
