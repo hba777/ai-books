@@ -6,7 +6,7 @@ const ClassificationCardRow: React.FC = () => {
   const { currentFilter, setCurrentFilter } = useClassificationContext();
 
   return (
-    <div className="flex gap-10 w-full justify-center mt-6 mb-8">
+    <div className="flex gap-3 lg:gap-4 w-full justify-center mt-6 mb-8 px-4">
       <ClassificationStatCard
         value={245}
         label="Books Uploaded"

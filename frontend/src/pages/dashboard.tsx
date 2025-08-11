@@ -14,9 +14,9 @@ const Dashboard: React.FC = () => {
   return (
       <div className="min-h-screen flex bg-[#f7f9fc]">
       <Sidebar />
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col min-w-0">
         <Header />
-        <div className="flex-1 flex flex-col items-center px-2 py-12">
+        <div className="flex-1 flex flex-col items-center px-4 py-12 overflow-x-auto">
           <WelcomeSection onUploadClick={() => setModalOpen(true)}/>
           <div className="w-full flex justify-start mb-6">
             <ProcessingCard/>
