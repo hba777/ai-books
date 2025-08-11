@@ -19,6 +19,15 @@ def get_review_outcomes_count():
     count = review_outcomes_collection.count_documents({})
     return {"count": count}
 
+@router.delete("/delete_all", dependencies=[Depends(get_user_from_cookie)])
+def delete_all_review_outcomes():
+    """
+    Deletes all review outcomes from the collection.
+    """
+    review_outcomes_collection = get_review_outcomes_collection()
+    result = review_outcomes_collection.delete_many({})
+    return {"status": "success", "deleted_count": result.deleted_count}
+
 # Analysis Workflow
 @router.post("/run", dependencies=[Depends(get_user_from_cookie)])
 def run_analysis_workflow():
