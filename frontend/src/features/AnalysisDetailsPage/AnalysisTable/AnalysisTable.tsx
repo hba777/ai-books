@@ -8,7 +8,7 @@ interface AnalysisTableProps {
   pageSize?: number; // kept for backward compatibility, not used in overall pagination mode
   minConfidence?: number; // filter: minimum confidence inclusive
   onlyHumanReviewed?: boolean; // view switch to consolidated human reviewed
-  selectedReviewTypes?: ReviewTypeKey[]; // which review types (agents) to include
+  selectedReviewTypes?: string[]; // which review types (agents) to include
 }
 
 interface EditableFields {
@@ -16,19 +16,48 @@ interface EditableFields {
   recommendation: string;
 }
 
-const reviewTables: { key: keyof ReviewOutcomesResponse; title: string }[] = reviewTypeOptions.map(({ key, title }) => ({ key: key as keyof ReviewOutcomesResponse, title }));
+// Build review table definitions dynamically from the shape of the data at runtime
+const deriveReviewTables = (rows: ReviewOutcomesResponse[]): { key: keyof ReviewOutcomesResponse; title: string }[] => {
+  const candidateKeys: Array<keyof ReviewOutcomesResponse> = [
+    "FactCheckingReview",
+    "FederalUnityReview",
+    "ForeignRelationsReview",
+    "HistoricalNarrativeReview",
+    "InstitutionalIntegrityReview",
+    "NationalSecurityReview",
+    "RhetoricToneReview",
+  ];
+  const present = new Set<keyof ReviewOutcomesResponse>();
+  for (const row of rows) {
+    for (const k of candidateKeys) {
+      if ((row as any)[k]) present.add(k);
+    }
+  }
+  const keyToTitle: Record<string, string> = {
+    FactCheckingReview: "Fact Checking Review",
+    FederalUnityReview: "Federal Unity Review",
+    ForeignRelationsReview: "Foreign Relations Review",
+    HistoricalNarrativeReview: "Historical Narrative Review",
+    InstitutionalIntegrityReview: "Institutional Integrity Review",
+    NationalSecurityReview: "National Security Review",
+    RhetoricToneReview: "Rhetoric & Tone Review",
+  };
+  return Array.from(present).map((key) => ({ key, title: keyToTitle[String(key)] ?? String(key) }));
+};
 
 const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50, onlyHumanReviewed = false, selectedReviewTypes }) => {
   const [editingRows, setEditingRows] = useState<Set<string>>(new Set());
   const [editableFields, setEditableFields] = useState<Record<string, EditableFields>>({});
 
   // Get unique problematic texts and group reviews by text
+  const reviewTables = useMemo(() => deriveReviewTables(data), [data]);
+
   const groupedData = useMemo(() => {
     const textGroups: Record<string, any> = {};
     
     data.forEach((row) => {
       reviewTables.forEach(({ key, title }) => {
-        if (selectedReviewTypes && selectedReviewTypes.length > 0 && !selectedReviewTypes.includes(key as ReviewTypeKey)) {
+        if (selectedReviewTypes && selectedReviewTypes.length > 0 && !selectedReviewTypes.includes(String(key))) {
           return;
         }
         const review = (row as any)[key];
@@ -46,7 +75,7 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
     });
     
     return Object.values(textGroups);
-  }, [data]);
+  }, [data, selectedReviewTypes, reviewTables]);
 
   const renderBool = (v: unknown): React.ReactNode => {
     if (typeof v === "boolean") return v ? "Yes" : "No";
@@ -119,18 +148,14 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
     }));
   };
 
-  if (groupedData.length === 0) {
-    return (
-      <div className="bg-white rounded-2xl shadow p-6 text-gray-500">No review data available.</div>
-    );
-  }
+  // Note: Avoid early returns before all hooks are called; render fallbacks conditionally instead.
 
   // Build a flat list of human-reviewed items (across all texts and review types), honoring filters
   const humanReviewedItems = useMemo(() => {
     const items: Array<{ key: keyof ReviewOutcomesResponse; title: string; review: any }> = [];
     data.forEach((row) => {
       reviewTables.forEach(({ key, title }) => {
-        if (selectedReviewTypes && selectedReviewTypes.length > 0 && !selectedReviewTypes.includes(key as ReviewTypeKey)) return;
+        if (selectedReviewTypes && selectedReviewTypes.length > 0 && !selectedReviewTypes.includes(String(key))) return;
         const review = (row as any)[key];
         if (!review) return;
         // Must be human reviewed
@@ -144,7 +169,7 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
       });
     });
     return items;
-  }, [data, minConfidence]);
+  }, [data, minConfidence, selectedReviewTypes, reviewTables]);
 
   // Pagination for paragraph tables (10 paragraphs per page)
   const PARAGRAPHS_PER_PAGE = 10;
@@ -161,7 +186,8 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
 
   return (
     <div className="flex flex-col gap-4">
-      {!onlyHumanReviewed && visibleParagraphGroups.map((group, relIndex) => {
+      {!onlyHumanReviewed && (
+        visibleParagraphGroups.length > 0 ? visibleParagraphGroups.map((group, relIndex) => {
         const textIndex = startIdx + relIndex;
         return (
         <div key={textIndex} className="w-full">
@@ -191,7 +217,7 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
               <tbody>
                 {reviewTables.map(({ key, title }) => {
                   const review = group.reviews[key];
-                  const rowKey = getRowKey(textIndex, key);
+                  const rowKey = getRowKey(textIndex, String(key));
                   const isEditing = editingRows.has(rowKey);
                   const currentEditableFields = editableFields[rowKey] || { observation: "", recommendation: "" };
 
@@ -212,7 +238,7 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
                   }
 
                   return (
-                    <tr key={key} className="border-b hover:bg-gray-50">
+                    <tr key={String(key)} className="border-b hover:bg-gray-50">
                       {/* Review Type */}
                       <td className="py-4 px-6 text-gray-700 font-medium">
                         {title}
@@ -311,7 +337,9 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
             </table>
           </div>
         </div>
-      );})}
+      );}) : (
+        <div className="bg-white rounded-2xl shadow p-6 text-gray-500">No review data available.</div>
+      ))}
 
       {/* Human Reviewed (Consolidated) */}
       {onlyHumanReviewed && humanReviewedItems.length > 0 && (

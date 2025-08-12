@@ -1,13 +1,13 @@
 import React from "react";
-import { reviewTypeOptions, ReviewTypeKey } from "../constants";
 
 interface ReviewFiltersProps {
   minConfidence: number;
   onMinConfidenceChange: (value: number) => void;
   onlyHumanReviewed: boolean;
   onOnlyHumanReviewedChange: (value: boolean) => void;
-  selectedReviewTypes: ReviewTypeKey[];
-  onSelectedReviewTypesChange: (value: ReviewTypeKey[]) => void;
+  selectedReviewTypes: string[];
+  onSelectedReviewTypesChange: (value: string[]) => void;
+  availableReviewTypes?: { key: string; title: string }[];
 }
 
 const ReviewFilters: React.FC<ReviewFiltersProps> = ({
@@ -17,8 +17,10 @@ const ReviewFilters: React.FC<ReviewFiltersProps> = ({
   onOnlyHumanReviewedChange,
   selectedReviewTypes,
   onSelectedReviewTypesChange,
+  availableReviewTypes,
 }) => {
-  const toggleReviewType = (key: ReviewTypeKey) => {
+  const options = availableReviewTypes && availableReviewTypes.length > 0 ? availableReviewTypes : [];
+  const toggleReviewType = (key: string) => {
     if (selectedReviewTypes.includes(key)) {
       onSelectedReviewTypesChange(selectedReviewTypes.filter(k => k !== key));
     } else {
@@ -31,7 +33,7 @@ const ReviewFilters: React.FC<ReviewFiltersProps> = ({
       <div className="flex items-center gap-2">
         <label className="text-sm font-semibold text-gray-700">Agents</label>
         <div className="flex flex-wrap gap-2 max-w-[600px]">
-          {reviewTypeOptions.map(({ key, title }) => (
+          {options.map(({ key, title }) => (
             <button
               type="button"
               key={key}
