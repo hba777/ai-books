@@ -63,6 +63,11 @@ export interface ReviewOutcomesResponse {
   timestamp?: string;
 }
 
+export interface BookClassificationsResponse {
+  book_id: string;
+  classifications: string[];
+}
+
 // WebSocket connection for progress tracking
 export function connectToProgressWebSocket(
   bookId: string,
@@ -184,5 +189,10 @@ export async function startClassification(bookId: string): Promise<{ message: st
 
 export async function getReviewOutcomes(): Promise<ReviewOutcomesResponse[]> {
   const res = await api.get("/review_outcomes/");
+  return res.data;
+}
+
+export async function getBookClassifications(bookId: string): Promise<BookClassificationsResponse> {
+  const res = await api.get<BookClassificationsResponse>(`/classification/classifications/${bookId}`);
   return res.data;
 }

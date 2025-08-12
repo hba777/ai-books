@@ -51,28 +51,6 @@ def get_all_chunks():
 
     return ChunkListResponse(items=[ChunkResponse(**chunk) for chunk in chunks])
 
-@router.get("/classifications/{book_id}", dependencies=[Depends(get_user_from_cookie)])
-def get_book_classifications(book_id: str):
-    chunks_collection = get_chunks_collection()
-
-    # Get all chunks for this book_id
-    chunks = list(chunks_collection.find({"doc_id": book_id}))
-
-    if not chunks:
-        raise HTTPException(status_code=404, detail="No chunks found for this book.")
-
-    classifications = []
-
-    for chunk in chunks:
-        if "classification" in chunk and chunk["classification"]:
-            for c in chunk["classification"]:
-                # Only add the classification string
-                if "classification" in c:
-                    classifications.append(c["classification"])
-
-    return {"book_id": book_id, "classifications": classifications}
-
-
 @router.get("/count", dependencies=[Depends(get_user_from_cookie)])
 def get_chunks_count():
     chunks_collection = get_chunks_collection()

@@ -16,10 +16,11 @@ const AnalysisDetails: React.FC = () => {
   const [minConfidence, setMinConfidence] = useState<number>(50);
   const [onlyHumanReviewed, setOnlyHumanReviewed] = useState<boolean>(false);
   const [selectedReviewTypes, setSelectedReviewTypes] = useState<string[]>([]);
-  const [book, setBook] = useState<Book>(); 
+  const [book, setBook] = useState<Book>();
+  const [tags, setTags] = useState<string[]>([]);
   const router = useRouter();
   const { id } = router.query;
-  const { getBookById, reviewOutcomes, fetchReviewOutcomes } = useBooks();
+  const { getBookById, reviewOutcomes, fetchReviewOutcomes, getBookClassifications } = useBooks();
 
   useEffect(() => {
     if (!id) return;
@@ -37,6 +38,22 @@ const AnalysisDetails: React.FC = () => {
   useEffect(() => {
     fetchReviewOutcomes();
   }, []);
+
+  useEffect(() => {
+    const fetchTags = async () => {
+      if (!book?._id) return;
+      try {
+        const res = await getBookClassifications(book._id);
+        // Remove duplicates while preserving order
+        const uniqueTags = Array.from(new Set(res.classifications || []));
+        setTags(uniqueTags);
+      } catch (e) {
+        console.error("Failed to fetch classifications:", e);
+        setTags([]);
+      }
+    };
+    fetchTags();
+  }, [book?._id, getBookClassifications]);
 
   if (!book) {
     return (
@@ -85,7 +102,7 @@ const AnalysisDetails: React.FC = () => {
         <Header />
         <div className="flex-1 flex flex-col items-center px-4 py-12 w-full">
           <div className="w-full max-w-7xl">
-            <TopSection bookTitle={book.doc_name} tags={mockTags} bookId={book._id} onSeeInfo={()=>setShowSeeInfo(true)} />
+            <TopSection bookTitle={book.doc_name} tags={tags} bookId={book._id} onSeeInfo={()=>setShowSeeInfo(true)} />
             <ReviewFilters
               minConfidence={minConfidence}
               onMinConfidenceChange={setMinConfidence}
