@@ -15,6 +15,13 @@ interface KnowledgeBaseItemFormData {
   topic: string;
 }
 
+interface FieldErrors {
+  topic?: string;
+  main_category?: string;
+  sub_category?: string;
+  json_data?: string;
+}
+
 const KnowledgeBaseForm: React.FC<KnowledgeBaseFormProps> = ({
   value,
   onChange,
@@ -28,6 +35,67 @@ const KnowledgeBaseForm: React.FC<KnowledgeBaseFormProps> = ({
     sub_category: "",
     topic: "",
   });
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+
+  // Validation functions
+  const validateTopic = (topic: string): string | null => {
+    if (!topic.trim()) return "Topic is required";
+    if (topic.length < 3) return "Topic must be at least 3 characters";
+    if (topic.length > 100) return "Topic must be less than 100 characters";
+    if (!/^[a-zA-Z0-9\s\-_]+$/.test(topic)) return "Topic contains invalid characters";
+    return null;
+  };
+
+  const validateMainCategory = (category: string): string | null => {
+    if (!category.trim()) return "Main category is required";
+    if (category.length < 2) return "Main category must be at least 2 characters";
+    if (category.length > 50) return "Main category must be less than 50 characters";
+    if (!/^[a-zA-Z0-9\s\-_]+$/.test(category)) return "Main category contains invalid characters";
+    return null;
+  };
+
+  const validateSubCategory = (category: string): string | null => {
+    if (!category.trim()) return "Sub category is required";
+    if (category.length < 2) return "Sub category must be at least 2 characters";
+    if (category.length > 50) return "Sub category must be less than 50 characters";
+    if (!/^[a-zA-Z0-9\s\-_]+$/.test(category)) return "Sub category contains invalid characters";
+    return null;
+  };
+
+  const validateJsonData = (jsonData: string): string | null => {
+    if (!jsonData.trim()) return "Description is required";
+    if (jsonData.length > 2000) return "Description must be less than 2000 characters";
+    
+    // Try to parse JSON if it looks like JSON
+    if (jsonData.trim().startsWith('{') || jsonData.trim().startsWith('[')) {
+      try {
+        JSON.parse(jsonData);
+      } catch {
+        return "Invalid JSON format";
+      }
+    }
+    
+    return null;
+  };
+
+  const validateAllFields = (): boolean => {
+    const errors: FieldErrors = {};
+    
+    const topicError = validateTopic(formData.topic);
+    if (topicError) errors.topic = topicError;
+    
+    const mainCategoryError = validateMainCategory(formData.main_category);
+    if (mainCategoryError) errors.main_category = mainCategoryError;
+    
+    const subCategoryError = validateSubCategory(formData.sub_category);
+    if (subCategoryError) errors.sub_category = subCategoryError;
+    
+    const jsonDataError = validateJsonData(formData.json_data);
+    if (jsonDataError) errors.json_data = jsonDataError;
+    
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleAdd = () => {
     setFormData({
@@ -37,6 +105,7 @@ const KnowledgeBaseForm: React.FC<KnowledgeBaseFormProps> = ({
       topic: "",
     });
     setEditingIndex(null);
+    setFieldErrors({});
     setShowForm(true);
   };
 
@@ -49,6 +118,7 @@ const KnowledgeBaseForm: React.FC<KnowledgeBaseFormProps> = ({
       topic: item.topic,
     });
     setEditingIndex(index);
+    setFieldErrors({});
     setShowForm(true);
   };
 
@@ -57,8 +127,22 @@ const KnowledgeBaseForm: React.FC<KnowledgeBaseFormProps> = ({
     onChange(newValue);
   };
 
+  const handleFieldChange = (field: keyof KnowledgeBaseItemFormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Clear field error when user starts typing
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate all fields before submission
+    if (!validateAllFields()) {
+      return;
+    }
 
     const newItem: Omit<KnowledgeBaseItem, "_id"> = {
       json_data: formData.json_data,
@@ -78,11 +162,13 @@ const KnowledgeBaseForm: React.FC<KnowledgeBaseFormProps> = ({
     }
     setShowForm(false);
     setEditingIndex(null);
+    setFieldErrors({});
   };
 
   const handleCancel = () => {
     setShowForm(false);
     setEditingIndex(null);
+    setFieldErrors({});
   };
 
   return (
@@ -145,12 +231,15 @@ const KnowledgeBaseForm: React.FC<KnowledgeBaseFormProps> = ({
                 <input
                   type="text"
                   value={formData.topic}
-                  onChange={(e) =>
-                    setFormData({ ...formData, topic: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) => handleFieldChange('topic', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    fieldErrors.topic ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   required
                 />
+                {fieldErrors.topic && (
+                  <div className="text-red-500 text-sm mt-1">{fieldErrors.topic}</div>
+                )}
               </div>
 
               <div>
@@ -160,12 +249,15 @@ const KnowledgeBaseForm: React.FC<KnowledgeBaseFormProps> = ({
                 <input
                   type="text"
                   value={formData.main_category}
-                  onChange={(e) =>
-                    setFormData({ ...formData, main_category: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) => handleFieldChange('main_category', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    fieldErrors.main_category ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   required
                 />
+                {fieldErrors.main_category && (
+                  <div className="text-red-500 text-sm mt-1">{fieldErrors.main_category}</div>
+                )}
               </div>
 
               <div>
@@ -175,28 +267,34 @@ const KnowledgeBaseForm: React.FC<KnowledgeBaseFormProps> = ({
                 <input
                   type="text"
                   value={formData.sub_category}
-                  onChange={(e) =>
-                    setFormData({ ...formData, sub_category: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) => handleFieldChange('sub_category', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    fieldErrors.sub_category ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   required
                 />
+                {fieldErrors.sub_category && (
+                  <div className="text-red-500 text-sm mt-1">{fieldErrors.sub_category}</div>
+                )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  JSON Data *
+                  Description *
                 </label>
                 <textarea
                   value={formData.json_data}
-                  onChange={(e) =>
-                    setFormData({ ...formData, json_data: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) => handleFieldChange('json_data', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    fieldErrors.json_data ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   rows={4}
-                  placeholder="Enter JSON data..."
+                  placeholder="Enter description"
                   required
                 />
+                {fieldErrors.json_data && (
+                  <div className="text-red-500 text-sm mt-1">{fieldErrors.json_data}</div>
+                )}
               </div>
 
               <div className="flex justify-end gap-3 pt-4">

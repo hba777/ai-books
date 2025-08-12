@@ -42,29 +42,17 @@ const InDepthAnalysisAgentForm: React.FC<InDepthAnalysisAgentFormProps> = ({
 
   // Validation function
   const validatePrompt = (prompt: string) => {
-    try {
-      const parsed = JSON.parse(prompt);
+    // Content check
+    if (!prompt.trim()) return "Field cannot be empty";
 
-      // Structure check
-      if (!parsed.criteria || !parsed.guidelines) return "Missing required keys";
+    // Length check
+    if (prompt.length > 2000) return "Text too long (max 2000 characters)";
 
-      // Content check
-      if (parsed.criteria.trim().length === 0 || parsed.guidelines.trim().length === 0)
-        return "Criteria and guidelines cannot be empty";
+    // Injection prevention (basic example)
+    const injectionPattern = /ignore all|disregard previous|instead/i;
+    if (injectionPattern.test(prompt)) return "Suspicious content detected";
 
-      // Length check
-      if (parsed.criteria.length > 2000 || parsed.guidelines.length > 2000)
-        return "Text too long";
-
-      // Injection prevention (basic example)
-      const injectionPattern = /ignore all|disregard previous|instead/i;
-      if (injectionPattern.test(parsed.criteria) || injectionPattern.test(parsed.guidelines))
-        return "Suspicious content detected";
-
-      return null; // No errors
-    } catch {
-      return "Invalid JSON format";
-    }
+    return null; // No errors
   };
 
   const validateFields = () => {
@@ -159,7 +147,7 @@ const InDepthAnalysisAgentForm: React.FC<InDepthAnalysisAgentFormProps> = ({
         </div>
         
         <div className="flex flex-col gap-2">
-          <label className="font-semibold">Criteria (JSON format)</label>
+          <label className="font-semibold">Criteria</label>
           <textarea
             className={`border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
               fieldErrors.criteria ? 'border-red-500' : 'border-gray-400'
@@ -168,7 +156,8 @@ const InDepthAnalysisAgentForm: React.FC<InDepthAnalysisAgentFormProps> = ({
             value={values.criteria}
             onChange={handleChange}
             rows={3}
-            placeholder='{"criteria": "Your criteria here", "guidelines": "Your guidelines here"}'
+            placeholder={`- Criteria 1 
+- Criteria 2`}
             required
           />
           {fieldErrors.criteria && (
@@ -176,7 +165,7 @@ const InDepthAnalysisAgentForm: React.FC<InDepthAnalysisAgentFormProps> = ({
           )}
         </div>
         <div className="flex flex-col gap-2">
-          <label className="font-semibold">Policy Guidelines (JSON format)</label>
+          <label className="font-semibold">Policy Guidelines</label>
           <textarea
             className={`border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
               fieldErrors.guidelines ? 'border-red-500' : 'border-gray-400'
@@ -185,7 +174,8 @@ const InDepthAnalysisAgentForm: React.FC<InDepthAnalysisAgentFormProps> = ({
             value={values.guidelines}
             onChange={handleChange}
             rows={3}
-            placeholder='{"criteria": "Your criteria here", "guidelines": "Your guidelines here"}'
+            placeholder={`1. Guideline 1 
+2. Guideline 2`}
             required
           />
           {fieldErrors.guidelines && (
