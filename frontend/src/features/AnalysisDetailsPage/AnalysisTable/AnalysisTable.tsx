@@ -371,7 +371,7 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
                       <tr>
                         <td colSpan={6} className="px-6 pt-4">
                           <div className="border-2 border-dotted border-gray-300 bg-gray-50 rounded-md p-3 text-sm text-gray-700 whitespace-normal break-words">
-                            {analyzedText}
+                            Paragraph: {analyzedText}
                           </div>
                         </td>
                       </tr>
