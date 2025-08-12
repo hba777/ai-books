@@ -461,14 +461,28 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
           </div>
         </div>
       );}) : (
-        <div className="bg-white rounded-2xl shadow p-6 text-gray-500">No review data available.</div>
+        <div className="bg-white rounded-2xl shadow p-6 text-center">
+          <div className="text-gray-500 mb-2">
+            <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-lg font-semibold text-gray-700 mb-2">No Review Data Available</p>
+            <p className="text-sm text-gray-500">
+              {minConfidence > 50 ? 
+                `Confidence level too high (${minConfidence}+). Try lowering the confidence filter to see more results.` : 
+                'No review data matches the current filters.'
+              }
+            </p>
+          </div>
+        </div>
       ))}
 
       {/* Human Reviewed (Consolidated) */}
-      {onlyHumanReviewed && humanReviewedItems.length > 0 && (
+      {onlyHumanReviewed && (
         <div className="w-full">
           <h3 className="text-lg font-semibold mb-3">Human Reviewed (All)</h3>
-          <div className="bg-white rounded-2xl shadow overflow-x-auto">
+          {humanReviewedItems.length > 0 ? (
+            <div className="bg-white rounded-2xl shadow overflow-x-auto">
             <table className="min-w-[1000px] text-left">
               <thead>
                 <tr className="text-sm border-b bg-[#f7f9fc]">
@@ -603,6 +617,22 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
               </tbody>
             </table>
           </div>
+          ) : (
+            <div className="bg-white rounded-2xl shadow p-6 text-center">
+              <div className="text-gray-500 mb-2">
+                <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-lg font-semibold text-gray-700 mb-2">No Human Reviewed Items Found</p>
+                <p className="text-sm text-gray-500">
+                  {minConfidence > 50 ? 
+                    `Confidence level too high (${minConfidence}+). Try lowering the confidence filter to see more results.` : 
+                    'No human reviewed items match the current filters.'
+                  }
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
