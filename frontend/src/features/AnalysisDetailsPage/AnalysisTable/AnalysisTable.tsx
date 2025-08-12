@@ -176,8 +176,8 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
           </div>
 
           {/* Review Table */}
-          <div className="bg-white rounded-2xl shadow overflow-x-auto">
-            <table className="min-w-[1000px] w-full text-left border-collapse">
+          <div className="rounded-2xl shadow">
+            <table className="min-w-[1000px] text-left bg-white w-full">
               <thead>
                 <tr className="text-sm border-b bg-[#f7f9fc]">
                   <th className="py-4 px-6 font-semibold text-left">Review Type</th>
@@ -318,7 +318,7 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
         <div className="w-full">
           <h3 className="text-lg font-semibold mb-3">Human Reviewed (All)</h3>
           <div className="bg-white rounded-2xl shadow overflow-x-auto">
-            <table className="min-w-[1000px] w-full text-left border-collapse">
+            <table className="min-w-[1000px] text-left">
               <thead>
                 <tr className="text-sm border-b bg-[#f7f9fc]">
                   <th className="py-4 px-6 font-semibold text-left">Review Type</th>

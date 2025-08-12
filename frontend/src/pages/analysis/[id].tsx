@@ -4,7 +4,7 @@ import Header from "@/components/Header/Header";
 import TopSection from "@/features/AnalysisDetailsPage/TopSection/TopSection";
 import AnalysisTable from "@/features/AnalysisDetailsPage/AnalysisTable/AnalysisTable";
 import ReviewFilters from "@/features/AnalysisDetailsPage/Filters/ReviewFilters";
-import { ReviewTypeKey } from "@/features/AnalysisDetailsPage/constants";
+import { ReviewTypeKey, reviewTypeOptions } from "@/features/AnalysisDetailsPage/constants";
 import SeeInfo from "@/features/ClassificationDetailsPage/SeeInfo";
 import { useRouter } from "next/router";
 import { Book } from "@/services/booksApi";
