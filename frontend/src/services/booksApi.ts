@@ -183,6 +183,6 @@ export async function startClassification(bookId: string): Promise<{ message: st
 }
 
 export async function getReviewOutcomes(): Promise<ReviewOutcomesResponse[]> {
-  const res = await api.get<ReviewOutcomesResponse[]>("/review_outcomes/");
+  const res = await api.get("/review_outcomes/");
   return res.data;
 }

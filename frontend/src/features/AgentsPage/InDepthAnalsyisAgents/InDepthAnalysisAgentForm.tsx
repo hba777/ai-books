@@ -37,15 +37,61 @@ const InDepthAnalysisAgentForm: React.FC<InDepthAnalysisAgentFormProps> = ({
   const [values, setValues] = useState<AgentFormValues>({ ...defaultValues, ...initialValues });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ criteria?: string; guidelines?: string }>({});
   const { updateAgent } = useAgents(); 
+
+  // Validation function
+  const validatePrompt = (prompt: string) => {
+    // Content check
+    if (!prompt.trim()) return "Field cannot be empty";
+
+    // Length check
+    if (prompt.length > 2000) return "Text too long (max 2000 characters)";
+
+    // Injection prevention (basic example)
+    const injectionPattern = /ignore all|disregard previous|instead/i;
+    if (injectionPattern.test(prompt)) return "Suspicious content detected";
+
+    return null; // No errors
+  };
+
+  const validateFields = () => {
+    const errors: { criteria?: string; guidelines?: string } = {};
+    
+    // Validate criteria
+    const criteriaError = validatePrompt(values.criteria);
+    if (criteriaError) {
+      errors.criteria = criteriaError;
+    }
+    
+    // Validate guidelines
+    const guidelinesError = validatePrompt(values.guidelines);
+    if (guidelinesError) {
+      errors.guidelines = guidelinesError;
+    }
+    
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setValues((prev) => ({ ...prev, [name]: value }));
+    
+    // Clear field error when user starts typing
+    if (fieldErrors[name as keyof typeof fieldErrors]) {
+      setFieldErrors(prev => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate fields before submission
+    if (!validateFields()) {
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     try {
@@ -103,24 +149,38 @@ const InDepthAnalysisAgentForm: React.FC<InDepthAnalysisAgentFormProps> = ({
         <div className="flex flex-col gap-2">
           <label className="font-semibold">Criteria</label>
           <textarea
-            className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className={`border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+              fieldErrors.criteria ? 'border-red-500' : 'border-gray-400'
+            }`}
             name="criteria"
             value={values.criteria}
             onChange={handleChange}
-            rows={2}
+            rows={3}
+            placeholder={`- Criteria 1 
+- Criteria 2`}
             required
           />
+          {fieldErrors.criteria && (
+            <div className="text-red-500 text-sm">{fieldErrors.criteria}</div>
+          )}
         </div>
         <div className="flex flex-col gap-2">
           <label className="font-semibold">Policy Guidelines</label>
           <textarea
-            className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className={`border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+              fieldErrors.guidelines ? 'border-red-500' : 'border-gray-400'
+            }`}
             name="guidelines"
             value={values.guidelines}
             onChange={handleChange}
-            rows={2}
+            rows={3}
+            placeholder={`1. Guideline 1 
+2. Guideline 2`}
             required
           />
+          {fieldErrors.guidelines && (
+            <div className="text-red-500 text-sm">{fieldErrors.guidelines}</div>
+          )}
         </div>
         <div className="flex flex-col gap-2">
           <label className="font-semibold">Knowledge Bases</label>

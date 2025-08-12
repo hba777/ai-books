@@ -3,6 +3,7 @@ import Sidebar from "@/components/Sidebar/Sidebar";
 import Header from "@/components/Header/Header";
 import TopSection from "@/features/AnalysisDetailsPage/TopSection/TopSection";
 import AnalysisTable from "@/features/AnalysisDetailsPage/AnalysisTable/AnalysisTable";
+import ReviewFilters from "@/features/AnalysisDetailsPage/Filters/ReviewFilters";
 import SeeInfo from "@/features/ClassificationDetailsPage/SeeInfo";
 import { useRouter } from "next/router";
 import { Book } from "@/services/booksApi";
@@ -12,6 +13,9 @@ const mockTags = ["Political", "Maths", "IT/CS", "Maths", "Maths"];
 
 const AnalysisDetails: React.FC = () => {
   const [showSeeInfo, setShowSeeInfo] = useState(false);
+  const [minConfidence, setMinConfidence] = useState<number>(50);
+  const [onlyHumanReviewed, setOnlyHumanReviewed] = useState<boolean>(false);
+  const [selectedReviewTypes, setSelectedReviewTypes] = useState<string[]>([]);
   const [book, setBook] = useState<Book>(); 
   const router = useRouter();
   const { id } = router.query;
@@ -47,6 +51,29 @@ const AnalysisDetails: React.FC = () => {
     (r) => r.doc_id === book._id || r.Book_Name === book.doc_name
   );
 
+  // Derive available review types (keys + human titles) dynamically for this book
+  const candidateKeys = [
+    "FactCheckingReview",
+    "FederalUnityReview",
+    "ForeignRelationsReview",
+    "HistoricalNarrativeReview",
+    "InstitutionalIntegrityReview",
+    "NationalSecurityReview",
+    "RhetoricToneReview",
+  ];
+  const titleMap: Record<string, string> = {
+    FactCheckingReview: "Fact Checking Review",
+    FederalUnityReview: "Federal Unity Review",
+    ForeignRelationsReview: "Foreign Relations Review",
+    HistoricalNarrativeReview: "Historical Narrative Review",
+    InstitutionalIntegrityReview: "Institutional Integrity Review",
+    NationalSecurityReview: "National Security Review",
+    RhetoricToneReview: "Rhetoric & Tone Review",
+  };
+  const availableReviewTypes = candidateKeys
+    .filter((key) => bookReviewOutcomes.some((row) => Boolean((row as any)[key])))
+    .map((key) => ({ key, title: titleMap[key] ?? key }));
+
   return (
     <div className="min-h-screen flex bg-[#f7f9fc]">
       <Sidebar />
@@ -55,10 +82,22 @@ const AnalysisDetails: React.FC = () => {
         <div className="flex-1 flex flex-col items-center px-4 py-12 w-full">
           <div className="w-full max-w-7xl">
             <TopSection bookTitle={book.doc_name} tags={mockTags} bookId={book._id} onSeeInfo={()=>setShowSeeInfo(true)} />
+            <ReviewFilters
+              minConfidence={minConfidence}
+              onMinConfidenceChange={setMinConfidence}
+              onlyHumanReviewed={onlyHumanReviewed}
+              onOnlyHumanReviewedChange={setOnlyHumanReviewed}
+              selectedReviewTypes={selectedReviewTypes}
+              onSelectedReviewTypesChange={setSelectedReviewTypes}
+              availableReviewTypes={availableReviewTypes}
+            />
             {book.status === "Processed" ? (
               <AnalysisTable
                 data={bookReviewOutcomes}
                 pageSize={10}
+                minConfidence={minConfidence}
+                onlyHumanReviewed={onlyHumanReviewed}
+                selectedReviewTypes={selectedReviewTypes}
               />
             ) : (
               <div className="flex justify-center items-center h-40 text-xl font-semibold text-gray-500">
