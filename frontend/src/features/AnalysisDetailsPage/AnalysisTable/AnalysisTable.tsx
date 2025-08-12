@@ -15,33 +15,35 @@ interface EditableFields {
   recommendation: string;
 }
 
-// Build review table definitions dynamically from the shape of the data at runtime
-const deriveReviewTables = (rows: ReviewOutcomesResponse[]): { key: keyof ReviewOutcomesResponse; title: string }[] => {
-  const candidateKeys: Array<keyof ReviewOutcomesResponse> = [
-    "FactCheckingReview",
-    "FederalUnityReview",
-    "ForeignRelationsReview",
-    "HistoricalNarrativeReview",
-    "InstitutionalIntegrityReview",
-    "NationalSecurityReview",
-    "RhetoricToneReview",
-  ];
-  const present = new Set<keyof ReviewOutcomesResponse>();
+// Build review table definitions dynamically from the outcome rows without hardcoding names
+const formatKeyToTitle = (rawKey: string): string => {
+  const noSuffix = rawKey.endsWith("Review") ? rawKey.slice(0, -6) : rawKey;
+  const withSpaces = noSuffix
+    .replace(/_/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2");
+  const trimmed = withSpaces.trim();
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1) + (rawKey.endsWith("Review") ? " Review" : "");
+};
+
+const deriveReviewTables = (rows: ReviewOutcomesResponse[]): { key: string; title: string }[] => {
+  const keys = new Set<string>();
   for (const row of rows) {
-    for (const k of candidateKeys) {
-      if ((row as any)[k]) present.add(k);
+    for (const [k, v] of Object.entries(row as Record<string, unknown>)) {
+      if (v && typeof v === "object") {
+        const obj = v as Record<string, unknown>;
+        // Heuristics to detect a review block
+        if (
+          "problematic_text" in obj ||
+          "confidence" in obj ||
+          "issue_found" in obj ||
+          "human_review" in obj
+        ) {
+          keys.add(k);
+        }
+      }
     }
   }
-  const keyToTitle: Record<string, string> = {
-    FactCheckingReview: "Fact Checking Review",
-    FederalUnityReview: "Federal Unity Review",
-    ForeignRelationsReview: "Foreign Relations Review",
-    HistoricalNarrativeReview: "Historical Narrative Review",
-    InstitutionalIntegrityReview: "Institutional Integrity Review",
-    NationalSecurityReview: "National Security Review",
-    RhetoricToneReview: "Rhetoric & Tone Review",
-  };
-  return Array.from(present).map((key) => ({ key, title: keyToTitle[String(key)] ?? String(key) }));
+  return Array.from(keys).map((key) => ({ key, title: formatKeyToTitle(key) }));
 };
 
 const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50, onlyHumanReviewed = false, selectedReviewTypes }) => {
@@ -151,7 +153,7 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
 
   // Build a flat list of human-reviewed items (across all texts and review types), honoring filters
   const humanReviewedItems = useMemo(() => {
-    const items: Array<{ key: keyof ReviewOutcomesResponse; title: string; review: any }> = [];
+    const items: Array<{ key: string; title: string; review: any }> = [];
     data.forEach((row) => {
       reviewTables.forEach(({ key, title }) => {
         if (selectedReviewTypes && selectedReviewTypes.length > 0 && !selectedReviewTypes.includes(String(key))) return;

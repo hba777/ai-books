@@ -51,28 +51,32 @@ const AnalysisDetails: React.FC = () => {
     (r) => r.doc_id === book._id || r.Book_Name === book.doc_name
   );
 
-  // Derive available review types (keys + human titles) dynamically for this book
-  const candidateKeys = [
-    "FactCheckingReview",
-    "FederalUnityReview",
-    "ForeignRelationsReview",
-    "HistoricalNarrativeReview",
-    "InstitutionalIntegrityReview",
-    "NationalSecurityReview",
-    "RhetoricToneReview",
-  ];
-  const titleMap: Record<string, string> = {
-    FactCheckingReview: "Fact Checking Review",
-    FederalUnityReview: "Federal Unity Review",
-    ForeignRelationsReview: "Foreign Relations Review",
-    HistoricalNarrativeReview: "Historical Narrative Review",
-    InstitutionalIntegrityReview: "Institutional Integrity Review",
-    NationalSecurityReview: "National Security Review",
-    RhetoricToneReview: "Rhetoric & Tone Review",
+  // Derive available review types dynamically for this book without hardcoding names
+  const formatKeyToTitle = (rawKey: string): string => {
+    const noSuffix = rawKey.endsWith("Review") ? rawKey.slice(0, -6) : rawKey;
+    const withSpaces = noSuffix
+      .replace(/_/g, " ")
+      .replace(/([a-z])([A-Z])/g, "$1 $2");
+    const trimmed = withSpaces.trim();
+    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1) + (rawKey.endsWith("Review") ? " Review" : "");
   };
-  const availableReviewTypes = candidateKeys
-    .filter((key) => bookReviewOutcomes.some((row) => Boolean((row as any)[key])))
-    .map((key) => ({ key, title: titleMap[key] ?? key }));
+
+  const availableReviewTypes = Array.from(
+    new Set(
+      bookReviewOutcomes.flatMap((row) =>
+        Object.entries(row as Record<string, unknown>)
+          .filter(([k, v]) =>
+            v && typeof v === "object" && (
+              "problematic_text" in (v as Record<string, unknown>) ||
+              "confidence" in (v as Record<string, unknown>) ||
+              "issue_found" in (v as Record<string, unknown>) ||
+              "human_review" in (v as Record<string, unknown>)
+            )
+          )
+          .map(([k]) => k)
+      )
+    )
+  ).map((key) => ({ key, title: formatKeyToTitle(key) }));
 
   return (
     <div className="min-h-screen flex bg-[#f7f9fc]">

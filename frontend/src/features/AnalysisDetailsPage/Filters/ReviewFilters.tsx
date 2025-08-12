@@ -75,9 +75,9 @@ const ReviewFilters: React.FC<ReviewFiltersProps> = ({
             ? "bg-blue-600 text-white hover:bg-blue-700"
             : "bg-gray-200 text-gray-800 hover:bg-gray-300"
         }`}
-        title={onlyHumanReviewed ? "Show all issues" : "Show only human reviewed"}
+        title={onlyHumanReviewed ? "Show all issues" : "Show only human review"}
       >
-        {onlyHumanReviewed ? "View All Issues" : "View Human Reviewed"}
+        {onlyHumanReviewed ? "View All Issues" : "View Human Review"}
       </button>
     </div>
   );
