@@ -3,6 +3,8 @@ import Sidebar from "@/components/Sidebar/Sidebar";
 import Header from "@/components/Header/Header";
 import TopSection from "@/features/AnalysisDetailsPage/TopSection/TopSection";
 import AnalysisTable from "@/features/AnalysisDetailsPage/AnalysisTable/AnalysisTable";
+import ReviewFilters from "@/features/AnalysisDetailsPage/Filters/ReviewFilters";
+import { ReviewTypeKey } from "@/features/AnalysisDetailsPage/constants";
 import SeeInfo from "@/features/ClassificationDetailsPage/SeeInfo";
 import { useRouter } from "next/router";
 import { Book } from "@/services/booksApi";
@@ -12,6 +14,9 @@ const mockTags = ["Political", "Maths", "IT/CS", "Maths", "Maths"];
 
 const AnalysisDetails: React.FC = () => {
   const [showSeeInfo, setShowSeeInfo] = useState(false);
+  const [minConfidence, setMinConfidence] = useState<number>(50);
+  const [onlyHumanReviewed, setOnlyHumanReviewed] = useState<boolean>(false);
+  const [selectedReviewTypes, setSelectedReviewTypes] = useState<ReviewTypeKey[]>([]);
   const [book, setBook] = useState<Book>(); 
   const router = useRouter();
   const { id } = router.query;
@@ -55,10 +60,21 @@ const AnalysisDetails: React.FC = () => {
         <div className="flex-1 flex flex-col items-center px-4 py-12 w-full">
           <div className="w-full max-w-7xl">
             <TopSection bookTitle={book.doc_name} tags={mockTags} bookId={book._id} onSeeInfo={()=>setShowSeeInfo(true)} />
+            <ReviewFilters
+              minConfidence={minConfidence}
+              onMinConfidenceChange={setMinConfidence}
+              onlyHumanReviewed={onlyHumanReviewed}
+              onOnlyHumanReviewedChange={setOnlyHumanReviewed}
+              selectedReviewTypes={selectedReviewTypes}
+              onSelectedReviewTypesChange={setSelectedReviewTypes}
+            />
             {book.status === "Processed" ? (
               <AnalysisTable
                 data={bookReviewOutcomes}
                 pageSize={10}
+                minConfidence={minConfidence}
+                onlyHumanReviewed={onlyHumanReviewed}
+                selectedReviewTypes={selectedReviewTypes}
               />
             ) : (
               <div className="flex justify-center items-center h-40 text-xl font-semibold text-gray-500">

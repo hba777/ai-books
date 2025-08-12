@@ -4,14 +4,16 @@ from utils.jwt_utils import get_user_from_cookie
 from db.mongo import get_review_outcomes_collection
 from Analysis.mains1 import run_workflow
 from .schemas import ReviewOutcomesResponse  # <-- response-friendly model
+import json
+from bson.json_util import dumps
 
 router = APIRouter(prefix="/review_outcomes", tags=["Review Outcomes"])
 
-@router.get("/", response_model=List[ReviewOutcomesResponse], dependencies=[Depends(get_user_from_cookie)])
+@router.get("/", dependencies=[Depends(get_user_from_cookie)])
 def get_all_review_outcomes():
     review_outcomes_collection = get_review_outcomes_collection()
     review_outcomes = list(review_outcomes_collection.find())
-    return review_outcomes
+    return json.loads(dumps(review_outcomes))
 
 @router.get("/count", dependencies=[Depends(get_user_from_cookie)])
 def get_review_outcomes_count():
