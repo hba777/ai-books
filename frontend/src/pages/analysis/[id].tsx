@@ -16,10 +16,11 @@ const AnalysisDetails: React.FC = () => {
   const [minConfidence, setMinConfidence] = useState<number>(50);
   const [onlyHumanReviewed, setOnlyHumanReviewed] = useState<boolean>(false);
   const [selectedReviewTypes, setSelectedReviewTypes] = useState<string[]>([]);
-  const [book, setBook] = useState<Book>(); 
+  const [book, setBook] = useState<Book>();
+  const [tags, setTags] = useState<string[]>([]);
   const router = useRouter();
   const { id } = router.query;
-  const { getBookById, reviewOutcomes, fetchReviewOutcomes } = useBooks();
+  const { getBookById, reviewOutcomes, fetchReviewOutcomes, getBookClassifications } = useBooks();
 
   useEffect(() => {
     if (!id) return;
@@ -38,6 +39,22 @@ const AnalysisDetails: React.FC = () => {
     fetchReviewOutcomes();
   }, []);
 
+  useEffect(() => {
+    const fetchTags = async () => {
+      if (!book?._id) return;
+      try {
+        const res = await getBookClassifications(book._id);
+        // Remove duplicates while preserving order
+        const uniqueTags = Array.from(new Set(res.classifications || []));
+        setTags(uniqueTags);
+      } catch (e) {
+        console.error("Failed to fetch classifications:", e);
+        setTags([]);
+      }
+    };
+    fetchTags();
+  }, [book?._id, getBookClassifications]);
+
   if (!book) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -51,28 +68,32 @@ const AnalysisDetails: React.FC = () => {
     (r) => r.doc_id === book._id || r.Book_Name === book.doc_name
   );
 
-  // Derive available review types (keys + human titles) dynamically for this book
-  const candidateKeys = [
-    "FactCheckingReview",
-    "FederalUnityReview",
-    "ForeignRelationsReview",
-    "HistoricalNarrativeReview",
-    "InstitutionalIntegrityReview",
-    "NationalSecurityReview",
-    "RhetoricToneReview",
-  ];
-  const titleMap: Record<string, string> = {
-    FactCheckingReview: "Fact Checking Review",
-    FederalUnityReview: "Federal Unity Review",
-    ForeignRelationsReview: "Foreign Relations Review",
-    HistoricalNarrativeReview: "Historical Narrative Review",
-    InstitutionalIntegrityReview: "Institutional Integrity Review",
-    NationalSecurityReview: "National Security Review",
-    RhetoricToneReview: "Rhetoric & Tone Review",
+  // Derive available review types dynamically for this book without hardcoding names
+  const formatKeyToTitle = (rawKey: string): string => {
+    const noSuffix = rawKey.endsWith("Review") ? rawKey.slice(0, -6) : rawKey;
+    const withSpaces = noSuffix
+      .replace(/_/g, " ")
+      .replace(/([a-z])([A-Z])/g, "$1 $2");
+    const trimmed = withSpaces.trim();
+    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1) + (rawKey.endsWith("Review") ? " Review" : "");
   };
-  const availableReviewTypes = candidateKeys
-    .filter((key) => bookReviewOutcomes.some((row) => Boolean((row as any)[key])))
-    .map((key) => ({ key, title: titleMap[key] ?? key }));
+
+  const availableReviewTypes = Array.from(
+    new Set(
+      bookReviewOutcomes.flatMap((row) =>
+        Object.entries(row as Record<string, unknown>)
+          .filter(([k, v]) =>
+            v && typeof v === "object" && (
+              "problematic_text" in (v as Record<string, unknown>) ||
+              "confidence" in (v as Record<string, unknown>) ||
+              "issue_found" in (v as Record<string, unknown>) ||
+              "human_review" in (v as Record<string, unknown>)
+            )
+          )
+          .map(([k]) => k)
+      )
+    )
+  ).map((key) => ({ key, title: formatKeyToTitle(key) }));
 
   return (
     <div className="min-h-screen flex bg-[#f7f9fc]">
@@ -81,7 +102,7 @@ const AnalysisDetails: React.FC = () => {
         <Header />
         <div className="flex-1 flex flex-col items-center px-4 py-12 w-full">
           <div className="w-full max-w-7xl">
-            <TopSection bookTitle={book.doc_name} tags={mockTags} bookId={book._id} onSeeInfo={()=>setShowSeeInfo(true)} />
+            <TopSection bookTitle={book.doc_name} tags={tags} bookId={book._id} onSeeInfo={()=>setShowSeeInfo(true)} />
             <ReviewFilters
               minConfidence={minConfidence}
               onMinConfidenceChange={setMinConfidence}

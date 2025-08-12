@@ -51,7 +51,6 @@ def get_all_chunks():
 
     return ChunkListResponse(items=[ChunkResponse(**chunk) for chunk in chunks])
 
-
 @router.get("/count", dependencies=[Depends(get_user_from_cookie)])
 def get_chunks_count():
     chunks_collection = get_chunks_collection()

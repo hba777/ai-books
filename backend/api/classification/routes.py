@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 from typing import Dict, Any
 from models.user import User
 from utils.jwt_utils import get_user_from_cookie
-from db.mongo import books_collection,get_agent_configs_collection
+from db.mongo import books_collection,get_agent_configs_collection, get_chunks_collection
 from bson import ObjectId
 import time
 from Classification.app import supervisor_loop
@@ -47,3 +47,24 @@ async def start_classification(book_id: str, background_tasks: BackgroundTasks) 
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error starting classification: {str(e)}")
+    
+@router.get("/classifications/{book_id}", dependencies=[Depends(get_user_from_cookie)])
+def get_book_classifications(book_id: str):
+    chunks_collection = get_chunks_collection()
+
+    # Get all chunks for this book_id
+    chunks = list(chunks_collection.find({"doc_id": book_id}))
+
+    if not chunks:
+        raise HTTPException(status_code=404, detail="No chunks found for this book.")
+
+    classifications = []
+
+    for chunk in chunks:
+        if "classification" in chunk and chunk["classification"]:
+            for c in chunk["classification"]:
+                # Only add the classification string
+                if "classification" in c:
+                    classifications.append(c["classification"])
+
+    return {"book_id": book_id, "classifications": classifications}

@@ -13,7 +13,9 @@ import {
   Book,
   ClassificationProgress,
   getReviewOutcomes,
-  ReviewOutcomesResponse
+  ReviewOutcomesResponse,
+  getBookClassifications,
+  BookClassificationsResponse
 } from "../services/booksApi"
 import { useUser } from "../context/UserContext";
 
@@ -31,6 +33,7 @@ interface BookContextType {
   getBookNameById: (bookId: string) => string | undefined;
   reviewOutcomes: ReviewOutcomesResponse[];
   fetchReviewOutcomes: () => Promise<void>;
+  getBookClassifications: (bookId: string) => Promise<BookClassificationsResponse>;
 }
 
 const BookContext = createContext<BookContextType | undefined>(undefined);
@@ -39,6 +42,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [books, setBooks] = useState<Book[]>([]);
   const [activeClassifications, setActiveClassifications] = useState<ClassificationProgress[]>([]);
   const [reviewOutcomes, setReviewOutcomes] = useState<ReviewOutcomesResponse[]>([]);
+  const classificationsCacheRef = useRef<Map<string, BookClassificationsResponse>>(new Map());
   const { user, loading: userLoading } = useUser(); 
   const websocketRefs = useRef<Map<string, WebSocket>>(new Map());
   const wsRef = useRef<WebSocket | null>(null);
@@ -141,6 +145,14 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setReviewOutcomes(res);
   };
 
+  const fetchBookClassifications = async (bookId: string): Promise<BookClassificationsResponse> => {
+    const cached = classificationsCacheRef.current.get(bookId);
+    if (cached) return cached;
+    const res = await getBookClassifications(bookId);
+    classificationsCacheRef.current.set(bookId, res);
+    return res;
+  };
+
   // Cleanup WebSocket connections on unmount
   useEffect(() => {
     return () => {
@@ -174,7 +186,8 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       startClassification,
       getBookNameById,
       reviewOutcomes,
-      fetchReviewOutcomes
+      fetchReviewOutcomes,
+      getBookClassifications: fetchBookClassifications
     }}>
       {children}
     </BookContext.Provider>
