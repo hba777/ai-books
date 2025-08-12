@@ -489,7 +489,10 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
         <div className="flex justify-end items-center gap-2 p-2">
           <button
             className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50 cursor-pointer"
-            onClick={() => setParagraphPage(clampedParagraphPage - 1)}
+            onClick={() => {
+              setParagraphPage(clampedParagraphPage - 1);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
             disabled={clampedParagraphPage === 1}
           >
             Previous
@@ -499,7 +502,10 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
           </span>
           <button
             className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50 cursor-pointer"
-            onClick={() => setParagraphPage(clampedParagraphPage + 1)}
+            onClick={() => {
+              setParagraphPage(clampedParagraphPage + 1);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
             disabled={clampedParagraphPage === totalParagraphPages}
           >
             Next
