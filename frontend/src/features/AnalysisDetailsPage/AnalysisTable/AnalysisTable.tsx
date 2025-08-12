@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { ReviewOutcomesResponse } from "../../../context/BookContext";
 import { FaEdit, FaTrash, FaSave, FaTimes } from "react-icons/fa";
-import { reviewTypeOptions, ReviewTypeKey } from "../constants";
 
 interface AnalysisTableProps {
   data: ReviewOutcomesResponse[];
