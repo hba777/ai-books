@@ -19,10 +19,13 @@ const ReviewFilters: React.FC<ReviewFiltersProps> = ({
   onSelectedReviewTypesChange,
   availableReviewTypes,
 }) => {
-  const options = availableReviewTypes && availableReviewTypes.length > 0 ? availableReviewTypes : [];
+  const options =
+    availableReviewTypes && availableReviewTypes.length > 0
+      ? availableReviewTypes
+      : [];
   const toggleReviewType = (key: string) => {
     if (selectedReviewTypes.includes(key)) {
-      onSelectedReviewTypesChange(selectedReviewTypes.filter(k => k !== key));
+      onSelectedReviewTypesChange(selectedReviewTypes.filter((k) => k !== key));
     } else {
       onSelectedReviewTypesChange([...selectedReviewTypes, key]);
     }
@@ -51,7 +54,9 @@ const ReviewFilters: React.FC<ReviewFiltersProps> = ({
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <label className="text-sm font-semibold text-gray-700">Min Confidence</label>
+        <label className="text-sm font-semibold text-gray-700">
+          Min Confidence
+        </label>
         <select
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={minConfidence}
@@ -64,8 +69,6 @@ const ReviewFilters: React.FC<ReviewFiltersProps> = ({
           <option value={90}>90+</option>
         </select>
       </div>
-
-      
 
       <button
         type="button"
@@ -84,5 +87,3 @@ const ReviewFilters: React.FC<ReviewFiltersProps> = ({
 };
 
 export default ReviewFilters;
-
-

@@ -15,7 +15,12 @@ import {
   getReviewOutcomes,
   ReviewOutcomesResponse,
   getBookClassifications,
-  BookClassificationsResponse
+  BookClassificationsResponse,
+  updateReviewOutcome,
+  deleteReviewOutcome,
+  ReviewUpdateRequest,
+  ReviewUpdateResponse,
+  ReviewDeleteResponse
 } from "../services/booksApi"
 import { useUser } from "../context/UserContext";
 
@@ -34,6 +39,8 @@ interface BookContextType {
   reviewOutcomes: ReviewOutcomesResponse[];
   fetchReviewOutcomes: () => Promise<void>;
   getBookClassifications: (bookId: string) => Promise<BookClassificationsResponse>;
+  updateReviewOutcome: (outcomeId: string, reviewType: string, data: ReviewUpdateRequest) => Promise<ReviewUpdateResponse>;
+  deleteReviewOutcome: (outcomeId: string, reviewType: string) => Promise<ReviewDeleteResponse>;
 }
 
 const BookContext = createContext<BookContextType | undefined>(undefined);
@@ -153,6 +160,14 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return res;
   };
 
+  const updateReviewOutcomeHandler = async (outcomeId: string, reviewType: string, data: ReviewUpdateRequest): Promise<ReviewUpdateResponse> => {
+    return await updateReviewOutcome(outcomeId, reviewType, data);
+  };
+
+  const deleteReviewOutcomeHandler = async (outcomeId: string, reviewType: string): Promise<ReviewDeleteResponse> => {
+    return await deleteReviewOutcome(outcomeId, reviewType);
+  };
+
   // Cleanup WebSocket connections on unmount
   useEffect(() => {
     return () => {
@@ -187,7 +202,9 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       getBookNameById,
       reviewOutcomes,
       fetchReviewOutcomes,
-      getBookClassifications: fetchBookClassifications
+      getBookClassifications: fetchBookClassifications,
+      updateReviewOutcome: updateReviewOutcomeHandler,
+      deleteReviewOutcome: deleteReviewOutcomeHandler
     }}>
       {children}
     </BookContext.Provider>

@@ -44,6 +44,7 @@ export interface ReviewDetailResponse {
 }
 
 export interface ReviewOutcomesResponse {
+  _id?: string;
   Book_Name?: string;
   Chunk_no?: number;
   Chunk_ID?: string;
@@ -194,5 +195,39 @@ export async function getReviewOutcomes(): Promise<ReviewOutcomesResponse[]> {
 
 export async function getBookClassifications(bookId: string): Promise<BookClassificationsResponse> {
   const res = await api.get<BookClassificationsResponse>(`/classification/classifications/${bookId}`);
+  return res.data;
+}
+
+export interface ReviewUpdateRequest {
+  observation?: string;
+  recommendation?: string;
+}
+
+export interface ReviewUpdateResponse {
+  status: string;
+  matched_count: number;
+  modified_count: number;
+  updated_fields: Record<string, string>;
+}
+
+export interface ReviewDeleteResponse {
+  status: string;
+  matched_count: number;
+  modified_count: number;
+  deleted_review_type: string;
+  outcome_id: string;
+}
+
+export async function updateReviewOutcome(
+  outcomeId: string, 
+  reviewType: string, 
+  data: ReviewUpdateRequest
+): Promise<ReviewUpdateResponse> {
+  const res = await api.put<ReviewUpdateResponse>(`/review_outcomes/update/${outcomeId}/${reviewType}`, data);
+  return res.data;
+}
+
+export async function deleteReviewOutcome(outcomeId: string, reviewType: string): Promise<ReviewDeleteResponse> {
+  const res = await api.delete<ReviewDeleteResponse>(`/review_outcomes/delete/${outcomeId}/${reviewType}`);
   return res.data;
 }
