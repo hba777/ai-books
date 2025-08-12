@@ -20,7 +20,7 @@ const AnalysisDetails: React.FC = () => {
   const [tags, setTags] = useState<string[]>([]);
   const router = useRouter();
   const { id } = router.query;
-  const { getBookById, reviewOutcomes, fetchReviewOutcomes, getBookClassifications } = useBooks();
+  const { getBookById, reviewOutcomes, fetchReviewOutcomes, getBookClassifications, updateReviewOutcome, deleteReviewOutcome } = useBooks();
 
   useEffect(() => {
     if (!id) return;
@@ -119,6 +119,9 @@ const AnalysisDetails: React.FC = () => {
                 minConfidence={minConfidence}
                 onlyHumanReviewed={onlyHumanReviewed}
                 selectedReviewTypes={selectedReviewTypes}
+                updateReviewOutcome={updateReviewOutcome}
+                deleteReviewOutcome={deleteReviewOutcome}
+                fetchReviewOutcomes={fetchReviewOutcomes}
               />
             ) : (
               <div className="flex justify-center items-center h-40 text-xl font-semibold text-gray-500">

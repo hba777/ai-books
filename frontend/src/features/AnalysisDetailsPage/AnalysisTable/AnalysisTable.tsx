@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { ReviewOutcomesResponse } from "../../../context/BookContext";
 import { FaEdit, FaTrash, FaSave, FaTimes } from "react-icons/fa";
+import ConfirmationModal from "./ConfirmationModel";
 
 interface AnalysisTableProps {
   data: ReviewOutcomesResponse[];
@@ -8,8 +9,10 @@ interface AnalysisTableProps {
   minConfidence?: number; // filter: minimum confidence inclusive
   onlyHumanReviewed?: boolean; // view switch to consolidated human reviewed
   selectedReviewTypes?: string[]; // which review types (agents) to include
+  updateReviewOutcome?: (outcomeId: string, reviewType: string, data: { observation?: string; recommendation?: string }) => Promise<any>;
+  deleteReviewOutcome?: (outcomeId: string, reviewType: string) => Promise<any>;
+  fetchReviewOutcomes?: () => Promise<void>;
 }
-
 interface EditableFields {
   observation: string;
   recommendation: string;
@@ -46,9 +49,22 @@ const deriveReviewTables = (rows: ReviewOutcomesResponse[]): { key: string; titl
   return Array.from(keys).map((key) => ({ key, title: formatKeyToTitle(key) }));
 };
 
-const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50, onlyHumanReviewed = false, selectedReviewTypes }) => {
+const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50, onlyHumanReviewed = false, selectedReviewTypes, updateReviewOutcome, deleteReviewOutcome, fetchReviewOutcomes }) => {
   const [editingRows, setEditingRows] = useState<Set<string>>(new Set());
   const [editableFields, setEditableFields] = useState<Record<string, EditableFields>>({});
+  const [confirmationModal, setConfirmationModal] = useState<{
+    isOpen: boolean;
+    type: 'edit' | 'delete';
+    textIndex: number;
+    reviewType: string;
+    review?: any;
+  }>({
+    isOpen: false,
+    type: 'edit',
+    textIndex: 0,
+    reviewType: '',
+    review: undefined
+  });
 
   // Get unique problematic texts and group reviews by text
   const reviewTables = useMemo(() => deriveReviewTables(data), [data]);
@@ -99,15 +115,62 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
   };
 
   const handleSave = (textIndex: number, reviewType: string) => {
+    setConfirmationModal({
+      isOpen: true,
+      type: 'edit',
+      textIndex,
+      reviewType
+    });
+  };
+
+  const confirmSave = async () => {
+    const { textIndex, reviewType } = confirmationModal;
     const rowKey = getRowKey(textIndex, reviewType);
+    const fields = editableFields[rowKey];
+    
+    try {
+      // Find the review outcome document that contains this review
+      const outcomeDoc = data.find(row => {
+        const review = (row as any)[reviewType];
+        return review && review.problematic_text === groupedData[textIndex]?.problematicText;
+      });
+      
+      if (outcomeDoc?._id) {
+        // Type guard for _id
+        let idString: string;
+  
+        if (
+          typeof outcomeDoc._id === "object" &&
+          outcomeDoc._id !== null &&
+          "$oid" in outcomeDoc._id &&
+          typeof (outcomeDoc._id as any).$oid === "string"
+        ) {
+          idString = (outcomeDoc._id as any).$oid;
+        } else if (typeof outcomeDoc._id === "string") {
+          idString = outcomeDoc._id;
+        } else {
+          throw new Error("Invalid _id format");
+        }
+  
+        // Call the API to update the review using the string id
+        await updateReviewOutcome!(idString, reviewType, {
+          observation: fields?.observation,
+          recommendation: fields?.recommendation,
+        });  
+        // Refresh the review outcomes to get updated data
+        await fetchReviewOutcomes!();
+      }
+    } catch (error) {
+      console.error("Failed to save review:", error);
+      alert("Failed to save changes. Please try again.");
+      return;
+    }
+    
     setEditingRows(prev => {
       const newSet = new Set(prev);
       newSet.delete(rowKey);
       return newSet;
     });
-    
-    // Here you would typically save the updated data to your backend
-    console.log('Saving data for:', rowKey, editableFields[rowKey]);
     
     // Clear the editable fields
     setEditableFields(prev => {
@@ -115,8 +178,13 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
       delete newFields[rowKey];
       return newFields;
     });
+
+    setConfirmationModal(prev => ({ ...prev, isOpen: false }));
   };
 
+
+  
+  
   const handleCancel = (textIndex: number, reviewType: string) => {
     const rowKey = getRowKey(textIndex, reviewType);
     setEditingRows(prev => {
@@ -133,11 +201,63 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
     });
   };
 
-  const handleDelete = (textIndex: number, reviewType: string) => {
-    // Here you would typically delete the review from your backend
-    console.log('Deleting review:', reviewType, 'for text index:', textIndex);
-    alert(`Delete functionality for ${reviewType} would be implemented here`);
+    const handleDelete = (textIndex: number, reviewType: string) => {
+    setConfirmationModal({
+      isOpen: true,
+      type: 'delete',
+      textIndex,
+      reviewType
+    });
   };
+
+  const confirmDelete = async () => {
+    const { textIndex, reviewType } = confirmationModal;
+    
+    if (!deleteReviewOutcome) {
+      alert('Delete functionality not available');
+      return;
+    }
+
+    try {
+      // Find the review outcome document that contains this review
+      const outcomeDoc = data.find(row => {
+        const review = (row as any)[reviewType];
+        return review && review.problematic_text === groupedData[textIndex]?.problematicText;
+      });
+      
+      if (outcomeDoc?._id) {
+        // Type guard for _id just like handleSave
+        let idString: string;
+  
+        if (
+          typeof outcomeDoc._id === "object" &&
+          outcomeDoc._id !== null &&
+          "$oid" in outcomeDoc._id &&
+          typeof (outcomeDoc._id as any).$oid === "string"
+        ) {
+          idString = (outcomeDoc._id as any).$oid;
+        } else if (typeof outcomeDoc._id === "string") {
+          idString = outcomeDoc._id;
+        } else {
+          throw new Error("Invalid _id format");
+        }
+  
+        // Call the API to delete the specific review type using the string id
+        await deleteReviewOutcome(idString, reviewType);
+  
+        // Refresh the review outcomes to get updated data
+        if (fetchReviewOutcomes) {
+          await fetchReviewOutcomes();
+        }
+      }
+    } catch (error) {
+      console.error('Failed to delete review:', error);
+      alert('Failed to delete review. Please try again.');
+    } finally {
+      setConfirmationModal(prev => ({ ...prev, isOpen: false }));
+    }
+  };
+  
 
   const handleFieldChange = (rowKey: string, field: keyof EditableFields, value: string) => {
     setEditableFields(prev => ({
@@ -184,6 +304,8 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
   const startIdx = (clampedParagraphPage - 1) * PARAGRAPHS_PER_PAGE;
   const endIdx = startIdx + PARAGRAPHS_PER_PAGE;
   const visibleParagraphGroups = groupedData.slice(startIdx, endIdx);
+
+ 
 
   return (
     <div className="flex flex-col gap-4">
@@ -512,6 +634,22 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
           </button>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmationModal.type === 'edit' ? confirmSave : confirmDelete}
+        title={confirmationModal.type === 'edit' ? 'Confirm Save' : 'Confirm Delete'}
+        message={
+          confirmationModal.type === 'edit' 
+            ? `Are you sure you want to save the changes to this ${confirmationModal.reviewType} review?`
+            : `Are you sure you want to delete this ${confirmationModal.reviewType} review? This action cannot be undone.`
+        }
+        confirmText={confirmationModal.type === 'edit' ? 'Save' : 'Delete'}
+        cancelText="Cancel"
+        type={confirmationModal.type}
+      />
     </div>
   );
 };
