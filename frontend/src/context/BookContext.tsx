@@ -5,6 +5,7 @@ import {
   getBookById, 
   getBookFile,
   assignDepartments as apiAssignDepartments,
+  assignSingleDepartment as apiAssignSingleDepartment,
   addFeedback as apiAddFeedback,
   indexBook as apiIndexBook,
   startClassification as apiStartClassification,
@@ -32,7 +33,8 @@ interface BookContextType {
   getBookById: (bookId: string) => Promise<Book>;
   getBookFile: (bookId: string) => Promise<Blob>;
   assignDepartments: (bookId: string, departments: string[]) => Promise<void>;
-  addFeedback: (bookId: string, comment: string, department: string) => Promise<void>;
+  assignSingleDepartment: (bookId: string, department: string) => Promise<void>;
+  addFeedback: (bookId: string, department: string, comment?: string, image?: string) => Promise<void>;
   indexBook: (bookId: string) => Promise<void>;
   startClassification: (bookId: string) => Promise<void>;
   getBookNameById: (bookId: string) => string | undefined;
@@ -77,8 +79,13 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await fetchBooks(); // Refresh books to get updated data
   };
 
-  const addFeedback = async (bookId: string, comment: string, department: string) => {
-    await apiAddFeedback(bookId, comment, department);
+  const assignSingleDepartment = async (bookId: string, department: string) => {
+    await apiAssignSingleDepartment(bookId, department);
+    await fetchBooks(); // Refresh books to get updated data
+  };
+
+  const addFeedback = async (bookId: string, department: string, comment?: string, image?: string) => {
+    await apiAddFeedback(bookId, department, comment, image);
     await fetchBooks(); // Refresh books to get updated data
   };
 
@@ -196,6 +203,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       getBookById: fetchBookById,
       getBookFile: fetchBookFile,
       assignDepartments,
+      assignSingleDepartment,
       addFeedback,
       indexBook,
       startClassification,
