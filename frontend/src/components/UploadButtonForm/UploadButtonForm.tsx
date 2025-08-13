@@ -1,7 +1,8 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { ImCross } from "react-icons/im";
 import { useBooks } from "@/context/BookContext";
 import { toast } from "react-toastify";
+import { validatePDF, quickImageBasedCheck, basicPDFValidation } from "@/utils/pdfValidator";
 
 interface BookFormState {
   title: string;
@@ -29,19 +30,79 @@ const UploadButtonForm: React.FC<{ open: boolean; onClose: () => void }> = ({
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [bookForm, setBookForm] = useState<BookFormState>(defaultBookForm);
+  const [isValidating, setIsValidating] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const { createBook } = useBooks();
 
-  if (!open) return null;
+  // Ensure we're on the client side
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Reset validation state when modal closes
+  React.useEffect(() => {
+    if (!open) {
+      setIsValidating(false);
+    }
+  }, [open]);
+
+  if (!open || !isClient) return null;
 
   // Handle file selection (from input or drop)
-  const handleFiles = (files: FileList | null) => {
+  const handleFiles = async (files: FileList | null) => {
     if (files && files.length > 0) {
       const file = files[0];
       if (file.type === "application/pdf") {
-        setSelectedFile(file);
-        setBookForm(defaultBookForm);
+        // Quick check first for better UX
+        try {
+          if (quickImageBasedCheck(file)) {
+            toast.error("This PDF appears to be image-based and is not allowed. Please upload a text-based PDF.");
+            return;
+          }
+        } catch (error) {
+          console.warn("Quick check failed, proceeding with detailed validation:", error);
+        }
+        
+        // Show loading state
+        setIsValidating(true);
+        toast.info("Validating PDF... Please wait.");
+        
+        try {
+          // Perform detailed PDF validation
+          const validationResult = await validatePDF(file);
+          
+          if (!validationResult.isValid) {
+            if (validationResult.isImageBased) {
+              toast.error(validationResult.error || "This PDF appears to be image-based and is not allowed.");
+            } else if (validationResult.error?.includes("client side")) {
+              // Fallback to basic validation if PDF.js is not available
+              const basicResult = basicPDFValidation(file);
+              if (basicResult.isValid) {
+                toast.warning("Advanced PDF validation not available. Proceeding with basic checks.");
+                setSelectedFile(file);
+                setBookForm(defaultBookForm);
+              } else {
+                toast.error(basicResult.error || "Basic validation failed.");
+              }
+            } else {
+              toast.error(validationResult.error || "PDF validation failed. Please try a different file.");
+            }
+            return;
+          }
+          
+          // PDF is valid and text-based
+          setSelectedFile(file);
+          setBookForm(defaultBookForm);
+          toast.success("PDF validated successfully! This appears to be a text-based PDF.");
+          
+        } catch (error) {
+          toast.error("Error validating PDF. Please try again.");
+          console.error("PDF validation error:", error);
+        } finally {
+          setIsValidating(false);
+        }
       } else {
-        alert("Only PDF files are allowed.");
+        toast.error("Only PDF files are allowed.");
       }
     }
   };
@@ -55,19 +116,20 @@ const UploadButtonForm: React.FC<{ open: boolean; onClose: () => void }> = ({
     e.preventDefault();
     setDragActive(false);
   };
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragActive(false);
-    handleFiles(e.dataTransfer.files);
+    await handleFiles(e.dataTransfer.files);
   };
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleFiles(e.target.files);
+  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    await handleFiles(e.target.files);
   };
 
   // Remove the file and reset form
   const removeFile = () => {
     setSelectedFile(null);
     setBookForm(defaultBookForm);
+    setIsValidating(false);
   };
 
   // Handle form field change
@@ -82,8 +144,10 @@ const UploadButtonForm: React.FC<{ open: boolean; onClose: () => void }> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
-  if (!selectedFile) {
-    alert("Please select a file.");
+  if (!selectedFile || isValidating) {
+    if (!selectedFile) {
+      toast.error("Please select a file.");
+    }
     return;
   }
 
@@ -137,11 +201,11 @@ const UploadButtonForm: React.FC<{ open: boolean; onClose: () => void }> = ({
             <div
               className={`border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center mb-4 cursor-pointer bg-gray-50 hover:bg-gray-100 transition ${
                 dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"
-              }`}
-              onClick={() => fileInputRef.current?.click()}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
+              } ${isValidating ? "opacity-50 cursor-not-allowed" : ""}`}
+              onClick={() => !isValidating && fileInputRef.current?.click()}
+              onDragOver={!isValidating ? handleDragOver : undefined}
+              onDragLeave={!isValidating ? handleDragLeave : undefined}
+              onDrop={!isValidating ? handleDrop : undefined}
             >
               <input
                 type="file"
@@ -149,24 +213,42 @@ const UploadButtonForm: React.FC<{ open: boolean; onClose: () => void }> = ({
                 className="hidden"
                 accept="application/pdf"
                 onChange={handleInputChange}
+                disabled={isValidating}
               />
               <div className="flex flex-col items-center">
-                <svg width="40" height="40" fill="none" viewBox="0 0 48 48">
-                  <rect width="40" height="40" rx="20" fill="#EEF2FF" />
-                  <path
-                    d="M20 28V14M20 14l-5 5M20 14l5 5"
-                    stroke="#6366F1"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <span className="text-blue-600 font-semibold mt-2 mb-1 text-center text-sm">
-                  Drag and drop a PDF file here or click to upload
-                </span>
-                <span className="text-xs text-gray-400 mb-1">
+                {isValidating ? (
+                  <>
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+                    <span className="text-blue-600 font-semibold mt-2 mb-1 text-center text-sm">
+                      Validating PDF...
+                    </span>
+                    <span className="text-xs text-gray-400 mb-1">
+                      Please wait while we check the file
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <svg width="40" height="40" fill="none" viewBox="0 0 48 48">
+                      <rect width="40" height="40" rx="20" fill="#EEF2FF" />
+                      <path
+                        d="M20 28V14M20 14l-5 5M20 14l5 5"
+                        stroke="#6366F1"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <span className="text-blue-600 font-semibold mt-2 mb-1 text-center text-sm">
+                      Drag and drop a PDF file here or click to upload
+                    </span>
+                                    <span className="text-xs text-gray-400 mb-1">
                   File type: <span className="font-bold">PDF</span>
                 </span>
+                <span className="text-xs text-red-500 text-center">
+                  Image-based PDFs (scanned images) are not allowed
+                </span>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -284,9 +366,14 @@ const UploadButtonForm: React.FC<{ open: boolean; onClose: () => void }> = ({
                 </button>
                 <button
                   type="submit"
-                  className="bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold px-6 py-2 rounded-lg shadow hover:from-blue-600 hover:to-purple-600 transition"
+                  disabled={isValidating}
+                  className={`bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold px-6 py-2 rounded-lg shadow transition ${
+                    isValidating 
+                      ? "opacity-50 cursor-not-allowed" 
+                      : "hover:from-blue-600 hover:to-purple-600"
+                  }`}
                 >
-                  Continue
+                  {isValidating ? "Validating..." : "Continue"}
                 </button>
               </div>
             </form>
