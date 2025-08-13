@@ -7,6 +7,7 @@ from utils.jwt_utils import get_user_from_cookie
 from db.mongo import books_collection, fs
 from .schemas import BookResponse, BookDeleteResponse, FeedbackRequest, FeedbackModel
 import json
+import base64
 from bson import ObjectId
 from datetime import datetime
 
@@ -141,18 +142,46 @@ def assign_departments(book_id: str, departments: List[str]):
     return {"message": "Departments assigned successfully"}
 
 # Add Feedback to book
+
 @router.post("/{book_id}/feedback")
-def add_feedback(book_id: str, comment: FeedbackRequest, user: User = Depends(get_user_from_cookie)):
+async def add_feedback(
+    book_id: str, 
+    comment: FeedbackRequest, 
+    user: User = Depends(get_user_from_cookie)
+):
     book = books_collection.find_one({"_id": ObjectId(book_id)})
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
 
-    # Remove department restriction
+    # Handle image upload if provided
+    image_url = None
+    if comment.image:
+        try:
+            # Decode base64 image
+            image_data = base64.b64decode(comment.image.split(',')[1] if ',' in comment.image else comment.image)
+            
+            # Generate unique filename
+            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            filename = f"feedback_{book_id}_{user.id}_{timestamp}.jpg"
+            
+            # Save to GridFS
+            file_id = fs.put(image_data, filename=filename, content_type="image/jpeg")
+            image_url = f"/books/{book_id}/feedback/image/{file_id}"
+            print(f"Saved feedback image: file_id={file_id}, image_url={image_url}")
+            
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to process image: {str(e)}")
+
+    # Validate that at least comment or image is provided
+    if not comment.comment and not image_url:
+        raise HTTPException(status_code=400, detail="Either comment or image must be provided")
+
     feedback = FeedbackModel(
         user_id=user.id,
         username=user.username,
         department=comment.department,
         comment=comment.comment,
+        image_url=image_url,
         timestamp=datetime.utcnow().isoformat()
     )
 
@@ -162,6 +191,49 @@ def add_feedback(book_id: str, comment: FeedbackRequest, user: User = Depends(ge
     )
 
     return {"message": "Feedback added successfully"}
+
+@router.get("/{book_id}/feedback/image/{file_id}")
+async def get_feedback_image(book_id: str, file_id: str):
+    """Get feedback image by file ID"""
+    print(f"Requesting feedback image: book_id={book_id}, file_id={file_id}")
+    try:
+        file_obj = fs.get(ObjectId(file_id))
+        print(f"Found file: {file_obj.filename}, content_type: {file_obj.content_type}")
+        return StreamingResponse(
+            file_obj, 
+            media_type=file_obj.content_type,
+            headers={
+                "Content-Disposition": f"inline; filename={file_obj.filename}",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET",
+                "Access-Control-Allow-Headers": "*"
+            }
+        )
+    except Exception as e:
+        print(f"Error serving feedback image: {e}")
+        raise HTTPException(status_code=404, detail="Image not found")
+
+@router.post("/{book_id}/assign-department")
+async def assign_single_department(book_id: str, department: str = Form(...), user: User = Depends(get_user_from_cookie)):
+    """Assign a single department to a book"""
+    book = books_collection.find_one({"_id": ObjectId(book_id)})
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+
+    # Get current assigned departments
+    current_departments = book.get("assigned_departments", [])
+    
+    # Add department if not already assigned
+    if department not in current_departments:
+        current_departments.append(department)
+        
+        books_collection.update_one(
+            {"_id": ObjectId(book_id)},
+            {"$set": {"assigned_departments": current_departments}}
+        )
+
+    return {"message": f"Department {department} assigned successfully"}
+    
 # Delete all books
 @router.delete(
     "/",

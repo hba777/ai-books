@@ -20,7 +20,8 @@ export interface Feedback {
   user_id: string;
   username: string;
   department: string;
-  comment: string;
+  comment?: string;
+  image_url?: string;
   timestamp: string;
 }
 
@@ -171,8 +172,26 @@ export async function assignDepartments(bookId: string, departments: string[]): 
 }
 
 // Add feedback to book
-export async function addFeedback(bookId: string, comment: string, department: string): Promise<{ message: string }> {
-  const res = await api.post<{ message: string }>(`/books/${bookId}/feedback`, { comment, department });
+export async function addFeedback(
+  bookId: string, 
+  department: string, 
+  comment?: string, 
+  image?: string
+): Promise<{ message: string }> {
+  const payload: any = { department };
+  if (comment) payload.comment = comment;
+  if (image) payload.image = image;
+  
+  const res = await api.post<{ message: string }>(`/books/${bookId}/feedback`, payload);
+  return res.data;
+}
+
+// Assign single department
+export async function assignSingleDepartment(bookId: string, department: string): Promise<{ message: string }> {
+  const formData = new FormData();
+  formData.append('department', department);
+  
+  const res = await api.post<{ message: string }>(`/books/${bookId}/assign-department`, formData);
   return res.data;
 }
 

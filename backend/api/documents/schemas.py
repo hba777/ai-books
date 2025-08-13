@@ -5,12 +5,14 @@ class FeedbackModel(BaseModel):
     user_id: str
     username: str
     department: str
-    comment: str
+    comment: Optional[str] = None
+    image_url: Optional[str] = None
     timestamp: str  # ISO datetime string
 
 class FeedbackRequest(BaseModel):
-    comment: str
+    comment: Optional[str] = None
     department: str
+    image: Optional[str] = None  # Base64 encoded image
 
 class BookResponse(BaseModel):
     id: str = Field(alias="_id")       # Internal name `id`, accepts/returns `_id`
