@@ -76,6 +76,14 @@ const ClassificationDetailsCard: React.FC<ClassificationDetailsCardProps> = ({ o
           <span className="font-bold text-lg text-gray-900">
             Classification Result
           </span>
+          <div className="flex">
+            <button
+              className="text-xs px-3 py-1 rounded-lg border border-blue-400 text-blue-600 font-semibold hover:bg-blue-50"
+              onClick={onSeeInfo}
+            >
+              See Info
+            </button>
+          </div>
         </div>
         
         <div className="mb-3 text-gray-500 text-xs font-semibold">

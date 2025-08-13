@@ -217,6 +217,11 @@ export async function getBookClassifications(bookId: string): Promise<BookClassi
   return res.data;
 }
 
+export async function updateBook(bookId: string, data: Partial<Book>): Promise<Book> {
+  const res = await api.put<Book>(`/books/${bookId}`, data);
+  return res.data;
+}
+
 export interface ReviewUpdateRequest {
   observation?: string;
   recommendation?: string;

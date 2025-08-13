@@ -36,3 +36,15 @@ class BookResponse(BaseModel):
 
 class BookDeleteResponse(BaseModel):
     detail: str
+
+class BookUpdateRequest(BaseModel):
+    doc_name: Optional[str] = None
+    author: Optional[str] = None
+    date: Optional[str] = None
+    status: Optional[str] = None
+    category: Optional[str] = None
+    reference: Optional[str] = None
+    summary: Optional[str] = None
+    labels: Optional[List[str]] = None
+    startDate: Optional[str] = None
+    endDate: Optional[str] = None

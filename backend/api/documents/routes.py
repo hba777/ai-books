@@ -5,7 +5,7 @@ from models.documents import BookModel
 from models.user import User
 from utils.jwt_utils import get_user_from_cookie
 from db.mongo import books_collection, fs
-from .schemas import BookResponse, BookDeleteResponse, FeedbackRequest, FeedbackModel
+from .schemas import BookResponse, BookDeleteResponse, FeedbackRequest, FeedbackModel, BookUpdateRequest
 import json
 import base64
 from bson import ObjectId
@@ -312,4 +312,17 @@ def delete_all_gridfs_files():
         return BookDeleteResponse(detail=f"Deleted {deleted_count} files from GridFS.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting files from GridFS: {str(e)}")
+
+@router.put("/{book_id}", response_model=BookResponse, dependencies=[Depends(get_user_from_cookie)])
+def update_book(book_id: str, update: BookUpdateRequest):
+    book = books_collection.find_one({"_id": ObjectId(book_id)})
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    update_data = {k: v for k, v in update.dict(exclude_unset=True).items() if v is not None}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    books_collection.update_one({"_id": ObjectId(book_id)}, {"$set": update_data})
+    updated_book = books_collection.find_one({"_id": ObjectId(book_id)})
+    updated_book["_id"] = str(updated_book["_id"])
+    return BookResponse(**updated_book)
 
