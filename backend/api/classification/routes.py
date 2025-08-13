@@ -58,13 +58,18 @@ def get_book_classifications(book_id: str):
     if not chunks:
         raise HTTPException(status_code=404, detail="No chunks found for this book.")
 
+    # Return entries with both classification and confidence_score
     classifications = []
 
     for chunk in chunks:
         if "classification" in chunk and chunk["classification"]:
             for c in chunk["classification"]:
-                # Only add the classification string
-                if "classification" in c:
-                    classifications.append(c["classification"])
+                # Include classification and confidence_score if present
+                if isinstance(c, dict) and "classification" in c:
+                    entry = {
+                        "classification": c.get("classification"),
+                        "confidence_score": c.get("confidence_score")
+                    }
+                    classifications.append(entry)
 
     return {"book_id": book_id, "classifications": classifications}

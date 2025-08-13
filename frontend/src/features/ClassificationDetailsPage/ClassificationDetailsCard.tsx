@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import ClassCard from "./ClassCard";
 import { useRouter } from "next/router";
 import { useBooks } from "../../context/BookContext";
-import { BookClassificationsResponse } from "../../services/booksApi";
+import { BookClassificationsResponse, ClassificationEntry } from "../../services/booksApi";
 
 interface ClassificationDetailsCardProps {
   onSeeInfo?: () => void;
@@ -12,12 +12,13 @@ interface ClassificationDetailsCardProps {
 interface ClassData {
   name: string;
   count: number;
+  entries: ClassificationEntry[];
 }
 
 const ClassificationDetailsCard: React.FC<ClassificationDetailsCardProps> = ({ onSeeInfo, onJumpToHighlight }) => {
   const router = useRouter();
   const { id: bookId } = router.query;
-  const { books, getBookClassifications } = useBooks();
+  const { getBookClassifications } = useBooks();
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,19 +37,22 @@ const ClassificationDetailsCard: React.FC<ClassificationDetailsCardProps> = ({ o
         
         const response: BookClassificationsResponse = await getBookClassifications(bookId);
                 
-        // Process classifications to count occurrences
-        const classCounts: { [key: string]: number } = {};
+        // Process classifications to group and count
+        const grouped: { [key: string]: ClassificationEntry[] } = {};
         
         if (response.classifications && Array.isArray(response.classifications)) {
-          response.classifications.forEach(classification => {
-            classCounts[classification] = (classCounts[classification] || 0) + 1;
+          response.classifications.forEach((c: ClassificationEntry) => {
+            const key = c.classification;
+            if (!grouped[key]) grouped[key] = [];
+            grouped[key].push(c);
           });
         }
                 
         // Convert to array format
-        const classData: ClassData[] = Object.entries(classCounts).map(([name, count]) => ({
+        const classData: ClassData[] = Object.entries(grouped).map(([name, entries]) => ({
           name,
-          count
+          count: entries.length,
+          entries
         }));
         
         // Sort by count (descending)
@@ -116,6 +120,7 @@ const ClassificationDetailsCard: React.FC<ClassificationDetailsCardProps> = ({ o
                 key={idx}
                 className={cls.name}
                 count={cls.count}
+                entries={cls.entries}
                 bookId={bookId}
                 onJumpToHighlight={onJumpToHighlight || (() => {})}
               />

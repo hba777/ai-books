@@ -65,9 +65,14 @@ export interface ReviewOutcomesResponse {
   timestamp?: string;
 }
 
+export interface ClassificationEntry {
+  classification: string;
+  confidence_score?: number;
+}
+
 export interface BookClassificationsResponse {
   book_id: string;
-  classifications: string[];
+  classifications: ClassificationEntry[];
 }
 
 // WebSocket connection for progress tracking
