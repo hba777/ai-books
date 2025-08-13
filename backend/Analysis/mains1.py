@@ -9,6 +9,9 @@ from .workflow_nodes import main_node, final_report_generator
 from .pdf_processor import get_first_pipeline1_chunk, get_all_pipeline1_chunks_details, get_next_pending_pipeline1_chunk, get_all_pending_pipeline1_chunks_details
 from .database_saver import save_results_to_mongo, clear_results_collection, update_chunk_analysis_status
 from .text_classifier import classify_text
+from db.mongo import get_books_collection
+from datetime import datetime
+from bson import ObjectId
 
 def run_workflow():
     # Clear the results collection at the beginning of each program execution
@@ -193,6 +196,14 @@ def run_workflow():
             print("Full Result Dictionary (for debugging):\n")
             print(result_with_review)
             print("-" * 40)
+
+            """Update books end process date"""
+            books_collection = get_books_collection()
+            now_str = datetime.utcnow().isoformat()
+            books_collection.update_one(
+                {"doc_id": doc_id_p1},
+                {"$set": {"endDate": now_str}}
+            )
 
     else:
         print("No PENDING chunks found from Pipeline 1's configured database and collection to process. All chunks might be processed, or none were pending.")

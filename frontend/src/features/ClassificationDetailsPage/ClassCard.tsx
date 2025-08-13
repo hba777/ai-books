@@ -23,7 +23,6 @@ interface FeedbackItem {
 
 const ClassCard: React.FC<ClassCardProps> = ({ 
   className, 
-  count, 
   entries,
   bookId, 
   onJumpToHighlight 
