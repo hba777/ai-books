@@ -136,7 +136,7 @@ const ClassifcationDetails: React.FC = () => {
             </div>
 
             {/* Right Column */}
-            <div className="flex-2">
+            <div className="flex-3">
               {fileUrl ? (
                 <PDFViewerActual
                   jumpToHighlight={jumpToHighlight}

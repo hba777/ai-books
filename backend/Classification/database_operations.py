@@ -209,12 +209,35 @@ def extract_summary_for_pdf(doc_id):
 def mark_document_done(doc_id):
     """Update the status of a document to 'Processed' regardless of current status."""
     books_collection = get_books_collection()
+    chunks_collection = get_chunks_collection()
     result = books_collection.update_one(
         {"_id": ObjectId(doc_id)},  
         {"$set": {"status": "Processed"}}
     )
     if result.matched_count == 0:
         print(f"⚠️ Document with id {doc_id} not found.")
+
+    """Add Classification labels to the book"""    
+    chunks = chunks_collection.find({"doc_id": doc_id}, {"classification": 1})
+
+    # Step 4: Extract all unique classification strings
+    unique_labels = set()
+    for chunk in chunks:
+        if chunk.get("classification"):
+            for cls in chunk["classification"]:
+                if isinstance(cls, dict) and "classification" in cls:
+                    unique_labels.add(cls["classification"])
+
+    # Step 5: Update the book's labels array
+    books_collection.update_one(
+        {"_id": ObjectId(doc_id)},
+        {"$set": {"labels": list(unique_labels)}}
+    )
+
+    print("\n####################")
+    print("Document Marked Processed")
+    print("Labels updated:", list(unique_labels))
+    print("####################\n")
     print("\n####################\nDocument Marked Processed\n####################\n")
 
 

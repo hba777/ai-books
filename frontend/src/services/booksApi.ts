@@ -65,9 +65,14 @@ export interface ReviewOutcomesResponse {
   timestamp?: string;
 }
 
+export interface ClassificationEntry {
+  classification: string;
+  confidence_score?: number;
+}
+
 export interface BookClassificationsResponse {
   book_id: string;
-  classifications: string[];
+  classifications: ClassificationEntry[];
 }
 
 // WebSocket connection for progress tracking
@@ -214,6 +219,11 @@ export async function getReviewOutcomes(): Promise<ReviewOutcomesResponse[]> {
 
 export async function getBookClassifications(bookId: string): Promise<BookClassificationsResponse> {
   const res = await api.get<BookClassificationsResponse>(`/classification/classifications/${bookId}`);
+  return res.data;
+}
+
+export async function updateBook(bookId: string, data: Partial<Book>): Promise<Book> {
+  const res = await api.put<Book>(`/books/${bookId}`, data);
   return res.data;
 }
 

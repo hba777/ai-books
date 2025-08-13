@@ -1,12 +1,13 @@
-import React, { useState, useRef } from "react";
+import React, { useMemo, useState, useRef } from "react";
 import { useBooks } from "../../context/BookContext";
-import { useRouter } from "next/router";
 import { toast } from "react-toastify";
 import  Image  from "next/image";
+import { ClassificationEntry } from "../../services/booksApi";
 
 interface ClassCardProps {
   className: string;
   count: number;
+  entries: ClassificationEntry[];
   bookId: string;
   onJumpToHighlight: (className: string, direction: 'next' | 'prev') => void;
 }
@@ -23,12 +24,14 @@ interface FeedbackItem {
 const ClassCard: React.FC<ClassCardProps> = ({ 
   className, 
   count, 
+  entries,
   bookId, 
   onJumpToHighlight 
 }) => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const [minConfidence, setMinConfidence] = useState<number | null>(null);
   const [feedbackComment, setFeedbackComment] = useState("");
   const [feedbackImage, setFeedbackImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -36,7 +39,6 @@ const ClassCard: React.FC<ClassCardProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { books, addFeedback, assignSingleDepartment } = useBooks();
-  const router = useRouter();
   
   // Get current book data
   const currentBook = books.find(book => book._id === bookId);
@@ -47,6 +49,12 @@ const ClassCard: React.FC<ClassCardProps> = ({
   const classFeedback = feedback.filter((item: FeedbackItem) => 
     item.department === className
   );
+
+  // Compute filtered count based on confidence filter
+  const filteredEntries = useMemo(() => {
+    if (minConfidence == null) return entries;
+    return entries.filter(e => (e.confidence_score ?? 0) >= minConfidence);
+  }, [entries, minConfidence]);
 
   const handleAssignDepartment = async () => {
     setIsSubmitting(true);
@@ -131,12 +139,15 @@ const ClassCard: React.FC<ClassCardProps> = ({
         <span className="flex-1 text-gray-700 font-semibold text-sm">
           {className}
         </span>
-        <input
-          type="number"
-          value={count}
-          readOnly
-          className="w-16 text-center border border-gray-200 rounded px-2 py-1 text-sm bg-white font-semibold"
-        />
+        <div className="flex items-center gap-2">
+          <div className="text-xs text-gray-600">Count:</div>
+          <input
+            type="number"
+            value={filteredEntries.length}
+            readOnly
+            className="w-16 text-center border border-gray-200 rounded px-2 py-1 text-sm bg-white font-semibold"
+          />
+        </div>
         
         {/* Navigation Buttons */}
         <button
@@ -160,7 +171,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-2 mb-3">
+      <div className="flex gap-2 mb-3 items-center flex-wrap">
         <button
           className={`text-xs px-3 py-1 rounded-lg border font-semibold transition ${
             assignedDepartments.includes(className)
@@ -179,6 +190,26 @@ const ClassCard: React.FC<ClassCardProps> = ({
         >
           {showFeedback ? "Hide" : "Show"} Feedback ({classFeedback.length})
         </button>
+
+        {/* Confidence filter */}
+        <div className="flex items-center gap-2 ml-auto">
+          <label className="text-xs text-gray-600">Min confidence</label>
+          <select
+            className="text-xs border border-gray-300 rounded px-2 py-1 bg-white"
+            value={minConfidence ?? ''}
+            onChange={(e) => {
+              const val = e.target.value;
+              setMinConfidence(val === '' ? null : Number(val));
+            }}
+          >
+            <option value="">All</option>
+            <option value="50">50+</option>
+            <option value="60">60+</option>
+            <option value="70">70+</option>
+            <option value="80">80+</option>
+            <option value="90">90+</option>
+          </select>
+        </div>
       </div>
 
       {/* Feedback Section */}
