@@ -17,7 +17,6 @@ import {
   ReviewOutcomesResponse,
   getBookClassifications, 
   BookClassificationsResponse,
-  ClassificationEntry,
   updateReviewOutcome,
   deleteReviewOutcome,
   ReviewUpdateRequest,

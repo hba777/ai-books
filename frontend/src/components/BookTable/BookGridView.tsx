@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { useBooks } from "../../context/BookContext";
 import { toast } from "react-toastify"
 import { useClassificationContext } from '../../features/ClassificationPage/ClassificationCardRow/ClassificationContext';
+import AgentsSideBar from "./AgentsSideBar.";
 
 interface Book {
   _id: string;
@@ -53,27 +54,27 @@ const statusStyles: Record<string, { border: string; bar: string; text: string }
 
 const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
   const router = useRouter();
-  const { startClassification } = useBooks();
+  const { startClassification, indexBook } = useBooks();
   const { isAnyBookProcessing } = useClassificationContext();
+
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarBookId, setSidebarBookId] = useState<string | null>(null);
 
   const handleBookClick = (id: string) => {
     const basePath = router.pathname.startsWith('/analysis') ? '/analysis' : '/classification';
     router.push(`${basePath}/${id}`);
   };
-  const { indexBook } = useBooks();
+
+  const openSidebarForBook = (e: React.MouseEvent, bookId: string) => {
+    e.stopPropagation();
+    setSidebarBookId(bookId);
+    setSidebarOpen(true);
+  };
 
   const handleStartClassification = async (e: React.MouseEvent, bookId: string) => {
-    e.stopPropagation(); // Prevent triggering the card click
-    
-    try {
-      await startClassification(bookId);
-      toast.success("Classification Started")
-    } catch (error) {
-      console.error('Error starting classification:', error);
-      toast.error("Classification Failed")
-    } finally {
-
-    }
+    e.stopPropagation();
+    setSidebarBookId(bookId);
+    setSidebarOpen(true);
   };
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -87,11 +88,11 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
               ? 100
               : book.status === "Processing"
                 ? 50
-                : book.status === "Assigned"
-                  ? 100
-                  : book.status === "Pending"
-                    ? 0
-                    : 0;
+              : book.status === "Assigned"
+                ? 100
+                : book.status === "Pending"
+                  ? 0
+                  : 0;
         return (
           <div
             key={book._id}
@@ -106,7 +107,7 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
             </div>
             <div className="flex items-center justify-between mb-2">
               <div className="font-bold text-lg text-gray-900">{book.doc_name}</div>
-              <div className="flex items-center gap-2">                <button
+              <div className="flex items:center gap-2">                <button
                   onClick={(e) => handleStartClassification(e, book._id)}
                   disabled={isAnyBookProcessing || book.status !== "Pending" || book.status === "Processed"}
                   className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
@@ -178,6 +179,9 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
           </div>
         );
       })}
+
+      {/* Sidebar */}
+      <AgentsSideBar open={sidebarOpen} bookId={sidebarBookId || ""} onClose={() => setSidebarOpen(false)} />
     </div>
   );
 };

@@ -45,3 +45,11 @@ def get_kb_data_collection():
 
 def get_gridfs():
     return fs
+
+def set_all_agents_status_true():
+    agent_configs_collection = get_agent_configs_collection()
+    result = agent_configs_collection.update_many(
+        {},  # Match all documents
+        {"$set": {"status": True}}
+    )
+    return {"matched": result.matched_count, "modified": result.modified_count}

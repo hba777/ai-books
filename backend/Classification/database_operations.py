@@ -9,6 +9,7 @@ from bson import ObjectId
 from db.mongo import (
     get_books_collection,
     get_chunks_collection,
+    set_all_agents_status_true
 )
 import asyncio
 from api.chunks.websocket_manager import get_client
@@ -233,6 +234,8 @@ def mark_document_done(doc_id):
         {"_id": ObjectId(doc_id)},
         {"$set": {"labels": list(unique_labels)}}
     )
+
+    set_all_agents_status_true()
 
     print("\n####################")
     print("Document Marked Processed")

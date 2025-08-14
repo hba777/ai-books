@@ -2,7 +2,6 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   Agent,
   KnowledgeBaseItem,
-  CreateAgentData,
   UpdateAgentData,
   getAllAgents,
   createAgent as apiCreateAgent,
@@ -100,7 +99,7 @@ export const AgentsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     } else if (!userLoading && !user) {
       setAgents([]); // clear if logged out
     }
-  }, [user, userLoading]);;
+  }, [user, userLoading]);
 
   return (
     <AgentsContext.Provider value={{ 
