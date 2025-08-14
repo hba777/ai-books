@@ -73,7 +73,7 @@ const ClassificationDetailsCard: React.FC<ClassificationDetailsCardProps> = ({ o
   }, []);
 
   return (
-    <div className="w-[370px] bg-white rounded-2xl shadow p-0 mt-8 ml-2 border border-blue-200 border-t-4 border-t-blue-500">
+    <div className="w-[400px] bg-white rounded-2xl shadow p-0 mt-8 ml-2 border border-blue-200 border-t-4 border-t-blue-500">
       {/* Card Content */}
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">

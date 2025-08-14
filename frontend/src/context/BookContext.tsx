@@ -23,7 +23,8 @@ import {
   ReviewUpdateRequest,
   ReviewUpdateResponse,
   ReviewDeleteResponse,
-  updateBook as apiUpdateBook
+  updateBook as apiUpdateBook,
+  removeClassificationFromChunk as apiRemoveClassificationFromChunk
 } from "../services/booksApi"
 import { useUser } from "../context/UserContext";
 
@@ -46,6 +47,7 @@ interface BookContextType {
   updateReviewOutcome: (outcomeId: string, reviewType: string, data: ReviewUpdateRequest) => Promise<ReviewUpdateResponse>;
   deleteReviewOutcome: (outcomeId: string, reviewType: string) => Promise<ReviewDeleteResponse>;
   updateBook: (bookId: string, data: Partial<Book>) => Promise<void>;
+  removeClassificationFromChunk: (chunkId: string, label: string) => Promise<void>;
 }
 
 const BookContext = createContext<BookContextType | undefined>(undefined);
@@ -183,6 +185,12 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await fetchBooks();
   };
 
+  const removeClassificationFromChunkHandler = async (chunkId: string, label: string) => {
+    await apiRemoveClassificationFromChunk(chunkId, label);
+    // Refresh classifications cache for the affected book
+    classificationsCacheRef.current.clear();
+  };
+
   // Cleanup WebSocket connections on unmount
   useEffect(() => {
     return () => {
@@ -221,7 +229,8 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       getBookClassifications: fetchBookClassifications,
       updateReviewOutcome: updateReviewOutcomeHandler,
       deleteReviewOutcome: deleteReviewOutcomeHandler,
-      updateBook
+      updateBook,
+      removeClassificationFromChunk: removeClassificationFromChunkHandler
     }}>
       {children}
     </BookContext.Provider>

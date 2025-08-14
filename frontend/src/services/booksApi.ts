@@ -68,6 +68,7 @@ export interface ReviewOutcomesResponse {
 export interface ClassificationEntry {
   classification: string;
   confidence_score?: number;
+  chunk_id?: string;
 }
 
 export interface BookClassificationsResponse {
@@ -258,5 +259,10 @@ export async function updateReviewOutcome(
 
 export async function deleteReviewOutcome(outcomeId: string, reviewType: string): Promise<ReviewDeleteResponse> {
   const res = await api.delete<ReviewDeleteResponse>(`/review_outcomes/delete/${outcomeId}/${reviewType}`);
+  return res.data;
+}
+
+export async function removeClassificationFromChunk(chunkId: string, label: string): Promise<{ message: string; chunk_id: string; removed_label: string; remaining_classifications: number }> {
+  const res = await api.delete<{ message: string; chunk_id: string; removed_label: string; remaining_classifications: number }>(`/classification/${chunkId}/${encodeURIComponent(label)}`);
   return res.data;
 }
