@@ -101,7 +101,7 @@ const ClassifcationDetails: React.FC = () => {
         <div className="flex-1 flex flex-col items-center px-4 py-12">
           <div className="flex w-full max-w-7xl gap-6">
             {/* Left Column */}
-            <div className="flex flex-col w-[350px] shrink-0">
+            <div className="flex flex-col w-[400px] shrink-0">
               {/* Breadcrumb/Header Bar */}
               <div className="flex items-center mb-4">
                 <button

@@ -58,18 +58,67 @@ def get_book_classifications(book_id: str):
     if not chunks:
         raise HTTPException(status_code=404, detail="No chunks found for this book.")
 
-    # Return entries with both classification and confidence_score
+    # Return entries with both classification and confidence_score, plus chunk_id
     classifications = []
 
     for chunk in chunks:
         if "classification" in chunk and chunk["classification"]:
             for c in chunk["classification"]:
-                # Include classification and confidence_score if present
+                # Include classification, confidence_score, and chunk_id if present
                 if isinstance(c, dict) and "classification" in c:
                     entry = {
                         "classification": c.get("classification"),
-                        "confidence_score": c.get("confidence_score")
+                        "confidence_score": c.get("confidence_score"),
+                        "chunk_id": chunk.get("chunk_id")  # Add chunk_id for deletion
                     }
                     classifications.append(entry)
 
     return {"book_id": book_id, "classifications": classifications}
+
+@router.delete("/{chunk_id}/{label}", dependencies=[Depends(get_user_from_cookie)])
+def remove_classification_from_chunk(chunk_id: str, label: str):
+    """
+    Remove a specific classification result from a chunk by chunk_id and label
+    """
+    try:
+        chunks_collection = get_chunks_collection()
+        
+        # Find the chunk by chunk_id
+        chunk = chunks_collection.find_one({"chunk_id": chunk_id})
+        if not chunk:
+            raise HTTPException(status_code=404, detail="Chunk not found")
+        
+        # Check if classification exists
+        if "classification" not in chunk or not chunk["classification"]:
+            raise HTTPException(status_code=404, detail="No classifications found in this chunk")
+        
+        # Find and remove the classification with matching label
+        original_count = len(chunk["classification"])
+        chunk["classification"] = [
+            c for c in chunk["classification"] 
+            if c.get("classification") != label
+        ]
+        
+        if len(chunk["classification"]) == original_count:
+            raise HTTPException(status_code=404, detail=f"Classification with label '{label}' not found")
+        
+        # Update the chunk in the database
+        result = chunks_collection.update_one(
+            {"chunk_id": chunk_id},
+            {"$set": {"classification": chunk["classification"]}}
+        )
+        
+        if result.modified_count == 0:
+            raise HTTPException(status_code=500, detail="Failed to update chunk")
+        
+        return {
+            "message": f"Successfully removed classification '{label}' from chunk {chunk_id}",
+            "chunk_id": chunk_id,
+            "removed_label": label,
+            "remaining_classifications": len(chunk["classification"])
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error removing classification: {str(e)}")

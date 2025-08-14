@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   reactStrictMode: true,
   images: {
     domains: ['localhost', '127.0.0.1'],
@@ -22,11 +21,18 @@ const nextConfig: NextConfig = {
   },
   webpack: (config, { isServer }) => {
     if (isServer) {
-      // Exclude react-pdf from server-side rendering
       config.externals = config.externals || [];
       config.externals.push('react-pdf');
     }
     return config;
+  },
+  
+  // ✅ Turbopack config
+  turbopack: {
+    resolveAlias: {
+      // Example alias to speed up resolution
+      '@components': './src/components',
+    },
   },
 };
 

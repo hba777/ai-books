@@ -1,14 +1,20 @@
 import React from "react";
 import ClassificationStatCard from "./ClassificationCard";
 import { useClassificationContext } from "./ClassificationContext";
+import { useBooks } from "@/context/BookContext";
 
 const ClassificationCardRow: React.FC = () => {
   const { currentFilter, setCurrentFilter } = useClassificationContext();
+  const { books } = useBooks();
+  const totalBooks = books.length;
+  const totalProcessed = books.filter((book) => book.status === "Processed").length;
+  const totalPending = books.filter((book) => book.status === "Pending").length;
+  const totalAssigned = books.filter((book) => book.status === "Assigned").length;
 
   return (
     <div className="flex gap-3 lg:gap-4 w-full justify-center mt-6 mb-8 px-4">
       <ClassificationStatCard
-        value={245}
+        value={totalBooks}
         label="Books Uploaded"
         subtitle=""
         bgColor={["#3B82F6", "#2563EB"]}
@@ -47,7 +53,7 @@ const ClassificationCardRow: React.FC = () => {
         } 
       />
       <ClassificationStatCard
-        value={67}
+        value={totalProcessed}
         label="Total Processed"
         subtitle=""
         bgColor={["#22C55E", "#16A34A"]}
@@ -92,7 +98,7 @@ const ClassificationCardRow: React.FC = () => {
       />
       
       <ClassificationStatCard
-        value={78}
+        value={totalPending}
         label="Pending Books"
         subtitle=""
         bgColor={["#F97316", "#EA580C"]}
@@ -138,7 +144,7 @@ const ClassificationCardRow: React.FC = () => {
         }
       />
       <ClassificationStatCard
-        value={245}
+        value={totalAssigned}
         label="Books Assigned"
         subtitle=""
         bgColor={["#A855F7", "#9333EA"]}

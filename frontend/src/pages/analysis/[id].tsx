@@ -44,8 +44,14 @@ const AnalysisDetails: React.FC = () => {
       if (!book?._id) return;
       try {
         const res = await getBookClassifications(book._id);
-        // Remove duplicates while preserving order
-        const uniqueTags = Array.from(new Set(res.classifications || []));
+        // Extract classification strings and remove duplicates while preserving order
+        const uniqueTags = Array.from(
+          new Set(
+            (res.classifications || [])
+              .map((c) => c.classification)
+              .filter((v): v is string => Boolean(v))
+          )
+        );
         setTags(uniqueTags);
       } catch (e) {
         console.error("Failed to fetch classifications:", e);

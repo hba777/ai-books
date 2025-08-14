@@ -62,3 +62,4 @@ def delete_all_chunks():
     chunks_collection = get_chunks_collection()
     delete_result = chunks_collection.delete_many({})
     return {"message": f"Successfully deleted {delete_result.deleted_count} chunks."}
+
