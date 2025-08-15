@@ -109,16 +109,18 @@ const AnalysisDetails: React.FC = () => {
         <div className="flex-1 flex flex-col items-center px-4 py-12 w-full">
           <div className="w-full max-w-7xl">
             <TopSection bookTitle={book.doc_name} tags={tags} bookId={book._id} onSeeInfo={()=>setShowSeeInfo(true)} />
-            <ReviewFilters
-              minConfidence={minConfidence}
-              onMinConfidenceChange={setMinConfidence}
-              onlyHumanReviewed={onlyHumanReviewed}
-              onOnlyHumanReviewedChange={setOnlyHumanReviewed}
-              selectedReviewTypes={selectedReviewTypes}
-              onSelectedReviewTypesChange={setSelectedReviewTypes}
-              availableReviewTypes={availableReviewTypes}
-            />
-            {book.status === "Processed" ? (
+            {book.status === "Processed" && (
+            <>
+              <ReviewFilters
+                minConfidence={minConfidence}
+                onMinConfidenceChange={setMinConfidence}
+                onlyHumanReviewed={onlyHumanReviewed}
+                onOnlyHumanReviewedChange={setOnlyHumanReviewed}
+                selectedReviewTypes={selectedReviewTypes}
+                onSelectedReviewTypesChange={setSelectedReviewTypes}
+                availableReviewTypes={availableReviewTypes}
+              />
+
               <AnalysisTable
                 data={bookReviewOutcomes}
                 pageSize={10}
@@ -129,11 +131,14 @@ const AnalysisDetails: React.FC = () => {
                 deleteReviewOutcome={deleteReviewOutcome}
                 fetchReviewOutcomes={fetchReviewOutcomes}
               />
-            ) : (
-              <div className="flex justify-center items-center h-40 text-xl font-semibold text-gray-500">
-                Analysis Pending
-              </div>
-            )}
+            </>
+          )}
+
+          {book.status !== "Processed" && (
+            <div className="flex justify-center items-center h-40 text-xl font-semibold text-gray-500">
+              Analysis Pending
+            </div>
+          )}
           </div>
         </div>
       </main>
