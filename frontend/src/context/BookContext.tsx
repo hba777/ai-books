@@ -166,9 +166,23 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchBookClassifications = async (bookId: string): Promise<BookClassificationsResponse> => {
     const cached = classificationsCacheRef.current.get(bookId);
     if (cached) return cached;
-    const res = await getBookClassifications(bookId);
-    classificationsCacheRef.current.set(bookId, res);
-    return res;
+  
+    try {
+      const res = await getBookClassifications(bookId);
+      classificationsCacheRef.current.set(bookId, res);
+      return res;
+    } catch (error: any) {
+      if (error.response && error.response.status === 404) {
+        // No classifications found — return empty instead of throwing
+        const emptyRes: BookClassificationsResponse = {
+          book_id: bookId,
+          classifications: []
+        };
+        classificationsCacheRef.current.set(bookId, emptyRes);
+        return emptyRes;
+      }
+      throw error; // Re-throw other errors (500, network issues, etc.)
+    }
   };
 
   const updateReviewOutcomeHandler = async (outcomeId: string, reviewType: string, data: ReviewUpdateRequest): Promise<ReviewUpdateResponse> => {
