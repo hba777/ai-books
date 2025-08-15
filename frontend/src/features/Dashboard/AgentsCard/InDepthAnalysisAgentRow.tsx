@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { Agent } from '../../../services/agentsApi';
 
 interface InDepthAnalysisAgentRowProps {
@@ -58,25 +58,68 @@ const icon = (
   </svg>
 );
 
-const InDepthAnalysisAgentRow: React.FC<InDepthAnalysisAgentRowProps> = ({ agents }) => (
-  <div className="flex gap-4 w-full">
-    {agents.map((agent) => (
-      <div
-        key={agent._id}
-        className="flex flex-col bg-[#efe9fc] rounded-xl p-4 min-w-[200px] max-w-[220px] h-35 shadow-sm relative overflow-hidden"
-      >
-        <div className="flex flex-col gap-3 mb-1 mt-2">
-          <div className="w-10 h-10 flex items-center justify-center rounded-lg from-[#A855F7] to-[#9333EA] bg-gradient-to-br">
-            {icon}
+const InDepthAnalysisAgentRow: React.FC<InDepthAnalysisAgentRowProps> = ({
+  agents,
+}) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  let isDown = false;
+  let startX = 0;
+  let scrollLeft = 0;
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    isDown = true;
+    startX = e.pageX - (scrollRef.current?.offsetLeft || 0);
+    scrollLeft = scrollRef.current?.scrollLeft || 0;
+  };
+
+  const onMouseLeave = () => {
+    isDown = false;
+  };
+
+  const onMouseUp = () => {
+    isDown = false;
+  };
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - (scrollRef.current?.offsetLeft || 0);
+    const walk = (x - startX) * 1.5; // scroll speed multiplier
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollLeft - walk;
+    }
+  };
+
+  return (
+    <div
+      ref={scrollRef}
+      className="flex gap-4 w-full cursor-grab select-none"
+      onMouseDown={onMouseDown}
+      onMouseLeave={onMouseLeave}
+      onMouseUp={onMouseUp}
+      onMouseMove={onMouseMove}
+    >
+      {agents.map((agent) => (
+        <div
+          key={agent._id}
+          className="flex flex-col bg-[#efe9fc] rounded-xl p-4 min-w-[200px] max-w-[220px] h-35 shadow-sm relative overflow-hidden"
+        >
+          <div className="flex flex-col gap-3 mb-1 mt-2">
+            <div className="w-10 h-10 flex items-center justify-center rounded-lg from-[#A855F7] to-[#9333EA] bg-gradient-to-br">
+              {icon}
+            </div>
+            <div className="font-semibold text-gray-800 text-base truncate">
+              {agent.agent_name}
+            </div>
           </div>
-          <div className="font-semibold text-gray-800 text-base">
-            {agent.agent_name}
+          <div className="text-xs text-gray-500">
+            {agent.status ? "Active" : "Inactive"}
           </div>
         </div>
-        <div className="text-xs text-gray-500 ">{agent.status ? 'Active' : 'Inactive'}</div>
-      </div>
-    ))}
-  </div>
-);
+      ))}
+    </div>
+  );
+};
+
 
 export default InDepthAnalysisAgentRow;

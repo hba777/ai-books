@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { useBooks } from "../../context/BookContext";
 import { toast } from "react-toastify"
 import { useClassificationContext } from '../../features/ClassificationPage/ClassificationCardRow/ClassificationContext';
+import AgentsSideBar from "./AgentsSideBar.";
 interface Book {
   _id: string;
   doc_name: string;
@@ -27,8 +28,11 @@ const BookTableView: React.FC<BookTableViewProps> = ({
   statusColors,
 }) => {
   const router = useRouter();
-  const {indexBook, startClassification } = useBooks();
+  const {indexBook } = useBooks();
   const { isAnyBookProcessing } = useClassificationContext();
+
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarBookId, setSidebarBookId] = useState<string | null>(null);
 
   const handleRowClick = (id: string) => {
     const basePath = router.pathname.startsWith("/analysis")
@@ -37,23 +41,12 @@ const BookTableView: React.FC<BookTableViewProps> = ({
     router.push(`${basePath}/${id}`);
   };
 
-  const handleStartClassification = async (e: React.MouseEvent, bookId: string) => {
-    e.stopPropagation(); // Prevent triggering the row click
-    
-    try {
-      await startClassification(bookId);
-      toast.success("Classification Started")
-    } catch (error) {
-      console.error('Error starting classification:', error);
-      toast.error("Classification Failed")
-    } finally {
-      // setProcessingBooks(prev => { // This line is removed as per the edit hint
-      //   const newSet = new Set(prev);
-      //   newSet.delete(bookId);
-      //   return newSet;
-      // });
-    }
+  const openSidebarForBook = (e: React.MouseEvent, bookId: string) => {
+    e.stopPropagation();
+    setSidebarBookId(bookId);
+    setSidebarOpen(true);
   };
+
   return (
     <div className="bg-white rounded-2xl shadow overflow-x-auto">
       <table className="min-w-full text-left">
@@ -226,13 +219,15 @@ const BookTableView: React.FC<BookTableViewProps> = ({
               </td>
               <td className="py-4 px-6 text-gray-500 whitespace-nowrap">
                 <button
-                  onClick={(e) => handleStartClassification(e, book._id)}
-                  disabled={isAnyBookProcessing || book.status !== "Pending" || book.status === "Processed"}
-                  className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
-                    isAnyBookProcessing || book.status !== "Pending" || book.status === "Processed"
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-blue-500 text-white hover:bg-blue-600'
-                  }`}
+                  onClick={(e) => openSidebarForBook(e, book._id)}
+                  disabled={(() => {
+                    const canStart = !isAnyBookProcessing && book.status === "Pending";
+                    return !canStart;
+                  })()}
+                  className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${(() => {
+                    const canStart = !isAnyBookProcessing && book.status === "Pending";
+                    return canStart ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed';
+                  })()}`}
                 >
                   {book.status === "Pending"
                     ? "Start Classification"
@@ -249,6 +244,9 @@ const BookTableView: React.FC<BookTableViewProps> = ({
           ))}
         </tbody>
       </table>
+
+      {/* Sidebar */}
+      <AgentsSideBar open={sidebarOpen} bookId={sidebarBookId || ""} onClose={() => setSidebarOpen(false)} />
     </div>
   );
 };

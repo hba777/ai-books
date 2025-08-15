@@ -10,10 +10,8 @@ import asyncio
 
 router = APIRouter(prefix="/classification", tags=["Classification"])
 
-
 @router.post("/{book_id}/start", dependencies=[Depends(get_user_from_cookie)])
 async def start_classification(book_id: str, background_tasks: BackgroundTasks) -> Dict[str, Any]:
-
     try:
         # Validate book_id format
         if not ObjectId.is_valid(book_id):
@@ -24,8 +22,7 @@ async def start_classification(book_id: str, background_tasks: BackgroundTasks) 
         if not book:
             raise HTTPException(status_code=404, detail="Book not found")
         
-        # Update book status to "Processing" (dummy update)
-        # In real implementation, this would trigger the actual classification
+        # Update book status to "Processing"
         books_collection.update_one(
             {"_id": ObjectId(book_id)},
             {"$set": {"status": "Processing", "startDate": time.strftime("%Y-%m-%d %H:%M:%S")}}
@@ -33,9 +30,10 @@ async def start_classification(book_id: str, background_tasks: BackgroundTasks) 
 
         agent_configs_collection = get_agent_configs_collection()
         agents = list(agent_configs_collection.find(
-            {"type": "classification"},
+            {"type": "classification", "status": True},  # Filter only active agents
             {"_id": 0, "agent_name": 1, "classifier_prompt": 1, "evaluators_prompt": 1}
         ))
+
         background_tasks.add_task(supervisor_loop, book_id, agents)
                 
         return {
@@ -47,6 +45,7 @@ async def start_classification(book_id: str, background_tasks: BackgroundTasks) 
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error starting classification: {str(e)}")
+
     
 @router.get("/classifications/{book_id}", dependencies=[Depends(get_user_from_cookie)])
 def get_book_classifications(book_id: str):

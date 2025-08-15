@@ -9,7 +9,11 @@ from bson import ObjectId
 from db.mongo import (
     get_books_collection,
     get_chunks_collection,
+    set_all_agents_status_true
 )
+
+from Analysis.mains1 import run_workflow
+
 import asyncio
 from api.chunks.websocket_manager import get_client
 
@@ -233,6 +237,10 @@ def mark_document_done(doc_id):
         {"_id": ObjectId(doc_id)},
         {"$set": {"labels": list(unique_labels)}}
     )
+
+    #runworkflow() Call here 
+
+    set_all_agents_status_true() # Call this at end of run workflow
 
     print("\n####################")
     print("Document Marked Processed")
