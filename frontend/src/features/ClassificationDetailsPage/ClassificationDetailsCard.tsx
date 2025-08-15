@@ -2,11 +2,14 @@ import React, { useState, useEffect } from "react";
 import ClassCard from "./ClassCard";
 import { useRouter } from "next/router";
 import { useBooks } from "../../context/BookContext";
-import { BookClassificationsResponse, ClassificationEntry } from "../../services/booksApi";
+import {
+  BookClassificationsResponse,
+  ClassificationEntry,
+} from "../../services/booksApi";
 
 interface ClassificationDetailsCardProps {
   onSeeInfo?: () => void;
-  onJumpToHighlight?: (className: string, direction: 'next' | 'prev') => void;
+  onJumpToHighlight?: (className: string, direction: "next" | "prev") => void;
 }
 
 interface ClassData {
@@ -15,7 +18,10 @@ interface ClassData {
   entries: ClassificationEntry[];
 }
 
-const ClassificationDetailsCard: React.FC<ClassificationDetailsCardProps> = ({ onSeeInfo, onJumpToHighlight }) => {
+const ClassificationDetailsCard: React.FC<ClassificationDetailsCardProps> = ({
+  onSeeInfo,
+  onJumpToHighlight,
+}) => {
   const router = useRouter();
   const { id: bookId } = router.query;
   const { getBookClassifications } = useBooks();
@@ -26,7 +32,7 @@ const ClassificationDetailsCard: React.FC<ClassificationDetailsCardProps> = ({ o
   // Fetch classification data
   useEffect(() => {
     const fetchClassifications = async () => {
-      if (!bookId || typeof bookId !== 'string') {
+      if (!bookId || typeof bookId !== "string") {
         setLoading(false);
         return;
       }
@@ -34,35 +40,43 @@ const ClassificationDetailsCard: React.FC<ClassificationDetailsCardProps> = ({ o
       try {
         setLoading(true);
         setError(null);
-        
-        const response: BookClassificationsResponse = await getBookClassifications(bookId);
-                
-        // Process classifications to group and count
-        const grouped: { [key: string]: ClassificationEntry[] } = {};
-        
-        if (response.classifications && Array.isArray(response.classifications)) {
-          response.classifications.forEach((c: ClassificationEntry) => {
-            const key = c.classification;
-            if (!grouped[key]) grouped[key] = [];
-            grouped[key].push(c);
-          });
+
+        const response: BookClassificationsResponse =
+          await getBookClassifications(bookId);
+
+        // If response indicates not found
+        if (!response || !response.classifications) {
+          throw new Error("Classification data not found");
         }
-                
-        // Convert to array format
-        const classData: ClassData[] = Object.entries(grouped).map(([name, entries]) => ({
-          name,
-          count: entries.length,
-          entries
-        }));
-        
-        // Sort by count (descending)
+
+        // Process classifications
+        const grouped: { [key: string]: ClassificationEntry[] } = {};
+        response.classifications.forEach((c: ClassificationEntry) => {
+          const key = c.classification;
+          if (!grouped[key]) grouped[key] = [];
+          grouped[key].push(c);
+        });
+
+        const classData: ClassData[] = Object.entries(grouped).map(
+          ([name, entries]) => ({
+            name,
+            count: entries.length,
+            entries,
+          })
+        );
+
         classData.sort((a, b) => b.count - a.count);
-        
         setClasses(classData);
-      } catch (err) {
-        console.error('Error fetching classifications:', err);
-        setError('Failed to load classification data');
-        // Fallback to empty array
+      } catch (err: any) {
+        console.error("Error fetching classifications:", err);
+
+        // Handle 404 gracefully
+        if (err?.response?.status === 404) {
+          setError("Classification pending");
+        } else {
+          setError("Failed to load classification data");
+        }
+
         setClasses([]);
       } finally {
         setLoading(false);
@@ -89,22 +103,25 @@ const ClassificationDetailsCard: React.FC<ClassificationDetailsCardProps> = ({ o
             </button>
           </div>
         </div>
-        
-        <div className="mb-3 text-gray-500 text-xs font-semibold">
-          Classes <span className="font-normal">- No of Paragraphs</span>
-          {!loading && !error && classes.length > 0 && (
+
+        {!loading && !error && classes.length > 0 && (
+          <div className="mb-3 text-gray-500 text-xs font-semibold">
+            Classes
+            <span className="font-normal">- No of Paragraphs</span>
             <span className="ml-2 text-blue-600">
               (Total: {classes.reduce((sum, cls) => sum + cls.count, 0)})
             </span>
-          )}
-        </div>
-        
+          </div>
+        )}
+
         {/* Class Cards */}
         <div className="space-y-3">
           {loading ? (
             <div className="text-center py-4">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="text-sm text-gray-500 mt-2">Loading classifications...</p>
+              <p className="text-sm text-gray-500 mt-2">
+                Loading classifications...
+              </p>
             </div>
           ) : error ? (
             <div className="text-center py-4">
@@ -112,10 +129,12 @@ const ClassificationDetailsCard: React.FC<ClassificationDetailsCardProps> = ({ o
             </div>
           ) : classes.length === 0 ? (
             <div className="text-center py-4">
-              <p className="text-sm text-gray-500">No classifications found</p>
+              <p className="text-sm text-gray-500">Classification Pending</p>
             </div>
           ) : (
-            bookId && typeof bookId === 'string' && classes.map((cls: ClassData, idx: number) => (
+            bookId &&
+            typeof bookId === "string" &&
+            classes.map((cls: ClassData, idx: number) => (
               <ClassCard
                 key={idx}
                 className={cls.name}
