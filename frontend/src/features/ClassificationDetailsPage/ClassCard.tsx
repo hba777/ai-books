@@ -1,7 +1,7 @@
-import React, { useEffect,useMemo, useState, useRef } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useBooks } from "../../context/BookContext";
 import { toast } from "react-toastify";
-import  Image  from "next/image";
+import Image from "next/image";
 import { ClassificationEntry } from "../../services/booksApi";
 
 interface ClassCardProps {
@@ -9,7 +9,7 @@ interface ClassCardProps {
   count: number;
   entries: ClassificationEntry[];
   bookId: string;
-  onJumpToHighlight: (className: string, direction: 'next' | 'prev') => void;
+  onJumpToHighlight: (className: string, direction: "next" | "prev") => void;
 }
 
 interface FeedbackItem {
@@ -21,11 +21,11 @@ interface FeedbackItem {
   timestamp: string;
 }
 
-const ClassCard: React.FC<ClassCardProps> = ({ 
-  className, 
+const ClassCard: React.FC<ClassCardProps> = ({
+  className,
   entries,
-  bookId, 
-  onJumpToHighlight 
+  bookId,
+  onJumpToHighlight,
 }) => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -37,37 +37,45 @@ const ClassCard: React.FC<ClassCardProps> = ({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [selectedClassificationIndex, setSelectedClassificationIndex] = useState(0);
+  const [selectedClassificationIndex, setSelectedClassificationIndex] =
+    useState(0);
+  const [isImageLoading, setIsImageLoading] = useState(false);
+  const [loadingImageUrls, setLoadingImageUrls] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const { books, addFeedback, assignSingleDepartment, removeClassificationFromChunk } = useBooks();
-  
+
+  const {
+    books,
+    addFeedback,
+    assignSingleDepartment,
+    removeClassificationFromChunk,
+  } = useBooks();
+
   // Get current book data
-  const currentBook = books.find(book => book._id === bookId);
+  const currentBook = books.find((book) => book._id === bookId);
   const feedback = currentBook?.feedback || [];
   const assignedDepartments = currentBook?.assigned_departments || [];
-  
+
   // Filter feedback for this class
-  const classFeedback = feedback.filter((item: FeedbackItem) => 
-    item.department === className
+  const classFeedback = feedback.filter(
+    (item: FeedbackItem) => item.department === className
   );
 
   // State for filtered entries
-const [filteredEntries, setFilteredEntries] = useState(() => {
-  if (minConfidence == null) return entries;
-  return entries.filter(e => (e.confidence_score ?? 0) >= minConfidence);
-});
+  const [filteredEntries, setFilteredEntries] = useState(() => {
+    if (minConfidence == null) return entries;
+    return entries.filter((e) => (e.confidence_score ?? 0) >= minConfidence);
+  });
 
-// Keep filteredEntries updated when entries or minConfidence changes
-useEffect(() => {
-  if (minConfidence == null) {
-    setFilteredEntries(entries);
-  } else {
-    setFilteredEntries(
-      entries.filter(e => (e.confidence_score ?? 0) >= minConfidence)
-    );
-  }
-}, [entries, minConfidence]);
+  // Keep filteredEntries updated when entries or minConfidence changes
+  useEffect(() => {
+    if (minConfidence == null) {
+      setFilteredEntries(entries);
+    } else {
+      setFilteredEntries(
+        entries.filter((e) => (e.confidence_score ?? 0) >= minConfidence)
+      );
+    }
+  }, [entries, minConfidence]);
 
   const handleAssignDepartment = async () => {
     setIsSubmitting(true);
@@ -85,17 +93,20 @@ useEffect(() => {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 5 * 1024 * 1024) {
+        // 5MB limit
         toast.error("Image size must be less than 5MB");
         return;
       }
-      
+
+      setIsImageLoading(true);
       setFeedbackImage(file);
-      
+
       // Create preview
       const reader = new FileReader();
       reader.onload = (e) => {
         setImagePreview(e.target?.result as string);
+        setIsImageLoading(false);
       };
       reader.readAsDataURL(file);
     }
@@ -119,12 +130,12 @@ useEffect(() => {
       }
 
       await addFeedback(
-        bookId, 
-        className, 
-        feedbackComment.trim() || undefined, 
+        bookId,
+        className,
+        feedbackComment.trim() || undefined,
         imageBase64
       );
-      
+
       setFeedbackComment("");
       setFeedbackImage(null);
       setImagePreview(null);
@@ -150,48 +161,66 @@ useEffect(() => {
     try {
       // Get the selected classification entry
       const selectedEntry = filteredEntries[selectedClassificationIndex];
-      
+
       if (!selectedEntry || !selectedEntry.chunk_id) {
         toast.error("No valid classification selected for deletion");
         return;
       }
-  
+
       // Remove only the selected classification instance from backend
       await removeClassificationFromChunk(selectedEntry.chunk_id, className);
-  
+
       // Update local state: remove the deleted entry from filteredEntries
-      setFilteredEntries(prev =>
+      setFilteredEntries((prev) =>
         prev.filter((_, idx) => idx !== selectedClassificationIndex)
       );
-  
+
       toast.success(`Classification '${className}' removed successfully!`);
       setShowDeleteModal(false);
-  
+
       // Adjust selected index if needed
-      setSelectedClassificationIndex(prevIndex =>
+      setSelectedClassificationIndex((prevIndex) =>
         prevIndex >= filteredEntries.length - 1 ? 0 : prevIndex
       );
-  
     } catch (error) {
       toast.error("Failed to remove classification");
     } finally {
       setIsDeleting(false);
     }
   };
-  
 
-  const handleNavigateClassification = (direction: 'next' | 'prev') => {
+  const handleNavigateClassification = (direction: "next" | "prev") => {
     if (filteredEntries.length === 0) return;
-    
-    if (direction === 'next') {
-      setSelectedClassificationIndex((prev) => 
+
+    if (direction === "next") {
+      setSelectedClassificationIndex((prev) =>
         prev >= filteredEntries.length - 1 ? 0 : prev + 1
       );
     } else {
-      setSelectedClassificationIndex((prev) => 
+      setSelectedClassificationIndex((prev) =>
         prev <= 0 ? filteredEntries.length - 1 : prev - 1
       );
     }
+  };
+
+  const handleImageLoad = (imageUrl: string) => {
+    setLoadingImageUrls(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(imageUrl);
+      return newSet;
+    });
+  };
+
+  const handleImageError = (imageUrl: string) => {
+    setLoadingImageUrls(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(imageUrl);
+      return newSet;
+    });
+  };
+
+  const addImageToLoading = (imageUrl: string) => {
+    setLoadingImageUrls(prev => new Set(prev).add(imageUrl));
   };
 
   return (
@@ -201,44 +230,67 @@ useEffect(() => {
         <span className="flex-1 text-gray-700 font-semibold text-sm">
           {className}
         </span>
-        <div className="flex items-center gap-2">
-          <div className="text-xs text-gray-600">Count:</div>
-          <input
-            type="number"
-            value={filteredEntries.length}
-            readOnly
-            className="w-16 text-center border border-gray-200 rounded px-2 py-1 text-sm bg-white font-semibold"
-          />
+        <div className="flex items-center gap-2 p-1">
+          <div className="text-sm bg-white text-gray-600 px-3 py-1 flex items-center justify-center rounded">
+            Count: {selectedClassificationIndex + 1}/{filteredEntries.length}
+          </div>
         </div>
-        
+
         {/* Navigation Buttons */}
         <button
           className="w-6 h-6 flex items-center justify-center rounded bg-blue-600 text-white font-bold text-lg ml-1"
-          onClick={() => handleNavigateClassification('prev')}
+          onClick={() => handleNavigateClassification("prev")}
           title={`Previous ${className} instance`}
         >
-          <svg width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M5.28042 1.79872C5.19625 1.79806 5.11182 1.83021 5.04721 1.89499L3.05922 3.88814C2.92967 4.01803 2.92808 4.2296 3.05566 4.36149L5.01338 6.38546C5.14095 6.51736 5.34876 6.51898 5.47831 6.38909C5.60786 6.25921 5.60946 6.04764 5.48188 5.91574L3.75485 4.13026L5.50858 2.37197C5.63813 2.24208 5.63973 2.03051 5.51215 1.89862C5.44852 1.83284 5.3646 1.79938 5.28042 1.79872Z" fill="white"/>
+          <svg
+            width="9"
+            height="9"
+            viewBox="0 0 9 9"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5.28042 1.79872C5.19625 1.79806 5.11182 1.83021 5.04721 1.89499L3.05922 3.88814C2.92967 4.01803 2.92808 4.2296 3.05566 4.36149L5.01338 6.38546C5.14095 6.51736 5.34876 6.51898 5.47831 6.38909C5.60786 6.25921 5.60946 6.04764 5.48188 5.91574L3.75485 4.13026L5.50858 2.37197C5.63813 2.24208 5.63973 2.03051 5.51215 1.89862C5.44852 1.83284 5.3646 1.79938 5.28042 1.79872Z"
+              fill="white"
+            />
           </svg>
         </button>
         <button
           className="w-6 h-6 flex items-center justify-center rounded bg-blue-600 text-white font-bold text-lg ml-1"
-          onClick={() => handleNavigateClassification('next')}
+          onClick={() => handleNavigateClassification("next")}
           title={`Next ${className} instance`}
         >
-          <svg width="11" height="12" viewBox="0 0 11 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3.88438 8.92041C3.99381 8.92041 4.10324 8.87729 4.1866 8.79148L6.75136 6.15132C6.91849 5.97927 6.91849 5.70117 6.75136 5.52912L4.1866 2.88896C4.01946 2.71691 3.74931 2.71691 3.58217 2.88896C3.41503 3.06101 3.41503 3.3391 3.58217 3.51115L5.84471 5.84022L3.58217 8.16928C3.41503 8.34133 3.41503 8.61943 3.58217 8.79148C3.66552 8.87729 3.77495 8.92041 3.88438 8.92041Z" fill="white"/>
+          <svg
+            width="11"
+            height="12"
+            viewBox="0 0 11 12"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M3.88438 8.92041C3.99381 8.92041 4.10324 8.87729 4.1866 8.79148L6.75136 6.15132C6.91849 5.97927 6.91849 5.70117 6.75136 5.52912L4.1866 2.88896C4.01946 2.71691 3.74931 2.71691 3.58217 2.88896C3.41503 3.06101 3.41503 3.3391 3.58217 3.51115L5.84471 5.84022L3.58217 8.16928C3.41503 8.34133 3.41503 8.61943 3.58217 8.79148C3.66552 8.87729 3.77495 8.92041 3.88438 8.92041Z"
+              fill="white"
+            />
           </svg>
         </button>
-        
+
         {/* Delete Classification Button */}
         <button
           className="w-6 h-6 flex items-center justify-center rounded bg-red-600 text-white font-bold text-lg ml-1 hover:bg-red-700 transition-colors"
           onClick={() => setShowDeleteModal(true)}
           title={`Delete selected ${className} instance`}
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="white"/>
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+              fill="white"
+            />
           </svg>
         </button>
       </div>
@@ -246,10 +298,10 @@ useEffect(() => {
       {/* Instance Indicator */}
       {filteredEntries.length > 1 && (
         <div className="flex items-center gap-2 mb-2 text-xs text-gray-600">
-          <span>Instance {selectedClassificationIndex + 1} of {filteredEntries.length}</span>
           {filteredEntries[selectedClassificationIndex]?.confidence_score && (
             <span className="text-blue-600">
-              (Confidence: {filteredEntries[selectedClassificationIndex].confidence_score}%)
+              (Confidence:{" "}
+              {filteredEntries[selectedClassificationIndex].confidence_score}%)
             </span>
           )}
         </div>
@@ -266,9 +318,11 @@ useEffect(() => {
           onClick={() => setShowAssignModal(true)}
           disabled={assignedDepartments.includes(className)}
         >
-          {assignedDepartments.includes(className) ? "Assigned" : "Assign Department"}
+          {assignedDepartments.includes(className)
+            ? "Assigned"
+            : "Assign Department"}
         </button>
-        
+
         <button
           className="text-xs px-3 py-1 rounded-lg border border-gray-400 text-gray-600 font-semibold hover:bg-gray-50"
           onClick={() => setShowFeedback(!showFeedback)}
@@ -281,10 +335,10 @@ useEffect(() => {
           <label className="text-xs text-gray-600">Min confidence</label>
           <select
             className="text-xs border border-gray-300 rounded px-2 py-1 bg-white"
-            value={minConfidence ?? ''}
+            value={minConfidence ?? ""}
             onChange={(e) => {
               const val = e.target.value;
-              setMinConfidence(val === '' ? null : Number(val));
+              setMinConfidence(val === "" ? null : Number(val));
               setSelectedClassificationIndex(0); // Reset selection when filter changes
             }}
           >
@@ -302,7 +356,9 @@ useEffect(() => {
       {showFeedback && (
         <div className="border-t border-gray-200 pt-3">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-semibold text-gray-700">Feedback</span>
+            <span className="text-sm font-semibold text-gray-700">
+              Feedback
+            </span>
             <button
               className="text-xs px-2 py-1 rounded border border-blue-400 text-blue-600 font-semibold hover:bg-blue-50"
               onClick={() => setShowFeedbackForm(!showFeedbackForm)}
@@ -323,7 +379,7 @@ useEffect(() => {
                   rows={3}
                 />
               </div>
-              
+
               <div className="mb-3">
                 <input
                   type="file"
@@ -338,11 +394,17 @@ useEffect(() => {
                 >
                   Upload Image (optional)
                 </button>
+                {isImageLoading && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-xs text-gray-500">Processing image...</span>
+                  </div>
+                )}
                 {imagePreview && (
                   <div className="mt-2 relative inline-block">
-                    <img 
-                      src={imagePreview} 
-                      alt="Preview" 
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
                       className="w-20 h-20 object-cover rounded border"
                     />
                     <button
@@ -358,7 +420,9 @@ useEffect(() => {
               <div className="flex gap-2">
                 <button
                   onClick={handleSubmitFeedback}
-                  disabled={isSubmitting || (!feedbackComment.trim() && !feedbackImage)}
+                  disabled={
+                    isSubmitting || (!feedbackComment.trim() && !feedbackImage)
+                  }
                   className="text-xs px-3 py-1 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-50"
                 >
                   {isSubmitting ? "Submitting..." : "Submit Feedback"}
@@ -397,13 +461,25 @@ useEffect(() => {
                     <p className="text-xs text-gray-600 mb-2">{item.comment}</p>
                   )}
                   {item.image_url && (
-                    <Image
-                      src={`${process.env.NEXT_PUBLIC_API_URL}${item.image_url}`}
-                      alt="Feedback" 
-                      className="w-20 h-20 object-cover rounded border"
-                      height={80}
-                      width={80}
-                    />
+                    <div className="relative">
+                      {loadingImageUrls.has(item.image_url) && (
+                        <div className="w-20 h-20 flex items-center justify-center bg-gray-100 rounded border">
+                          <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                      )}
+                      <Image
+                        src={`${process.env.NEXT_PUBLIC_API_URL}${item.image_url}`}
+                        alt="Feedback"
+                        className={`w-20 h-20 object-cover rounded border ${
+                          loadingImageUrls.has(item.image_url) ? 'hidden' : ''
+                        }`}
+                        height={80}
+                        width={80}
+                        onLoad={() => handleImageLoad(item.image_url!)}
+                        onError={() => handleImageError(item.image_url!)}
+                        onLoadStart={() => addImageToLoading(item.image_url!)}
+                      />
+                    </div>
                   )}
                 </div>
               ))
@@ -416,9 +492,12 @@ useEffect(() => {
       {showAssignModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Assign to {className}</h3>
+            <h3 className="text-lg font-semibold mb-4">
+              Assign to {className}
+            </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Are you sure you want to assign this book to the {className} department?
+              Are you sure you want to assign this book to the {className}{" "}
+              department?
             </p>
             <div className="flex gap-3">
               <button
@@ -443,10 +522,13 @@ useEffect(() => {
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4 text-red-600">Delete Classification Instance</h3>
+            <h3 className="text-lg font-semibold mb-4 text-red-600">
+              Delete Classification Instance
+            </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Are you sure you want to delete the <strong>{className}</strong> classification instance {selectedClassificationIndex + 1}? 
-              This action cannot be undone.
+              Are you sure you want to delete the <strong>{className}</strong>{" "}
+              classification instance {selectedClassificationIndex + 1}? This
+              action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button

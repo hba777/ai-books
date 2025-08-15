@@ -1,11 +1,15 @@
 import React from "react";
 import AnalysisCard from "./AnalysisCard";
+import { useBooks } from "@/context/BookContext";
 
 const AnalysisCardRow: React.FC = () => {
+  const { books } = useBooks();
+  const totalProcessed = books.filter((book) => book.status === "Processed").length;
+  const totalPending = books.filter((book) => book.status === "Pending").length;
   return (
     <div className="flex w-full mx-auto mt-4 justify-around">
       <AnalysisCard
-        value={245}
+        value={totalProcessed}
         label="Total In-Depth Reviewed Books"
         icon={
             <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -17,7 +21,7 @@ const AnalysisCardRow: React.FC = () => {
         }
       />
       <AnalysisCard
-        value={"2,459"}
+        value={totalPending}
         label="In-depth Review Pending Books"
         icon={
             <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">

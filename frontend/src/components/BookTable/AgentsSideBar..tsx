@@ -10,18 +10,27 @@ interface AgentsSideBarProps {
   onClose: () => void;
 }
 
-const AgentsSideBar: React.FC<AgentsSideBarProps> = ({ open, bookId, onClose }) => {
+const AgentsSideBar: React.FC<AgentsSideBarProps> = ({
+  open,
+  bookId,
+  onClose,
+}) => {
   const { agents, powerToggleAgent } = useAgents();
   const { startClassification } = useBooks();
   const [starting, setStarting] = useState<boolean>(false);
 
   const { classificationAgents, analysisAgents } = useMemo(() => {
-    const classificationAgents = agents.filter(a => a.type === "classification");
-    const analysisAgents = agents.filter(a => a.type === "analysis");
+    const classificationAgents = agents.filter(
+      (a) => a.type === "classification"
+    );
+    const analysisAgents = agents.filter((a) => a.type === "analysis");
     return { classificationAgents, analysisAgents };
   }, [agents]);
 
-  const handlePowerClick = async (agentId: string, currentStatus: boolean | undefined) => {
+  const handlePowerClick = async (
+    agentId: string,
+    currentStatus: boolean | undefined
+  ) => {
     try {
       await powerToggleAgent(agentId, !!currentStatus);
       toast.success(currentStatus === false ? "Powered on" : "Powered off");
@@ -52,13 +61,31 @@ const AgentsSideBar: React.FC<AgentsSideBarProps> = ({ open, bookId, onClose }) 
       {/* Panel */}
       <div
         className={`absolute right-0 top-0 h-full w-[360px] bg-white shadow-xl border-l border-gray-200
-        transform transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
+        transform transition-transform duration-300 ${
+          open ? "translate-x-0" : "translate-x-full"
+        }`}
       >
         {/* Header */}
         <div className="px-5 py-4 border-b flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">Agents</h2>
-          <button onClick={onClose} className="p-1 rounded hover:bg-gray-100" aria-label="Close">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          <button
+            onClick={onClose}
+            className="p-1 rounded hover:bg-gray-100"
+            aria-label="Close"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
           </button>
         </div>
 
@@ -66,29 +93,46 @@ const AgentsSideBar: React.FC<AgentsSideBarProps> = ({ open, bookId, onClose }) 
         <div className="overflow-y-auto h-[calc(100%-140px)] p-5 space-y-6">
           {/* Classification Agents */}
           <div>
-            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Classification</div>
+            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+              Classification
+            </div>
             {classificationAgents.length === 0 ? (
-              <div className="text-xs text-gray-500">No classification agents</div>
+              <div className="text-xs text-gray-500">
+                No classification agents
+              </div>
             ) : (
               <ul className="divide-y border rounded">
-                {classificationAgents.map(agent => (
-                  <li key={agent._id} className="flex items-center justify-between px-3 py-2">
+                {classificationAgents.map((agent) => (
+                  <li
+                    key={agent._id}
+                    className="flex items-center justify-between px-3 py-2"
+                  >
                     <div>
-                      <div className="text-sm font-semibold text-gray-800">{agent.agent_name}</div>
+                      <div className="text-sm font-semibold text-gray-800">
+                        {agent.agent_name}
+                      </div>
                     </div>
                     <button
                       onClick={() => handlePowerClick(agent._id, agent.status)}
-                      className={agent.status === false ? "text-blue-500 hover:text-blue-700 focus:outline-none" : ""}
-                      title={agent.status === false ? "Powered Off" : "Powered On"}
+                      className={
+                        agent.status === false
+                          ? "text-blue-500 hover:text-blue-700 focus:outline-none"
+                          : ""
+                      }
+                      title={
+                        agent.status === false ? "Powered Off" : "Powered On"
+                      }
                     >
-                      {agent.status === false ? <FaPlay /> : (
+                      {agent.status === false ? (
+                        <FaPlay />
+                      ) : (
                         <svg
                           width="16"
                           height="16"
                           viewBox="0 0 16 16"
                           fill="none"
                           xmlns="http://www.w3.org/2000/svg"
-                          style={{ cursor: 'pointer' }}
+                          style={{ cursor: "pointer" }}
                         >
                           <g clipPath="url(#clip0_1_10435)">
                             <path
@@ -127,29 +171,60 @@ const AgentsSideBar: React.FC<AgentsSideBarProps> = ({ open, bookId, onClose }) 
 
           {/* Analysis Agents */}
           <div>
-            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Analysis</div>
+            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+              Analysis
+            </div>
             {analysisAgents.length === 0 ? (
               <div className="text-xs text-gray-500">No analysis agents</div>
             ) : (
               <ul className="divide-y border rounded">
-                {analysisAgents.map(agent => (
-                  <li key={agent._id} className="flex items-center justify-between px-3 py-2">
+                {analysisAgents.map((agent) => (
+                  <li
+                    key={agent._id}
+                    className="flex items-center justify-between px-3 py-2"
+                  >
                     <div>
-                      <div className="text-sm font-semibold text-gray-800">{agent.agent_name}</div>
+                      <div className="text-sm font-semibold text-gray-800">
+                        {agent.agent_name}
+                      </div>
                     </div>
+                    <div className="flex items-center gap-2">
+                      {/* Confidence Score Input */}
+                    <input
+                        type="number"
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        value={"90"}
+                        onChange={(e) => {
+                          // handle local state or API update here
+                          const value = parseFloat(e.target.value);
+                          // Example: updateAgent(agent._id, { confidence_score: value });
+                        }}
+                        className="w-12 border border-gray-300 rounded px-1 text-sm"
+                        placeholder="Score"
+                      />
                     <button
                       onClick={() => handlePowerClick(agent._id, agent.status)}
-                      className={agent.status === false ? "text-blue-500 hover:text-blue-700 focus:outline-none" : ""}
-                      title={agent.status === false ? "Powered Off" : "Powered On"}
+                      className={
+                        agent.status === false
+                          ? "text-blue-500 hover:text-blue-700 focus:outline-none"
+                          : ""
+                      }
+                      title={
+                        agent.status === false ? "Powered Off" : "Powered On"
+                      }
                     >
-                      {agent.status === false ? <FaPlay /> : (
+                      {agent.status === false ? (
+                        <FaPlay />
+                      ) : (
                         <svg
                           width="16"
                           height="16"
                           viewBox="0 0 16 16"
                           fill="none"
                           xmlns="http://www.w3.org/2000/svg"
-                          style={{ cursor: 'pointer' }}
+                          style={{ cursor: "pointer" }}
                         >
                           <g clipPath="url(#clip0_1_10435)">
                             <path
@@ -180,6 +255,7 @@ const AgentsSideBar: React.FC<AgentsSideBarProps> = ({ open, bookId, onClose }) 
                         </svg>
                       )}
                     </button>
+                    </div>
                   </li>
                 ))}
               </ul>
