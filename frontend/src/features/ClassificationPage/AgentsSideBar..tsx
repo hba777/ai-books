@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useAgents } from "../../context/AgentsContext";
 import { useBooks } from "../../context/BookContext";
 import { toast } from "react-toastify";
@@ -193,30 +193,22 @@ const AgentsSideBar: React.FC<AgentsSideBarProps> = ({
                       <select
                         value={typeof agent.confidence_score === 'number' ? agent.confidence_score : ''}
                         onChange={async (e) => {
-                          const value = parseFloat(e.target.value);
-                          if (!isNaN(value)) {
+                          const percent = parseInt(e.target.value, 10);
+                          if (!isNaN(percent)) {
                             try {
-                              await updateAgentConfidenceScore(agent._id, value);
+                              await updateAgentConfidenceScore(agent._id, percent);
                               toast.success("Confidence score updated");
                             } catch (err) {
                               toast.error("Failed to update score");
                             }
                           }
                         }}
-                        className="border border-gray-300 rounded px-2 py-1 text-sm"
+                        className="border border-gray-300 rounded px-2 py-1 text-sm w-16"
                       >
-                        <option value="" disabled>Select score</option>
-                        <option value="0">0.00</option>
-                        <option value="0.1">0.10</option>
-                        <option value="0.2">0.20</option>
-                        <option value="0.3">0.30</option>
-                        <option value="0.4">0.40</option>
-                        <option value="0.5">0.50</option>
-                        <option value="0.6">0.60</option>
-                        <option value="0.7">0.70</option>
-                        <option value="0.8">0.80</option>
-                        <option value="0.9">0.90</option>
-                        <option value="1">1.00</option>
+                        <option value="" disabled>Select</option>
+                        {[50, 60, 70, 80, 90].map((v) => (
+                          <option key={v} value={v}>{v}</option>
+                        ))}
                       </select>
                     <button
                       onClick={() => handlePowerClick(agent._id, agent.status)}

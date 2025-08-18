@@ -55,7 +55,7 @@ const statusStyles: Record<string, { border: string; bar: string; text: string }
 
 const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
   const router = useRouter();
-  const { startClassification, indexBook } = useBooks();
+  const { indexBook } = useBooks();
   const { isAnyBookProcessing } = useClassificationContext();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
