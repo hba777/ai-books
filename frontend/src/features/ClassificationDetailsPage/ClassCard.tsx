@@ -192,14 +192,20 @@ const ClassCard: React.FC<ClassCardProps> = ({
   const handleNavigateClassification = (direction: "next" | "prev") => {
     if (filteredEntries.length === 0) return;
 
+    let newIndex: number;
     if (direction === "next") {
-      setSelectedClassificationIndex((prev) =>
-        prev >= filteredEntries.length - 1 ? 0 : prev + 1
-      );
+      newIndex = selectedClassificationIndex >= filteredEntries.length - 1 ? 0 : selectedClassificationIndex + 1;
     } else {
-      setSelectedClassificationIndex((prev) =>
-        prev <= 0 ? filteredEntries.length - 1 : prev - 1
-      );
+      newIndex = selectedClassificationIndex <= 0 ? filteredEntries.length - 1 : selectedClassificationIndex - 1;
+    }
+    
+    setSelectedClassificationIndex(newIndex);
+    
+    // Get the selected entry and jump to its coordinates if available
+    const selectedEntry = filteredEntries[newIndex];
+    if (selectedEntry?.coordinates && selectedEntry?.page_number) {
+      // Call the parent's onJumpToHighlight with the current classification info
+      onJumpToHighlight(className, direction);
     }
   };
 
@@ -302,6 +308,11 @@ const ClassCard: React.FC<ClassCardProps> = ({
             <span className="text-blue-600">
               (Confidence:{" "}
               {filteredEntries[selectedClassificationIndex].confidence_score}%)
+            </span>
+          )}
+          {filteredEntries[selectedClassificationIndex]?.page_number && (
+            <span className="text-green-600">
+              (Page: {filteredEntries[selectedClassificationIndex].page_number})
             </span>
           )}
         </div>

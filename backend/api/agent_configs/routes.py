@@ -156,6 +156,39 @@ def test_agent(agent_id: str, request: TestAgentRequest):
     }
 
 @router.delete(
+    "/all",
+    response_model=AgentDeleteResponse,
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_cookie)]
+)
+def delete_all_agents():
+    collection = get_agent_configs_collection()
+
+    # Fetch all agents
+    agents = collection.find()
+    deleted_agent_ids = []
+
+    for agent in agents:
+        # Delete associated knowledge base items
+        if "knowledge_base" in agent and agent["knowledge_base"]:
+            for kb_item in agent["knowledge_base"]:
+                if "_id" in kb_item:
+                    kb_data_collection.delete_one({"_id": ObjectId(kb_item["_id"])})
+
+        # Delete the agent itself
+        collection.delete_one({"_id": agent["_id"]})
+        deleted_agent_ids.append(str(agent["_id"]))
+
+    if not deleted_agent_ids:
+        raise HTTPException(status_code=404, detail="No agents found to delete")
+
+    return AgentDeleteResponse(
+        detail=f"Deleted {len(deleted_agent_ids)} agents successfully",
+        agent_id=",".join(deleted_agent_ids)  # or list of IDs if preferred
+    )
+
+
+@router.delete(
     "/{agent_id}",
     response_model=AgentDeleteResponse,
     status_code=status.HTTP_200_OK,
@@ -176,7 +209,7 @@ def delete_agent(agent_id: str):
                 kb_data_collection.delete_one({"_id": ObjectId(kb_item["_id"])})
     
     # Delete the agent
-    result = collection.delete_one({"_id": ObjectId(agent_id)})
+    collection.delete_one({"_id": ObjectId(agent_id)})
     return AgentDeleteResponse(detail="Agent deleted successfully", agent_id=agent_id)
 
 @router.patch(
@@ -203,4 +236,30 @@ def power_off_agent(agent_id: str, status: bool = Body(..., embed=True)):
             if "_id" in kb_item:
                 kb_item["_id"] = str(kb_item["_id"])
     
+    return AgentConfigResponse(**result)
+
+
+@router.patch(
+    "/{agent_id}/confidence-score",
+    response_model=AgentConfigResponse,
+    dependencies=[Depends(get_user_from_cookie)]
+)
+def update_confidence_score(agent_id: str, confidence_score: float = Body(..., embed=True)):
+    collection = get_agent_configs_collection()
+    result = collection.find_one_and_update(
+        {"_id": ObjectId(agent_id)},
+        {"$set": {"confidence_score": confidence_score}},
+        return_document=True
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    result["_id"] = str(result["_id"])
+
+    # Convert knowledge_base _id fields to strings for response
+    if "knowledge_base" in result and result["knowledge_base"]:
+        for kb_item in result["knowledge_base"]:
+            if "_id" in kb_item:
+                kb_item["_id"] = str(kb_item["_id"])
+
     return AgentConfigResponse(**result)

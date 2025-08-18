@@ -8,6 +8,7 @@ import {
   updateAgent as apiUpdateAgent,
   deleteAgent as apiDeleteAgent,
   powerToggleAgent as apiPowerToggleAgent,
+  updateAgentConfidenceScore as apiUpdateAgentConfidenceScore,
   testAgent as apiTestAgent
 } from '../services/agentsApi';
 import { useUser } from "../context/UserContext";
@@ -24,6 +25,7 @@ interface AgentsContextType {
   updateAgent: (id: string, agent: UpdateAgentData) => Promise<Agent>;
   deleteAgent: (id: string) => Promise<void>;
   powerToggleAgent: (id: string, status: boolean) => Promise<Agent>;
+  updateAgentConfidenceScore: (id: string, score: number) => Promise<Agent>;
   testAgent: (id: string, text: string) => Promise<{
     message: string;
     agent_id: string;
@@ -89,6 +91,12 @@ export const AgentsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return updated;
   };
 
+  const updateAgentConfidenceScore = async (id: string, score: number) => {
+    const updated = await apiUpdateAgentConfidenceScore(id, score);
+    await fetchAgents();
+    return updated;
+  };
+
   const testAgent = async (id: string, text: string) => {
     return await apiTestAgent(id, text);
   };
@@ -111,6 +119,7 @@ export const AgentsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       updateAgent, 
       deleteAgent, 
       powerToggleAgent,
+      updateAgentConfidenceScore,
       testAgent
     }}>
       {children}

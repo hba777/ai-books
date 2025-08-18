@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useAgents } from "../../context/AgentsContext";
 import { useBooks } from "../../context/BookContext";
 import { toast } from "react-toastify";
@@ -15,7 +15,7 @@ const AgentsSideBar: React.FC<AgentsSideBarProps> = ({
   bookId,
   onClose,
 }) => {
-  const { agents, powerToggleAgent } = useAgents();
+  const { agents, powerToggleAgent, updateAgentConfidenceScore } = useAgents();
   const { startClassification } = useBooks();
   const [starting, setStarting] = useState<boolean>(false);
 
@@ -189,21 +189,27 @@ const AgentsSideBar: React.FC<AgentsSideBarProps> = ({
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {/* Confidence Score Input */}
-                    <input
-                        type="number"
-                        min={0}
-                        max={1}
-                        step={0.01}
-                        value={"90"}
-                        onChange={(e) => {
-                          // handle local state or API update here
-                          const value = parseFloat(e.target.value);
-                          // Example: updateAgent(agent._id, { confidence_score: value });
+                      {/* Confidence Score Dropdown */}
+                      <select
+                        value={typeof agent.confidence_score === 'number' ? agent.confidence_score : ''}
+                        onChange={async (e) => {
+                          const percent = parseInt(e.target.value, 10);
+                          if (!isNaN(percent)) {
+                            try {
+                              await updateAgentConfidenceScore(agent._id, percent);
+                              toast.success("Confidence score updated");
+                            } catch (err) {
+                              toast.error("Failed to update score");
+                            }
+                          }
                         }}
-                        className="w-12 border border-gray-300 rounded px-1 text-sm"
-                        placeholder="Score"
-                      />
+                        className="border border-gray-300 rounded px-2 py-1 text-sm w-16"
+                      >
+                        <option value="" disabled>Select</option>
+                        {[50, 60, 70, 80, 90].map((v) => (
+                          <option key={v} value={v}>{v}</option>
+                        ))}
+                      </select>
                     <button
                       onClick={() => handlePowerClick(agent._id, agent.status)}
                       className={

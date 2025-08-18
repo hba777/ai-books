@@ -68,7 +68,9 @@ def get_book_classifications(book_id: str):
                     entry = {
                         "classification": c.get("classification"),
                         "confidence_score": c.get("confidence_score"),
-                        "chunk_id": chunk.get("chunk_id")  # Add chunk_id for deletion
+                        "chunk_id": chunk.get("chunk_id"),  # Add chunk_id for deletion
+                        "coordinates": chunk.get("coordinates"),  # Add coordinates for PDF navigation
+                        "page_number": chunk.get("page_number")  # Add page number for PDF navigation
                     }
                     classifications.append(entry)
 

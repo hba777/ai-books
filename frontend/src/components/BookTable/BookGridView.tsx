@@ -3,7 +3,8 @@ import { useRouter } from "next/router";
 import { useBooks } from "../../context/BookContext";
 import { toast } from "react-toastify"
 import { useClassificationContext } from '../../features/ClassificationPage/ClassificationCardRow/ClassificationContext';
-import AgentsSideBar from "./AgentsSideBar.";
+import AgentsSideBar from "../../features/ClassificationPage/AgentsSideBar.";
+
 
 interface Book {
   _id: string;
@@ -54,7 +55,7 @@ const statusStyles: Record<string, { border: string; bar: string; text: string }
 
 const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
   const router = useRouter();
-  const { startClassification, indexBook } = useBooks();
+  const { indexBook } = useBooks();
   const { isAnyBookProcessing } = useClassificationContext();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -109,9 +110,9 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
               <div className="font-bold text-lg text-gray-900">{book.doc_name}</div>
               <div className="flex items:center gap-2">                <button
                   onClick={(e) => handleStartClassification(e, book._id)}
-                  disabled={isAnyBookProcessing || book.status !== "Pending" || book.status === "Processed"}
+                  disabled={isAnyBookProcessing || book.status === "Pending" || book.status === "Processed"}
                   className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
-                    isAnyBookProcessing || book.status !== "Pending" || book.status === "Processed"
+                    isAnyBookProcessing || book.status === "Pending" || book.status === "Processed"
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : 'bg-blue-500 text-white hover:bg-blue-600'
                   }`}

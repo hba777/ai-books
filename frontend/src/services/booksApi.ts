@@ -14,6 +14,7 @@ export interface Book {
   endDate?: string | null;
   assigned_departments?: string[];
   feedback?: Feedback[];
+  filters?: Filters;
 }
 
 export interface Feedback {
@@ -23,6 +24,16 @@ export interface Feedback {
   comment?: string;
   image_url?: string;
   timestamp: string;
+}
+
+export interface ClassificationFilter {
+  name: string;
+  value: number;
+}
+
+export interface Filters {
+  classificationFilters?: ClassificationFilter[];
+  analysisFilters?: string[];
 }
 
 export interface ClassificationProgress {
@@ -69,6 +80,8 @@ export interface ClassificationEntry {
   classification: string;
   confidence_score?: number;
   chunk_id?: string;
+  coordinates?: number[];
+  page_number?: number;
 }
 
 export interface BookClassificationsResponse {

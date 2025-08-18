@@ -7,7 +7,7 @@ import SeeInfo from "@/features/ClassificationDetailsPage/SeeInfo";
 import { useRouter } from "next/router";
 import { useBooks } from "@/context/BookContext";
 import { useUser } from "@/context/UserContext";
-import { Book } from "@/services/booksApi";
+import { Book, ClassificationEntry } from "@/services/booksApi";
 
 const ClassifcationDetails: React.FC = () => {
   const [showSeeInfo, setShowSeeInfo] = useState(false);
@@ -15,6 +15,8 @@ const ClassifcationDetails: React.FC = () => {
     className: string;
     direction: "next" | "prev";
   } | null>(null);
+  const [currentClassificationCoordinates, setCurrentClassificationCoordinates] = useState<number[] | undefined>(undefined);
+  const [currentClassificationPage, setCurrentClassificationPage] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [book, setBook] = useState<Book>(); 
   const [fileUrl, setFileUrl] = useState<string | null>(null);
@@ -22,8 +24,72 @@ const ClassifcationDetails: React.FC = () => {
 
   const router = useRouter();
   const { id } = router.query; // URL: /classification/[id]
-  const { getBookById, getBookFile } = useBooks();
+  const { getBookById, getBookFile, getBookClassifications } = useBooks();
   const { user, loading: userLoading } = useUser();
+
+  // Function to handle jumping to highlight with coordinates
+  const handleJumpToHighlight = async (className: string, direction: "next" | "prev") => {
+    if (!id || typeof id !== "string") return;
+    
+    try {
+      const response = await getBookClassifications(id);
+      const classEntries = response.classifications.filter(
+        (entry: ClassificationEntry) => entry.classification === className
+      );
+      
+      if (classEntries.length > 0) {
+        // Find the next/previous entry based on direction
+        let currentIndex = 0;
+        if (currentClassificationCoordinates && currentClassificationPage) {
+          // Find current entry index
+          currentIndex = classEntries.findIndex(
+            (entry: ClassificationEntry) => 
+              entry.coordinates === currentClassificationCoordinates && 
+              entry.page_number === currentClassificationPage
+          );
+          if (currentIndex === -1) currentIndex = 0;
+        }
+        
+        let nextIndex: number;
+        if (direction === "next") {
+          nextIndex = (currentIndex + 1) % classEntries.length;
+        } else {
+          nextIndex = (currentIndex - 1 + classEntries.length) % classEntries.length;
+        }
+        
+        const nextEntry = classEntries[nextIndex];
+        if (nextEntry.coordinates && nextEntry.page_number) {
+          setCurrentClassificationCoordinates(nextEntry.coordinates);
+          setCurrentClassificationPage(nextEntry.page_number);
+          setJumpToHighlight({ className, direction });
+        }
+      }
+    } catch (error) {
+      console.error("Error navigating to classification:", error);
+    }
+  };
+
+  // Function to set initial coordinates when classifications are first loaded
+  const setInitialClassificationCoordinates = async () => {
+    if (!id || typeof id !== "string") return;
+    
+    try {
+      const response = await getBookClassifications(id);
+      if (response.classifications && response.classifications.length > 0) {
+        // Set the first classification with coordinates as the initial one
+        const firstEntryWithCoordinates = response.classifications.find(
+          (entry: ClassificationEntry) => entry.coordinates && entry.page_number
+        );
+        
+        if (firstEntryWithCoordinates) {
+          setCurrentClassificationCoordinates(firstEntryWithCoordinates.coordinates);
+          setCurrentClassificationPage(firstEntryWithCoordinates.page_number);
+        }
+      }
+    } catch (error) {
+      console.error("Error setting initial classification coordinates:", error);
+    }
+  };
 
   // Fetch book details and file when `id` is available
   useEffect(() => {
@@ -43,6 +109,11 @@ const ClassifcationDetails: React.FC = () => {
         objectUrl = URL.createObjectURL(fileBlob);
         setFileUrl(objectUrl);
         setCurrentBlobUrl(objectUrl);
+        
+        // Set initial classification coordinates after book data is loaded
+        if (!isCancelled) {
+          await setInitialClassificationCoordinates();
+        }
               } catch (err: any) {
           if (isCancelled) return;
           console.error("Failed to fetch book or file:", err);
@@ -129,9 +200,7 @@ const ClassifcationDetails: React.FC = () => {
               {/* Card below breadcrumb */}
               <ClassificationDetailsCard
                 onSeeInfo={() => setShowSeeInfo(true)}
-                onJumpToHighlight={(className, direction) =>
-                  setJumpToHighlight({ className, direction })
-                }
+                onJumpToHighlight={handleJumpToHighlight}
               />
             </div>
 
@@ -142,6 +211,8 @@ const ClassifcationDetails: React.FC = () => {
                   jumpToHighlight={jumpToHighlight}
                   fileUrl={fileUrl}
                   doc_name={book.doc_name}
+                  currentClassificationCoordinates={currentClassificationCoordinates}
+                  currentClassificationPage={currentClassificationPage}
                 />
               ) : (
                 <div className="flex justify-center items-center h-full">

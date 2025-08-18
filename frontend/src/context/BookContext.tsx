@@ -47,6 +47,7 @@ interface BookContextType {
   deleteReviewOutcome: (outcomeId: string, reviewType: string) => Promise<ReviewDeleteResponse>;
   updateBook: (bookId: string, data: Partial<Book>) => Promise<void>;
   removeClassificationFromChunk: (chunkId: string, label: string) => Promise<void>;
+  jumpToClassificationCoordinates: (coordinates: number[], pageNumber: number) => void;
 }
 
 const BookContext = createContext<BookContextType | undefined>(undefined);
@@ -204,6 +205,12 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     classificationsCacheRef.current.clear();
   };
 
+  const jumpToClassificationCoordinates = (coordinates: number[], pageNumber: number) => {
+    // This function will be called by components to navigate to specific coordinates
+    // The actual implementation will be handled by the PDF viewer component
+    console.log(`Jumping to coordinates: ${coordinates} on page ${pageNumber}`);
+  };
+
   // Cleanup WebSocket connections on unmount
   useEffect(() => {
     return () => {
@@ -243,7 +250,8 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updateReviewOutcome: updateReviewOutcomeHandler,
       deleteReviewOutcome: deleteReviewOutcomeHandler,
       updateBook,
-      removeClassificationFromChunk: removeClassificationFromChunkHandler
+      removeClassificationFromChunk: removeClassificationFromChunkHandler,
+      jumpToClassificationCoordinates
     }}>
       {children}
     </BookContext.Provider>

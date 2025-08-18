@@ -21,7 +21,7 @@ class AgentConfigModel(BaseModel):
     evaluators_prompt: Optional[str] = None
     classifier_prompt: Optional[str] = None
     knowledge_base: Optional[List[KnowledgeBaseItem]] = None
-    
+    confidence_score: Optional[int] = 80  
 
     class Config:
         populate_by_name = True

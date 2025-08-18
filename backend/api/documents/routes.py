@@ -4,7 +4,7 @@ from typing import List, Optional
 from models.documents import BookModel
 from models.user import User
 from utils.jwt_utils import get_user_from_cookie
-from db.mongo import books_collection, fs
+from db.mongo import books_collection, fs, get_chunks_collection, get_review_outcomes_collection
 from .schemas import BookResponse, BookDeleteResponse, FeedbackRequest, FeedbackModel, BookUpdateRequest
 import json
 import base64
@@ -312,6 +312,45 @@ def delete_all_gridfs_files():
         return BookDeleteResponse(detail=f"Deleted {deleted_count} files from GridFS.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting files from GridFS: {str(e)}")
+
+#Testing Route only    
+@router.delete(
+    "/test/{book_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_user_from_cookie)]
+)
+def delete_book_with_relations(book_id: str):
+    try:
+        chunks_collection = get_chunks_collection()
+        review_outcomes_collection = get_review_outcomes_collection()
+
+        # Ensure valid ObjectId
+        if not ObjectId.is_valid(book_id):
+            raise HTTPException(status_code=400, detail="Invalid book_id format")
+
+        # Check if book exists
+        book = books_collection.find_one({"_id": ObjectId(book_id)})
+        if not book:
+            raise HTTPException(status_code=404, detail="Book not found")
+
+        # Delete the book
+        book_result = books_collection.delete_one({"_id": ObjectId(book_id)})
+
+        # Delete related chunks
+        chunk_result = chunks_collection.delete_many({"doc_id": str(book_id)})
+
+        # Delete related review_outcomes
+        review_result = review_outcomes_collection.delete_many({"doc_id": str(book_id)})
+
+        return {
+            "detail": "Book and related data deleted successfully",
+            "deleted_book_count": book_result.deleted_count,
+            "deleted_chunks_count": chunk_result.deleted_count,
+            "deleted_review_outcomes_count": review_result.deleted_count
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting book: {str(e)}")
 
 @router.put("/{book_id}", response_model=BookResponse, dependencies=[Depends(get_user_from_cookie)])
 def update_book(book_id: str, update: BookUpdateRequest):

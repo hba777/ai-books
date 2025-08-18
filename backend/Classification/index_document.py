@@ -5,33 +5,80 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from .summarization import summarize_pdf
 from .database_operations import insert_document
 
+
+def get_chunk_coordinates(words):
+    """
+    Calculate the bounding box coordinates (x0, top, x1, bottom) for a list of words.
+    """
+    if not words:
+        return None
+    x0 = min(float(w['x0']) for w in words)
+    top = min(float(w['top']) for w in words)
+    x1 = max(float(w['x1']) for w in words)
+    bottom = max(float(w['bottom']) for w in words)
+    return (x0, top, x1, bottom)
+
 def create_chunks_with_page_numbers(file_path: str):
     """
     Loads PDF, extracts text and page numbers using pdfplumber, and splits the content into chunks.
     """
-    documents = []
-    print(f"working with file: {file_path.split('/')[-1]}")
+    chunks = []
+    print(f"Working with file: {file_path.split('/')[-1]}")
+
+    chunk_size = 10000  # Example chunk size in characters
+    chunk_overlap = 5000 # Example overlap in characters
     
     with open(file_path, "rb") as pdf_file:
         with pdfplumber.open(pdf_file) as pdf:
-            for i, page in enumerate(pdf.pages):
-                text = page.extract_text()
-                if text:
-                    doc = Document(
-                        page_content=text,
-                        metadata={"page": i + 1} # <-- Page number is explicitly added here
-                    )
-                    documents.append(doc)
+            for page_index, page in enumerate(pdf.pages):
+                words = page.extract_words(
+                    x_tolerance=1,
+                    y_tolerance=1,
+                    keep_blank_chars=False
+                )
 
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=5000,
-        chunk_overlap=1024,
-        length_function=len,
-        is_separator_regex=False,
-    )
-    
-    # Splitting Document objects preserves the metadata
-    chunks = splitter.split_documents(documents)
+                if not words:
+                    continue
+
+                current_chunk_words = []
+                current_chunk_text = ""
+
+                for word in words:
+                    word_text = word['text']
+                    if len(current_chunk_text) + len(word_text) + 1 > chunk_size:
+                        if current_chunk_words:
+                            coords = get_chunk_coordinates(current_chunk_words)
+                            chunks.append(Document(
+                                page_content=current_chunk_text.strip(),
+                                metadata={
+                                    "page": page_index + 1,
+                                    "coordinates": coords
+                                }
+                            ))
+
+                        # Handle overlap
+                        if chunk_overlap > 0 and len(current_chunk_words) > 0:
+                            overlap_words = current_chunk_words[-int(chunk_overlap / 5):]
+                            current_chunk_words = overlap_words.copy()
+                            current_chunk_text = " ".join([w['text'] for w in overlap_words])
+                        else:
+                            current_chunk_words = []
+                            current_chunk_text = ""
+
+                    current_chunk_words.append(word)
+                    current_chunk_text += (" " if current_chunk_text else "") + word_text
+
+                # Add the last chunk of the page
+                if current_chunk_words:
+                    coords = get_chunk_coordinates(current_chunk_words)
+                    chunks.append(Document(
+                        page_content=current_chunk_text.strip(),
+                        metadata={
+                            "page": page_index + 1,
+                            "coordinates": coords
+                        }
+                    ))
+
     return chunks
 
 

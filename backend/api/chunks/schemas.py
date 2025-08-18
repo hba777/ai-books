@@ -2,21 +2,22 @@ from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional, Dict, Any
 
 class ClassificationResult(BaseModel):
-    classification: str
-    confidence_score: int
-    criteria_matched: Any
-    name: str
+    classification: Optional[str] = None
+    confidence_score: Optional[int] = None
+    criteria_matched: Optional[Any] = None
+    name: Optional[str] = None
 
 class ChunkResponse(BaseModel):
-    id: Optional[str] = Field(alias="_id")  # Maps MongoDB's _id to id
-    chunk_id: str
-    chunk_index: int
-    page_number: Optional[int]
-    doc_id: str
-    status: str
-    analysis_status: str
-    text: str
-    classification: Optional[List[ClassificationResult]] = None
+    id: Optional[str] = Field(default=None, alias="_id")  # Maps MongoDB's _id to id
+    chunk_id: Optional[str] = None
+    chunk_index: Optional[int] = None
+    page_number: Optional[int] = None
+    doc_id: Optional[str] = None
+    status: Optional[str] = None
+    analysis_status: Optional[str] = None
+    text: Optional[str] = None
+    classification: Optional[List["ClassificationResult"]] = None
+    coordinates: Optional[List[int]] = None
 
     class Config:
         populate_by_name = True
