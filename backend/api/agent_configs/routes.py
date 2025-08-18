@@ -237,3 +237,29 @@ def power_off_agent(agent_id: str, status: bool = Body(..., embed=True)):
                 kb_item["_id"] = str(kb_item["_id"])
     
     return AgentConfigResponse(**result)
+
+
+@router.patch(
+    "/{agent_id}/confidence-score",
+    response_model=AgentConfigResponse,
+    dependencies=[Depends(get_user_from_cookie)]
+)
+def update_confidence_score(agent_id: str, confidence_score: float = Body(..., embed=True)):
+    collection = get_agent_configs_collection()
+    result = collection.find_one_and_update(
+        {"_id": ObjectId(agent_id)},
+        {"$set": {"confidence_score": confidence_score}},
+        return_document=True
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    result["_id"] = str(result["_id"])
+
+    # Convert knowledge_base _id fields to strings for response
+    if "knowledge_base" in result and result["knowledge_base"]:
+        for kb_item in result["knowledge_base"]:
+            if "_id" in kb_item:
+                kb_item["_id"] = str(kb_item["_id"])
+
+    return AgentConfigResponse(**result)

@@ -15,7 +15,7 @@ const AgentsSideBar: React.FC<AgentsSideBarProps> = ({
   bookId,
   onClose,
 }) => {
-  const { agents, powerToggleAgent } = useAgents();
+  const { agents, powerToggleAgent, updateAgentConfidenceScore } = useAgents();
   const { startClassification } = useBooks();
   const [starting, setStarting] = useState<boolean>(false);
 
@@ -189,21 +189,35 @@ const AgentsSideBar: React.FC<AgentsSideBarProps> = ({
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {/* Confidence Score Input */}
-                    <input
-                        type="number"
-                        min={0}
-                        max={1}
-                        step={0.01}
-                        value={"90"}
-                        onChange={(e) => {
-                          // handle local state or API update here
+                      {/* Confidence Score Dropdown */}
+                      <select
+                        value={typeof agent.confidence_score === 'number' ? agent.confidence_score : ''}
+                        onChange={async (e) => {
                           const value = parseFloat(e.target.value);
-                          // Example: updateAgent(agent._id, { confidence_score: value });
+                          if (!isNaN(value)) {
+                            try {
+                              await updateAgentConfidenceScore(agent._id, value);
+                              toast.success("Confidence score updated");
+                            } catch (err) {
+                              toast.error("Failed to update score");
+                            }
+                          }
                         }}
-                        className="w-12 border border-gray-300 rounded px-1 text-sm"
-                        placeholder="Score"
-                      />
+                        className="border border-gray-300 rounded px-2 py-1 text-sm"
+                      >
+                        <option value="" disabled>Select score</option>
+                        <option value="0">0.00</option>
+                        <option value="0.1">0.10</option>
+                        <option value="0.2">0.20</option>
+                        <option value="0.3">0.30</option>
+                        <option value="0.4">0.40</option>
+                        <option value="0.5">0.50</option>
+                        <option value="0.6">0.60</option>
+                        <option value="0.7">0.70</option>
+                        <option value="0.8">0.80</option>
+                        <option value="0.9">0.90</option>
+                        <option value="1">1.00</option>
+                      </select>
                     <button
                       onClick={() => handlePowerClick(agent._id, agent.status)}
                       className={

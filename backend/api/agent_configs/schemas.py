@@ -21,6 +21,7 @@ class AgentConfigResponse(BaseModel):
     status: Optional[bool] = False
     evaluators_prompt: Optional[str] = None
     classifier_prompt: Optional[str] = None
+    confidence_score: Optional[int] = None
     knowledge_base: Optional[List[KnowledgeBaseItemResponse]] = None
 
 class AgentConfigListResponse(BaseModel):

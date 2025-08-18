@@ -18,6 +18,7 @@ export interface Agent {
   evaluators_prompt?: string | null;
   classifier_prompt?: string | null;
   knowledge_base?: KnowledgeBaseItem[] | null;
+  confidence_score?: number;
 }
 
 // Type for creating agents (without _id and with optional knowledge_base)
@@ -57,6 +58,15 @@ export const deleteAgent = async (agentId: string): Promise<{ detail: string; ag
 // Power toggle agent (patch status)
 export const powerToggleAgent = async (agentId: string, status: boolean): Promise<Agent> => {
   const response = await api.patch(`/agents/${agentId}`, { status });
+  return response.data;
+};
+
+// Update confidence score
+export const updateAgentConfidenceScore = async (
+  agentId: string,
+  confidence_score: number
+): Promise<Agent> => {
+  const response = await api.patch(`/agents/${agentId}/confidence-score`, { confidence_score });
   return response.data;
 };
 

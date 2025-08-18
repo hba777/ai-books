@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { useBooks } from "../../context/BookContext";
 import { toast } from "react-toastify"
 import { useClassificationContext } from '../../features/ClassificationPage/ClassificationCardRow/ClassificationContext';
-import AgentsSideBar from "./AgentsSideBar.";
+import AgentsSideBar from "../../features/ClassificationPage/AgentsSideBar.";
 
 
 interface Book {
