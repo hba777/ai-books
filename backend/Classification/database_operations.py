@@ -26,12 +26,17 @@ def insert_document(doc_id: str, chunks: list, summary: str):
     # Prepare chunk documents
     chunk_docs = []
     for i, chunk in enumerate(chunks):
+        # Extracting coordinates and page from the chunk's metadata
+        page_number = chunk.metadata.get("page", None)
+        coordinates = chunk.metadata.get("coordinates", None)
+
         chunk_docs.append({
             "chunk_id": str(uuid.uuid4()),
             "doc_id": doc_id,
             "chunk_index": i,
             "text": chunk.page_content,
-            "page_number": chunk.metadata.get("page", None),
+            "page_number": page_number,
+            "coordinates": coordinates,  # <-- NEW: Coordinates are now saved
             "status": "pending",
             "analysis_status": "pending"
         })
