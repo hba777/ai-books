@@ -22,6 +22,7 @@ class AgentConfigResponse(BaseModel):
     evaluators_prompt: Optional[str] = None
     classifier_prompt: Optional[str] = None
     knowledge_base: Optional[List[KnowledgeBaseItemResponse]] = None
+
 class AgentConfigListResponse(BaseModel):
     agents: List[AgentConfigResponse]
 
