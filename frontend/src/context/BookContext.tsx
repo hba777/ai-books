@@ -23,7 +23,9 @@ import {
   ReviewUpdateResponse,
   ReviewDeleteResponse,
   updateBook as apiUpdateBook,
-  removeClassificationFromChunk as apiRemoveClassificationFromChunk
+  removeClassificationFromChunk as apiRemoveClassificationFromChunk,
+  updateClassificationFilter as apiUpdateClassificationFilter,
+  updateAnalysisFilters as apiUpdateAnalysisFilters
 } from "../services/booksApi"
 import { useUser } from "../context/UserContext";
 
@@ -48,6 +50,8 @@ interface BookContextType {
   updateBook: (bookId: string, data: Partial<Book>) => Promise<void>;
   removeClassificationFromChunk: (chunkId: string, label: string) => Promise<void>;
   jumpToClassificationCoordinates: (coordinates: number[], pageNumber: number) => void;
+  updateClassificationFilter: (bookId: string, name: string, value: number) => Promise<void>;
+  updateAnalysisFilters: (bookId: string, analysisFilters: string[]) => Promise<void>;
 }
 
 const BookContext = createContext<BookContextType | undefined>(undefined);
@@ -211,6 +215,16 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log(`Jumping to coordinates: ${coordinates} on page ${pageNumber}`);
   };
 
+  const updateClassificationFilter = async (bookId: string, name: string, value: number) => {
+    await apiUpdateClassificationFilter(bookId, name, value);
+    await fetchBooks();
+  };
+
+  const updateAnalysisFilters = async (bookId: string, analysisFilters: string[]) => {
+    await apiUpdateAnalysisFilters(bookId, analysisFilters);
+    await fetchBooks();
+  };
+
   // Cleanup WebSocket connections on unmount
   useEffect(() => {
     return () => {
@@ -251,7 +265,9 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       deleteReviewOutcome: deleteReviewOutcomeHandler,
       updateBook,
       removeClassificationFromChunk: removeClassificationFromChunkHandler,
-      jumpToClassificationCoordinates
+      jumpToClassificationCoordinates,
+      updateClassificationFilter,
+      updateAnalysisFilters
     }}>
       {children}
     </BookContext.Provider>

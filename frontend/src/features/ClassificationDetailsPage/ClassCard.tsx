@@ -48,6 +48,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
     addFeedback,
     assignSingleDepartment,
     removeClassificationFromChunk,
+    updateClassificationFilter,
   } = useBooks();
 
   // Get current book data
@@ -76,6 +77,17 @@ const ClassCard: React.FC<ClassCardProps> = ({
       );
     }
   }, [entries, minConfidence]);
+
+  // Initialize minConfidence from saved book filters (classificationFilters)
+  useEffect(() => {
+    const saved = currentBook?.filters?.classificationFilters?.find(
+      (f: any) => f?.name === className
+    );
+    if (saved && typeof saved.value === "number") {
+      setMinConfidence(saved.value);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentBook?._id, className]);
 
   const handleAssignDepartment = async () => {
     setIsSubmitting(true);
@@ -351,6 +363,11 @@ const ClassCard: React.FC<ClassCardProps> = ({
               const val = e.target.value;
               setMinConfidence(val === "" ? null : Number(val));
               setSelectedClassificationIndex(0); // Reset selection when filter changes
+              if (val !== "") {
+                updateClassificationFilter(bookId, className, Number(val))
+                  .then(() => toast.success("Filter saved"))
+                  .catch(() => toast.error("Failed to save filter"));
+              }
             }}
           >
             <option value="">All</option>

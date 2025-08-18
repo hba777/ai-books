@@ -8,6 +8,7 @@ interface ReviewFiltersProps {
   selectedReviewTypes: string[];
   onSelectedReviewTypesChange: (value: string[]) => void;
   availableReviewTypes?: { key: string; title: string }[];
+  onSaveAnalysisFilters?: (filters: string[]) => void;
 }
 
 const ReviewFilters: React.FC<ReviewFiltersProps> = ({
@@ -18,6 +19,7 @@ const ReviewFilters: React.FC<ReviewFiltersProps> = ({
   selectedReviewTypes,
   onSelectedReviewTypesChange,
   availableReviewTypes,
+  onSaveAnalysisFilters,
 }) => {
   const options =
     availableReviewTypes && availableReviewTypes.length > 0
@@ -25,9 +27,13 @@ const ReviewFilters: React.FC<ReviewFiltersProps> = ({
       : [];
   const toggleReviewType = (key: string) => {
     if (selectedReviewTypes.includes(key)) {
-      onSelectedReviewTypesChange(selectedReviewTypes.filter((k) => k !== key));
+      const next = selectedReviewTypes.filter((k) => k !== key);
+      onSelectedReviewTypesChange(next);
+      onSaveAnalysisFilters?.(next);
     } else {
-      onSelectedReviewTypesChange([...selectedReviewTypes, key]);
+      const next = [...selectedReviewTypes, key];
+      onSelectedReviewTypesChange(next);
+      onSaveAnalysisFilters?.(next);
     }
   };
   return (

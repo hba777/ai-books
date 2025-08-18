@@ -5,7 +5,7 @@ from models.documents import BookModel
 from models.user import User
 from utils.jwt_utils import get_user_from_cookie
 from db.mongo import books_collection, fs, get_chunks_collection, get_review_outcomes_collection
-from .schemas import BookResponse, BookDeleteResponse, FeedbackRequest, FeedbackModel, BookUpdateRequest
+from .schemas import BookResponse, BookDeleteResponse, FeedbackRequest, FeedbackModel, BookUpdateRequest, UpdateClassificationFilterRequest, UpdateAnalysisFiltersRequest
 import json
 import base64
 from bson import ObjectId
@@ -233,7 +233,49 @@ async def assign_single_department(book_id: str, department: str = Form(...), us
         )
 
     return {"message": f"Department {department} assigned successfully"}
-    
+
+# Update a single classification filter (name -> value)
+@router.patch("/{book_id}/filters/classification", dependencies=[Depends(get_user_from_cookie)])
+async def update_classification_filter(book_id: str, payload: UpdateClassificationFilterRequest):
+    book = books_collection.find_one({"_id": ObjectId(book_id)})
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+
+    filters = book.get("filters", {}) or {}
+    existing_list = filters.get("classificationFilters", []) or []
+
+    # update if name exists, else append
+    updated = False
+    for item in existing_list:
+        if isinstance(item, dict) and item.get("name") == payload.name:
+            item["value"] = payload.value
+            updated = True
+            break
+    if not updated:
+        existing_list.append({"name": payload.name, "value": payload.value})
+
+    filters["classificationFilters"] = existing_list
+
+    books_collection.update_one({"_id": ObjectId(book_id)}, {"$set": {"filters": filters}})
+    updated_book = books_collection.find_one({"_id": ObjectId(book_id)})
+    updated_book["_id"] = str(updated_book["_id"])
+    return BookResponse(**updated_book)
+
+# Replace analysisFilters array
+@router.patch("/{book_id}/filters/analysis", dependencies=[Depends(get_user_from_cookie)])
+async def update_analysis_filters(book_id: str, payload: UpdateAnalysisFiltersRequest):
+    book = books_collection.find_one({"_id": ObjectId(book_id)})
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+
+    filters = book.get("filters", {}) or {}
+    filters["analysisFilters"] = payload.analysisFilters or []
+
+    books_collection.update_one({"_id": ObjectId(book_id)}, {"$set": {"filters": filters}})
+    updated_book = books_collection.find_one({"_id": ObjectId(book_id)})
+    updated_book["_id"] = str(updated_book["_id"])
+    return BookResponse(**updated_book)
+
 # Delete all books
 @router.delete(
     "/",

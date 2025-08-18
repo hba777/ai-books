@@ -279,3 +279,13 @@ export async function removeClassificationFromChunk(chunkId: string, label: stri
   const res = await api.delete<{ message: string; chunk_id: string; removed_label: string; remaining_classifications: number }>(`/classification/${chunkId}/${encodeURIComponent(label)}`);
   return res.data;
 }
+
+export async function updateClassificationFilter(bookId: string, name: string, value: number): Promise<Book> {
+  const res = await api.patch<Book>(`/books/${bookId}/filters/classification`, { name, value });
+  return res.data;
+}
+
+export async function updateAnalysisFilters(bookId: string, analysisFilters: string[]): Promise<Book> {
+  const res = await api.patch<Book>(`/books/${bookId}/filters/analysis`, { analysisFilters });
+  return res.data;
+}

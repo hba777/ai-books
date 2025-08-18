@@ -20,7 +20,7 @@ const AnalysisDetails: React.FC = () => {
   const [tags, setTags] = useState<string[]>([]);
   const router = useRouter();
   const { id } = router.query;
-  const { getBookById, reviewOutcomes, fetchReviewOutcomes, getBookClassifications, updateReviewOutcome, deleteReviewOutcome } = useBooks();
+  const { getBookById, reviewOutcomes, fetchReviewOutcomes, getBookClassifications, updateReviewOutcome, deleteReviewOutcome, updateAnalysisFilters } = useBooks();
 
   useEffect(() => {
     if (!id) return;
@@ -28,6 +28,9 @@ const AnalysisDetails: React.FC = () => {
       try {
         const bookData = await getBookById(id as string);
         setBook(bookData);
+        // Initialize selected review types from saved filters if present
+        const saved = bookData.filters?.analysisFilters || [];
+        if (Array.isArray(saved)) setSelectedReviewTypes(saved);
       } catch (err) {
         console.error("Failed to fetch book or file:", err);
       }
@@ -119,6 +122,7 @@ const AnalysisDetails: React.FC = () => {
                 selectedReviewTypes={selectedReviewTypes}
                 onSelectedReviewTypesChange={setSelectedReviewTypes}
                 availableReviewTypes={availableReviewTypes}
+                onSaveAnalysisFilters={(filters) => updateAnalysisFilters(book._id, filters)}
               />
 
               <AnalysisTable
