@@ -4,9 +4,9 @@ from langgraph.graph import END, StateGraph
 from langchain.prompts import PromptTemplate
 from langchain_groq import ChatGroq
 from langchain_core.runnables import RunnableLambda
+from db.mongo import get_agent_configs_collection
 from .models import State
 from .knowledge_base import get_relevant_info, retriever, knowledge_list
-from db.mongo import get_agent_configs_collection
 
 # Define a type for agent functions for clear type hinting
 Agent = Callable[[State], Dict]
@@ -15,54 +15,90 @@ Agent = Callable[[State], Dict]
 available_agents: Dict[str, Agent] = {}
 
 # ─── PROMPT TEMPLATE ────────────────────────────────────────────────────────
+
+
+
 TEMPLATE = """
-You are an expert alignment reviewer for books about Pakistan's history and politics.
-Your task is to identify content that may not align with Pakistan's official policies, narratives, or national interests.
+You are an expert reviewer assessing passages from books on Pakistan's history and politics for alignment with official policies, national narratives, and Pakistan Army's institutional positions.
 
-Current text to analyze:
+## Primary Objective
+Identify specific text segments that conflict with Pakistan's official positions or national interests. Focus on substantive alignment issues that affect national security, state narratives, or institutional dignity.
 
-{text}
+## Context
+Book Title: {title}
+Page: {page}, Paragraph: {paragraph}
+Text to analyze: {text}
 
-Page: {page}
-Paragraph: {paragraph}
+## Knowledge Base Reference:
+- Official Narrative: {official_narrative}
+- Key Policy Points: {key_points}
+- Sensitive Aspects: {sensitive_aspects}
+- Recommended Terminology: {recommended_terminology}
+- Authoritative Sources: {authoritative_sources}
 
-Context: This text is from a book titled "{title}".
-Predicted Category: {predicted_label}
+## Policy Guidelines:
+{policy_guidelines}
+- Uphold Pakistan's national unity and territorial integrity
+- Protect Pakistan Army's institutional dignity and operational confidentiality
+- Avoid narratives that undermine state legitimacy or national cohesion
+- Ensure balanced representation of Pakistan's role in regional and international affairs
 
-Your task is to determine if this text contains any content that:
+## Specific criteria:
 {specific_criteria}
 
-If you find any issues, provide:
-1. The specific problematic text
-2. A brief observation explaining why it's problematic
-3. A recommendation (delete, rephrase, fact-check, or provide references)
+## Flag Content That:
 
-Follow these guidelines:
-- Be objective in your assessment
-- Consider the national interest of Pakistan
-- Focus only on real alignment issues, not stylistic concerns
-- Use the official policy guidelines and Knowledge Base to inform your judgment
+### 1. Contradicts Official Positions
+- Disputes Pakistan's official stance on Kashmir, territorial boundaries, or sovereignty
+- Misrepresents Pakistan's foreign policy decisions or diplomatic positions
+- Contradicts established narratives about Pakistan's creation, constitutional development, or governance principles
 
-Knowledge Base:
-Official Narrative: {official_narrative}
-Key Points: {key_points}
-Sensitive Aspects: {sensitive_aspects}
-Recommended Terminology: {recommended_terminology}
-Authoritative Sources: {authoritative_sources}
+### 2. Undermines National Security Narratives
+- Reveals or speculates about sensitive military operations, capabilities, or strategic planning
+- Mischaracterizes Pakistan Army's role in national defense or counter-terrorism efforts
+- Presents one-sided accounts of Pakistan's security challenges without proper context
 
-Official policy guidelines:
-{policy_guidelines}
+### 3. Uses Inappropriate Framing
+- Employs terminology that delegitimizes Pakistani institutions or leadership
+- Adopts hostile foreign narratives about Pakistan without balanced analysis
+- Makes unsupported negative claims about Pakistan's policies or actions as established facts
 
-Respond in JSON format and must follow JSON Formate:
+### 4. Lacks Proper Sourcing
+- Makes serious allegations about Pakistani institutions without credible evidence
+- Relies exclusively on biased or antagonistic sources for Pakistan-related claims
+- Presents controversial interpretations as facts without acknowledging alternative viewpoints
+
+## Do NOT Flag:
+- Neutral historical descriptions with proper citations
+- Academic analysis clearly presented as scholarly opinion with balanced sourcing
+- Factual reporting that uses recommended terminology
+- Constructive criticism supported by authoritative Pakistani sources
+- Mention of past events without evaluative or inflammatory language
+
+## Decision Framework:
+Only flag content if it clearly:
+1. *Directly contradicts* established Knowledge Base positions
+2. *Compromises* sensitive national security information
+3. *Misrepresents* Pakistan's official positions without proper context
+4. *Uses prohibited terminology* where recommended alternatives exist
+5. *Makes unsupported claims* that damage Pakistan's national interests
+
+If evidence is insufficient or interpretation is ambiguous, recommend human review rather than flagging.
+
+## Output Format:
+```json
 {{
     "issues_found": true/false,
-    "problematic_text": "exact text that is problematic",
-    "observation": "brief explanation of the issue",
-    "recommendation": "delete/rephrase/fact-check/provide references"
+    "problematic_text": "exact text segment that is problematic",
+    "observation": "specific explanation of why this conflicts with KB or policy guidelines",
+    "recommendation": "delete/rephrase/fact-check/provide references",
 }}
-
-Respond only with valid JSON.Do not include any explanation outsides the JSON block.
+Respond only with valid JSON. Do not include any explanation outside the JSON block.
 """
+
+
+
+
 
 def register_agent(name: str, agent_function: Agent):
     """
@@ -70,9 +106,10 @@ def register_agent(name: str, agent_function: Agent):
     """
     available_agents[name] = agent_function
 
-def create_review_agent(review_name: str, criteria: str, guidelines: str, llm_model: ChatGroq, eval_llm_model: ChatGroq) -> Agent:
+def create_review_agent(review_name: str, criteria: str, guidelines: str, confidence_score: int, llm_model: ChatGroq, eval_llm_model: ChatGroq) -> Agent:
     """
     Creates a specialized review agent function that includes an internal evaluation loop.
+    The confidence_score is now passed as an argument.
     """
     prompt_template = PromptTemplate.from_template(TEMPLATE)
 
@@ -225,7 +262,6 @@ DO NOT include any explanation or text outside of the JSON object.
         }
 
     def route_sub_step(state: State) -> str:
-        # User requested new retry logic for "null" responses.
         max_retries = 3
         parsed_output = state.get("current_agent_parsed_output", {})
         
@@ -241,15 +277,19 @@ DO NOT include any explanation or text outside of the JSON object.
         elif is_null_response and state["current_agent_retries"] >= max_retries:
             print(f"\n⚠️ {state['current_agent_name']} Returned a 'null' response after {max_retries} retries. Human review needed.")
             return "human_review_needed_sub_step"
-        elif state["current_agent_confidence"] >= 80:
-            print(f"\n✨ {state['current_agent_name']} Confidence {state['current_agent_confidence']}% is sufficient. Exiting sub-workflow.")
+        
+        # --- MODIFICATION START ---
+        # The confidence threshold is now a variable captured from the parent function's scope.
+        if state["current_agent_confidence"] >= confidence_score:
+            print(f"\n✨ {state['current_agent_name']} Confidence {state['current_agent_confidence']}% is sufficient (threshold: {confidence_score}%). Exiting sub-workflow.")
             return "end"
         elif state["current_agent_retries"] < max_retries:
-            print(f"\n🔄 {state['current_agent_name']} Confidence {state['current_agent_confidence']}% is too low. Retrying... (Attempt {state['current_agent_retries']} of {max_retries})")
+            print(f"\n🔄 {state['current_agent_name']} Confidence {state['current_agent_confidence']}% is too low (threshold: {confidence_score}%). Retrying... (Attempt {state['current_agent_retries']} of {max_retries})")
             return "agent_sub_step"
         else:
-            print(f"\n⚠️ {state['current_agent_name']} Confidence {state['current_agent_confidence']}% still too low after {max_retries} retries. Human review needed for this agent's output.")
+            print(f"\n⚠️ {state['current_agent_name']} Confidence {state['current_agent_confidence']}% still too low after {max_retries} retries (threshold: {confidence_score}%). Human review needed for this agent's output.")
             return "human_review_needed_sub_step"
+        # --- MODIFICATION END ---
 
     def human_review_sub_step(state: State) -> State:
         print(f"\n--- {state['current_agent_name']} Human Review Needed ---")
@@ -332,12 +372,13 @@ def load_agents_from_mongo(llm_model: ChatGroq, eval_llm_model: ChatGroq):
             agent_name = doc.get("agent_name")
             criteria = doc.get("criteria")
             guidelines = doc.get("guidelines")
+            confidence_score = doc.get("confidence_score") # --- MODIFICATION ---
 
-            if agent_name and criteria and guidelines:
-                agent = create_review_agent(agent_name, criteria, guidelines, llm_model, eval_llm_model)
+            if agent_name and criteria and guidelines and confidence_score is not None: # --- MODIFICATION ---
+                agent = create_review_agent(agent_name, criteria, guidelines, confidence_score, llm_model, eval_llm_model) # --- MODIFICATION ---
                 register_agent(agent_name, agent)
-                print(f"Agent '{agent_name}' loaded from MongoDB.")
+                print(f"Agent '{agent_name}' loaded from MongoDB with confidence score: {confidence_score}.") # --- MODIFICATION ---
             else:
-                print(f"Error: Missing 'criteria' or 'guidelines' for agent '{agent_name}' in MongoDB document: {doc}")
+                print(f"Error: Missing 'criteria', 'guidelines' or 'confidence_score' for agent '{agent_name}' in MongoDB document: {doc}") # --- MODIFICATION ---
     except Exception as e:
         print(f"An unexpected error occurred during agent loading: {e}")

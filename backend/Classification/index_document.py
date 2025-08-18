@@ -25,8 +25,8 @@ def create_chunks_with_page_numbers(file_path: str):
     chunks = []
     print(f"Working with file: {file_path.split('/')[-1]}")
 
-    chunk_size = 5000  # Example chunk size in characters
-    chunk_overlap = 1024 # Example overlap in characters
+    chunk_size = 10000  # Example chunk size in characters
+    chunk_overlap = 5000 # Example overlap in characters
     
     with open(file_path, "rb") as pdf_file:
         with pdfplumber.open(pdf_file) as pdf:
