@@ -11,8 +11,10 @@ import {
   startClassification as apiStartClassification,
   connectToProgressWebSocket,
   connectToIndexProgressWebSocket,
+  connectToAnalysisProgressWebSocket,
   Book,
   ClassificationProgress,
+  AnalysisProgress,
   getReviewOutcomes,
   ReviewOutcomesResponse,
   getBookClassifications, 
@@ -32,6 +34,7 @@ import { useUser } from "../context/UserContext";
 interface BookContextType {
   books: Book[];
   activeClassifications: ClassificationProgress[];
+  activeAnalyses: AnalysisProgress[];
   fetchBooks: () => Promise<void>;
   createBook: (formData: FormData) => Promise<void>;
   getBookById: (bookId: string) => Promise<Book>;
@@ -59,6 +62,7 @@ const BookContext = createContext<BookContextType | undefined>(undefined);
 export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [books, setBooks] = useState<Book[]>([]);
   const [activeClassifications, setActiveClassifications] = useState<ClassificationProgress[]>([]);
+  const [activeAnalyses, setActiveAnalyses] = useState<AnalysisProgress[]>([]);
   const [reviewOutcomes, setReviewOutcomes] = useState<ReviewOutcomesResponse[]>([]);
   const classificationsCacheRef = useRef<Map<string, BookClassificationsResponse>>(new Map());
   const { user, loading: userLoading } = useUser(); 
@@ -140,6 +144,35 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         );
         
         // If progress is 100%, remove from active classifications after a delay
+        // if (progress === 100) {
+        //   fetchBooks()
+        //   setTimeout(() => {
+        //     setActiveClassifications(prev => 
+        //       prev.filter(classification => classification.book_id !== bookId)
+        //     );
+        //     // Close WebSocket connection
+        //     const wsToClose = websocketRefs.current.get(bookId);
+        //     if (wsToClose) {
+        //       wsToClose.close();
+        //       websocketRefs.current.delete(bookId);
+        //     }
+        //   }, 2000); // Remove after 2 seconds
+        // }
+      });
+      
+      websocketRefs.current.set(bookId, ws);
+
+      // Also connect to Analysis progress for the same book
+      const analysisWs = connectToAnalysisProgressWebSocket(bookId, (progress: number, total?: number, done?: number) => {
+        setActiveAnalyses(prev => {
+          const bookName = getBookNameById(bookId);
+          const existing = prev.find(a => a.book_id === bookId);
+          const updated = { book_id: bookId, progress, total, done, book_name: bookName } as AnalysisProgress;
+          if (existing) {
+            return prev.map(a => a.book_id === bookId ? updated : a);
+          }
+          return [...prev, updated];
+        });
         if (progress === 100) {
           fetchBooks()
           setTimeout(() => {
@@ -153,10 +186,17 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
               websocketRefs.current.delete(bookId);
             }
           }, 2000); // Remove after 2 seconds
+          setTimeout(() => {
+            setActiveAnalyses(prev => prev.filter(a => a.book_id !== bookId));
+            const wsToClose = websocketRefs.current.get(`${bookId}-analysis`);
+            if (wsToClose) {
+              wsToClose.close();
+              websocketRefs.current.delete(`${bookId}-analysis`);
+            }
+          }, 2000);
         }
       });
-      
-      websocketRefs.current.set(bookId, ws);
+      websocketRefs.current.set(`${bookId}-analysis`, analysisWs);
       
     } catch (error) {
       console.error('Error starting classification:', error);
@@ -248,6 +288,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <BookContext.Provider value={{
       books,
       activeClassifications,
+      activeAnalyses,
       fetchBooks,
       createBook,
       getBookById: fetchBookById,

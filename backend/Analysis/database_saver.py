@@ -92,6 +92,16 @@ def update_chunk_analysis_status(doc_id: str, chunk_id: str, analysis_status: st
 
         if update_result.matched_count > 0:
             print(f"✅ Chunk '{chunk_id}' in document '{doc_id}' analysis_status updated to '{analysis_status}' in chunks collection.")
+            # Compute and notify analysis progress
+            try:
+                from api.chunks.websocket import notify_analysis_progress
+                import asyncio
+                total = chunks_collection.count_documents({"doc_id": doc_id})
+                done = chunks_collection.count_documents({"doc_id": doc_id, "analysis_status": "Complete"})
+                progress = int((done / total) * 100) if total else 0
+                asyncio.run(notify_analysis_progress(doc_id, progress, total, done))
+            except Exception as notify_err:
+                print(f"[Analysis WS] Failed to send analysis progress: {notify_err}")
         else:
             print(f"⚠️ Chunk '{chunk_id}' in document '{doc_id}' not found for analysis_status update in chunks collection.")
 
