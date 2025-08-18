@@ -375,6 +375,14 @@ def delete_book_with_relations(book_id: str):
         if not book:
             raise HTTPException(status_code=404, detail="Book not found")
 
+        # Delete file from GridFS if it exists
+        if "file_id" in book:
+            try:
+                fs.delete(book["file_id"])
+            except Exception as e:
+                # Log but don't fail deletion if GridFS delete fails
+                print(f"Error deleting file from GridFS: {e}")
+
         # Delete the book
         book_result = books_collection.delete_one({"_id": ObjectId(book_id)})
 
@@ -385,10 +393,11 @@ def delete_book_with_relations(book_id: str):
         review_result = review_outcomes_collection.delete_many({"doc_id": str(book_id)})
 
         return {
-            "detail": "Book and related data deleted successfully",
+            "detail": "Book, related data, and file deleted successfully",
             "deleted_book_count": book_result.deleted_count,
             "deleted_chunks_count": chunk_result.deleted_count,
-            "deleted_review_outcomes_count": review_result.deleted_count
+            "deleted_review_outcomes_count": review_result.deleted_count,
+            "file_deleted": "file_id" in book
         }
 
     except Exception as e:

@@ -17,7 +17,7 @@ class ChunkResponse(BaseModel):
     analysis_status: Optional[str] = None
     text: Optional[str] = None
     classification: Optional[List["ClassificationResult"]] = None
-    coordinates: Optional[List[int]] = None
+    coordinates: Optional[List[float]] = None
 
     class Config:
         populate_by_name = True
