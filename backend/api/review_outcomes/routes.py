@@ -32,16 +32,16 @@ def delete_all_review_outcomes():
     return {"status": "success", "deleted_count": result.deleted_count}
 
 # Analysis Workflow
-@router.post("/run", dependencies=[Depends(get_user_from_cookie)])
-def run_analysis_workflow():
-    """
-    Calls the run_workflow function from Analysis.mains1 and returns its result.
-    """
-    try:
-        result = run_workflow()  # Pass params if needed
-        return {"status": "success", "result": result}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
+# @router.post("/run", dependencies=[Depends(get_user_from_cookie)])
+# def run_analysis_workflow():
+#     """
+#     Calls the run_workflow function from Analysis.mains1 and returns its result.
+#     """
+#     try:
+#         result = run_workflow()  # Pass params if needed
+#         return {"status": "success", "result": result}
+#     except Exception as e:
+#         return {"status": "error", "message": str(e)}
 
 @router.put("/update/{outcome_id}/{review_type}", dependencies=[Depends(get_user_from_cookie)])
 def update_review_type(

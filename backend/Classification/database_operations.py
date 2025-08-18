@@ -243,7 +243,7 @@ def mark_document_done(doc_id):
         {"$set": {"labels": list(unique_labels)}}
     )
 
-    #runworkflow() Call here 
+    run_workflow(book_id=doc_id)
 
     set_all_agents_status_true() # Call this at end of run workflow
 

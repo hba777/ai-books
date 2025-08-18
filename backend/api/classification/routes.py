@@ -35,7 +35,7 @@ async def start_classification(book_id: str, background_tasks: BackgroundTasks) 
         ))
 
         background_tasks.add_task(supervisor_loop, book_id, agents)
-                
+        
         return {
             "message": "Classification started successfully",
             "book_id": book_id,
