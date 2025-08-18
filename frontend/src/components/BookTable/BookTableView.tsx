@@ -4,19 +4,7 @@ import { useBooks } from "../../context/BookContext";
 import { toast } from "react-toastify"
 import { useClassificationContext } from '../../features/ClassificationPage/ClassificationCardRow/ClassificationContext';
 import AgentsSideBar from "./AgentsSideBar.";
-interface Book {
-  _id: string;
-  doc_name: string;
-  author: string;
-  date: string;
-  category: string;
-  reference: string;
-  status: string;
-  summary: string;
-  labels?: string[] | null;
-  startDate?: string | null;
-  endDate?: string | null;
-}
+import  { Book } from "../../services/booksApi"
 
 interface BookTableViewProps {
   filteredBooks: Book[];

@@ -14,6 +14,15 @@ class FeedbackRequest(BaseModel):
     department: str
     image: Optional[str] = None  # Base64 encoded image
 
+class ClassificationFilters(BaseModel):
+    # maps classification name -> integer
+    name: str
+    value: int
+
+class FiltersModel(BaseModel):
+    classificationFilters: Optional[List[ClassificationFilters]] = []
+    analysisFilters: Optional[List[str]] = []
+    
 class BookResponse(BaseModel):
     id: str = Field(alias="_id")       # Internal name `id`, accepts/returns `_id`
     doc_id: str
@@ -29,6 +38,7 @@ class BookResponse(BaseModel):
     endDate: Optional[str] = None
     assigned_departments: List[str] = []
     feedback: List[FeedbackModel] = []
+    filters: Optional[FiltersModel] = FiltersModel()
 
     class Config:
         populate_by_name = True

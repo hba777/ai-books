@@ -8,22 +8,34 @@ class FeedbackModel(BaseModel):
     comment: str
     timestamp: str  # ISO datetime string
 
+class ClassificationFilters(BaseModel):
+    # maps classification name -> integer
+    name: str
+    value: int
+
+class FiltersModel(BaseModel):
+    classificationFilters: Optional[List[ClassificationFilters]] = []
+    analysisFilters: Optional[List[str]] = []
+
 class BookModel(BaseModel):
     id: Optional[str] = Field(default=None, alias="_id")
-    doc_id: str
-    doc_name: str
-    author: str
-    date: str
-    status: str = "Pending"
-    category: str
-    reference: str
-    summary: str
+    doc_id: Optional[str] = None
+    doc_name: Optional[str] = None
+    author: Optional[str] = None
+    date: Optional[str] = None
+    status: Optional[str] = "Pending"
+    category: Optional[str] = None
+    reference: Optional[str] = None
+    summary: Optional[str] = None
     labels: Optional[List[str]] = []
     startDate: Optional[str] = None
     endDate: Optional[str] = None
 
-    assigned_departments: List[str] = []         # New field
-    feedback: List[FeedbackModel] = []           # New field
+    assigned_departments: Optional[List[str]] = []
+    feedback: Optional[List["FeedbackModel"]] = []
+
+    # ✅ New filters class
+    filters: Optional[FiltersModel] = FiltersModel()
 
     class Config:
         populate_by_name = True

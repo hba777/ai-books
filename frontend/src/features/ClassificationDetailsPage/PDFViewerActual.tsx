@@ -13,36 +13,25 @@ if (typeof window !== "undefined") {
   pdfjs.GlobalWorkerOptions.workerSrc = "/pdfjs/pdf.worker.min.mjs";
 }
 
-interface Highlight {
-  id: string;
-  pageNumber: number;
-  bbox: [number, number, number, number]; // x0, y0, x1, y1
-  class: string;
-}
-
-const sampleHighlights: Highlight[] = [
-  { id: "math-1", pageNumber: 1, bbox: [100, 200, 300, 230], class: "Maths" },
-  { id: "math-2", pageNumber: 2, bbox: [80, 150, 320, 190], class: "Maths" },
-];
-
 interface PDFViewerActualProps {
   jumpToHighlight?: { className: string; direction: "next" | "prev" } | null;
   fileUrl: string | null;
   doc_name: string;
+  currentClassificationCoordinates?: number[];
+  currentClassificationPage?: number;
 }
 
 const PDFViewerActual: React.FC<PDFViewerActualProps> = ({
   jumpToHighlight,
   fileUrl,
   doc_name,
+  currentClassificationCoordinates,
+  currentClassificationPage,
 }) => {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.5);
   const viewerRef = useRef<HTMLDivElement>(null);
-  const [activeHighlightId, setActiveHighlightId] = useState<string | null>(
-    null
-  );
   const [pendingHighlightId, setPendingHighlightId] = useState<string | null>(
     null
   );
@@ -70,55 +59,57 @@ const PDFViewerActual: React.FC<PDFViewerActualProps> = ({
     }
   };
 
-
+  // Navigate to specific coordinates when they change
   useEffect(() => {
-    if (jumpToHighlight) {
-      // Find all highlights for the class across all pages
-      const highlights = sampleHighlights.filter(
-        (h) => h.class === jumpToHighlight.className
-      );
-      if (highlights.length > 0) {
-        // Find the current highlight index
-        let idx = 0;
-        if (activeHighlightId) {
-          idx = highlights.findIndex((h) => h.id === activeHighlightId);
-        }
-        let nextIdx = 0;
-        if (jumpToHighlight.direction === "next") {
-          nextIdx = (idx + 1) % highlights.length;
-        } else {
-          nextIdx = (idx - 1 + highlights.length) % highlights.length;
-        }
-        const highlight = highlights[nextIdx];
-        setActiveHighlightId(highlight.id);
-        if (highlight.pageNumber !== pageNumber) {
-          setPendingHighlightId(highlight.id);
-          setPageNumber(highlight.pageNumber);
-        } else {
-          setTimeout(() => {
-            const el = document.getElementById(`highlight-${highlight.id}`);
-            if (el) {
-              el.scrollIntoView({ behavior: "smooth", block: "center" });
-            }
-          }, 100);
-        }
+    if (currentClassificationCoordinates && currentClassificationPage) {
+      // Navigate to the page if it's different
+      if (currentClassificationPage !== pageNumber) {
+        setPageNumber(currentClassificationPage);
+        setPendingHighlightId('current-classification');
+      } else {
+        // If already on the right page, scroll to coordinates
+        setTimeout(() => {
+          scrollToCoordinates(currentClassificationCoordinates);
+        }, 100);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jumpToHighlight]);
+  }, [currentClassificationCoordinates, currentClassificationPage, pageNumber]);
+
+  const scrollToCoordinates = (coordinates: number[]) => {
+    if (coordinates.length >= 4) {
+      const [x0, y0, x1, y1] = coordinates;
+      const centerX = (x0 + x1) / 2;
+      const centerY = (y0 + y1) / 2;
+      
+      // Calculate the position in the scaled PDF view
+      const scaledCenterX = centerX * scale;
+      const scaledCenterY = centerY * scale;
+      
+      // Scroll the viewer to center on these coordinates
+      if (viewerRef.current) {
+        const container = viewerRef.current;
+        const containerRect = container.getBoundingClientRect();
+        const scrollLeft = scaledCenterX - containerRect.width / 2;
+        const scrollTop = scaledCenterY - containerRect.height / 2;
+        
+        container.scrollTo({
+          left: Math.max(0, scrollLeft),
+          top: Math.max(0, scrollTop),
+          behavior: 'smooth'
+        });
+      }
+    }
+  };
 
   // When page changes, scroll to pending highlight if needed
   useEffect(() => {
-    if (pendingHighlightId) {
+    if (pendingHighlightId && currentClassificationCoordinates) {
       setTimeout(() => {
-        const el = document.getElementById(`highlight-${pendingHighlightId}`);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
+        scrollToCoordinates(currentClassificationCoordinates);
         setPendingHighlightId(null);
       }, 200);
     }
-  }, [pageNumber, pendingHighlightId]);
+  }, [pageNumber, pendingHighlightId, currentClassificationCoordinates]);
 
   return (
   <div className="flex-1 flex flex-col ml-6 max-w-3xl min-w-[500px] h-300 pt-0 mt-0">
@@ -191,28 +182,22 @@ const PDFViewerActual: React.FC<PDFViewerActualProps> = ({
         >
           <div className="relative mb-6">
             <Page pageNumber={pageNumber} scale={scale} />
-            {/* Overlay highlights */}
-            {sampleHighlights
-              .filter((h) => h.pageNumber === pageNumber)
-              .map((h) => (
-                <div
-                  id={`highlight-${h.id}`}
-                  key={h.id}
-                  className={`absolute border-2 ${
-                    activeHighlightId === h.id
-                      ? "border-yellow-500 z-10"
-                      : "border-yellow-400"
-                  }`}
-                  style={{
-                    top: h.bbox[1] * scale,
-                    left: h.bbox[0] * scale,
-                    width: (h.bbox[2] - h.bbox[0]) * scale,
-                    height: (h.bbox[3] - h.bbox[1]) * scale,
-                    background: "rgba(255, 255, 0, 0.25)",
-                    pointerEvents: "none",
-                  }}
-                />
-              ))}
+            {/* Show current classification highlight if coordinates are available */}
+            {currentClassificationCoordinates && 
+             currentClassificationPage === pageNumber && 
+             currentClassificationCoordinates.length >= 4 && (
+              <div
+                className="absolute border-2 border-yellow-500 z-10"
+                style={{
+                  top: currentClassificationCoordinates[1] * scale,
+                  left: currentClassificationCoordinates[0] * scale,
+                  width: (currentClassificationCoordinates[2] - currentClassificationCoordinates[0]) * scale,
+                  height: (currentClassificationCoordinates[3] - currentClassificationCoordinates[1]) * scale,
+                  background: "rgba(255, 255, 0, 0.25)",
+                  pointerEvents: "none",
+                }}
+              />
+            )}
           </div>
         </Document>
       ) : (
