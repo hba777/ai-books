@@ -130,17 +130,6 @@ def get_book_file(book_id: str):
         "Content-Disposition": f'attachment; filename="{file_obj.filename}"'
     })
 
-# Assign book to departmnent
-@router.put("/{book_id}/assign", dependencies=[Depends(get_user_from_cookie)])
-def assign_departments(book_id: str, departments: List[str]):
-    result = books_collection.update_one(
-        {"_id": ObjectId(book_id)},
-        {"$set": {"assigned_departments": departments}}
-    )
-    if result.modified_count == 0:
-        raise HTTPException(status_code=404, detail="Book not found or no change")
-    return {"message": "Departments assigned successfully"}
-
 # Add Feedback to book
 
 @router.post("/{book_id}/feedback")
@@ -231,6 +220,12 @@ async def assign_single_department(book_id: str, department: str = Form(...), us
             {"_id": ObjectId(book_id)},
             {"$set": {"assigned_departments": current_departments}}
         )
+        # Only change status if current one is exactly "Processed"
+        if book.get("status") == "Processed":
+            books_collection.update_one(
+                {"_id": ObjectId(book_id)},
+                {"$set": {"status": "Assigned"}}
+            )
 
     return {"message": f"Department {department} assigned successfully"}
 
@@ -375,6 +370,14 @@ def delete_book_with_relations(book_id: str):
         if not book:
             raise HTTPException(status_code=404, detail="Book not found")
 
+        # Delete file from GridFS if it exists
+        if "file_id" in book:
+            try:
+                fs.delete(book["file_id"])
+            except Exception as e:
+                # Log but don't fail deletion if GridFS delete fails
+                print(f"Error deleting file from GridFS: {e}")
+
         # Delete the book
         book_result = books_collection.delete_one({"_id": ObjectId(book_id)})
 
@@ -385,10 +388,11 @@ def delete_book_with_relations(book_id: str):
         review_result = review_outcomes_collection.delete_many({"doc_id": str(book_id)})
 
         return {
-            "detail": "Book and related data deleted successfully",
+            "detail": "Book, related data, and file deleted successfully",
             "deleted_book_count": book_result.deleted_count,
             "deleted_chunks_count": chunk_result.deleted_count,
-            "deleted_review_outcomes_count": review_result.deleted_count
+            "deleted_review_outcomes_count": review_result.deleted_count,
+            "file_deleted": "file_id" in book
         }
 
     except Exception as e:

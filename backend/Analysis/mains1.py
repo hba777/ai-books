@@ -9,29 +9,31 @@ from .workflow_nodes import main_node, final_report_generator
 from .pdf_processor import get_first_pipeline1_chunk, get_all_pipeline1_chunks_details, get_next_pending_pipeline1_chunk, get_all_pending_pipeline1_chunks_details
 from .database_saver import save_results_to_mongo, clear_results_collection, update_chunk_analysis_status
 from .text_classifier import classify_text
-from db.mongo import get_books_collection
+from db.mongo import get_books_collection, get_chunks_collection
 from datetime import datetime
 from bson import ObjectId
+import asyncio
+import time 
 
-def run_workflow():
-    # Clear the results collection at the beginning of each program execution
-    # Consider if you really want to clear all results every time you run.
-    # If you're resuming, you might not want to clear previous results.
-    # clear_results_collection() # <--- COMMENTED OUT TO PRESERVE PREVIOUS RUNS' DATA
-
+def run_workflow(book_id: str):
+    """
+    Run workflow for a specific book by its book_id.
+    Loads agents, builds the graph, and processes all pending chunks
+    that belong to the specified book.
+    """
     # Load agents dynamically from MongoDB
     print("Loading agents from MongoDB...")
     load_agents_from_mongo(llm, eval_llm)
-    
+
     total_agents = len(available_agents)
     if total_agents == 0:
         print("WARNING: No agents loaded. Analysis workflow might not function as expected.")
-        return # Exit if no agents are loaded
+        return  # Exit if no agents are loaded
 
     # Initialize the StateGraph with the defined State
     graph_builder = StateGraph(State)
 
-    # Add the main_node and final_report_generator nodes to the graph
+    # Add core nodes
     graph_builder.add_node("main_node", main_node)
     graph_builder.add_node("fnl_rprt", final_report_generator)
 
@@ -40,45 +42,43 @@ def run_workflow():
         graph_builder.add_node(agent_name, agent_runnable)
         print(f"Added agent '{agent_name}' as a node to the graph.")
 
-    # Set the entry point of the graph to "main_node"
+    # Define graph flow
     graph_builder.add_edge(START, "main_node")
-
-    # Dynamically add edges from "main_node" to each loaded agent, and then from each agent to the "fnl_rprt"
     for agent_name in available_agents:
         graph_builder.add_edge("main_node", agent_name)
         graph_builder.add_edge(agent_name, "fnl_rprt")
-
-    # Set the exit point of the graph to "fnl_rprt"
     graph_builder.add_edge("fnl_rprt", END)
 
-    # Compile the graph for execution
+    # Compile the graph
     graph = graph_builder.compile()
 
-    print("Loading chunks from Pipeline 1's database...")
+    print(f"Loading chunks for book_id={book_id} from Pipeline 1's database...")
 
-    # --- CHOOSE ONE OPTION BELOW: Process next pending chunk OR Process all pending chunks ---
+    chunks_collection = get_chunks_collection()
+    
+    # ✅ Only fetch pending chunks for the specific book
+    documents_to_process = chunks_collection.find({
+        "doc_id": book_id,
+        "analysis_status": "Pending"
+    })
 
-    # OPTION 1: Process only the NEXT pending Pipeline 1 chunk
-    # Uncomment the following two lines and comment out OPTION 2 to use this.
-    # print("\n--- OPTION 1: Executing graph.invoke() for the next PENDING chunk from Pipeline 1 ---")
-    #next_pending_chunk = get_next_pending_pipeline1_chunk()
-    #documents_to_process = [next_pending_chunk] if next_pending_chunk else []
+    documents_to_process = list(documents_to_process)
 
+    # ✅ Notify frontend that analysis has begun with 0% progress
+    try:
+        from api.chunks.websocket import notify_analysis_progress
+        total_chunks = chunks_collection.count_documents({"doc_id": book_id})
+        asyncio.run(notify_analysis_progress(book_id, 0, total_chunks, 0))
+    except Exception as notify_err:
+        print(f"[Analysis WS] Failed to send initial analysis progress: {notify_err}")
 
-    # OPTION 2: Process ALL PENDING Pipeline 1 chunks (ACTIVE BY DEFAULT)
-    # Uncomment the following two lines and comment out OPTION 1 to use this.
-    print("\n--- OPTION 2: Executing graph.invoke() for ALL PENDING chunks from Pipeline 1 ---")
-    documents_to_process = get_all_pending_pipeline1_chunks_details()
-
-
-    # --- Common processing loop for selected documents (Pipeline 1 schema) ---
     if documents_to_process:
-        print(f"Found {len(documents_to_process)} PENDING chunks from Pipeline 1 to process.")
+        print(f"Found {len(documents_to_process)} PENDING chunks for book {book_id} to process.")
         for doc_to_process in documents_to_process:
             if not doc_to_process:
                 continue
 
-            # Extract fields according to Pipeline 1's schema
+            # Extract fields
             p1_chunk_uuid = doc_to_process.get("chunk_id")
             doc_id_p1 = doc_to_process.get("doc_id")
             chunk_index_p1 = doc_to_process.get("chunk_index")
@@ -123,15 +123,11 @@ def run_workflow():
             result_with_review = graph.invoke(report_data)
 
             overall_chunk_status = "Complete"
-            # Initialize agent_analysis_statuses with all available agents set to "Pending"
             agent_analysis_statuses = {agent_name: "Pending" for agent_name in available_agents.keys()}
-            
-            # Now iterate over agents that actually produced output and update their status
+
             for agent_name, agent_data in result_with_review.get("main_node_output", {}).items():
                 agent_output = agent_data.get("output", {})
-                
-                # --- MODIFIED LOGIC: First, check for the specific `None` case as per your request ---
-                # This ensures that if the agent returns None for the key fields, the status is 'Complete'.
+
                 if (
                     agent_output.get("problematic_text") is None
                     and agent_output.get("observation") is None
@@ -139,18 +135,14 @@ def run_workflow():
                 ):
                     agent_analysis_statuses[agent_name] = "Complete"
                 else:
-                    # --- EXISTING LOGIC: If it's not the `None` case, run the original validation ---
                     is_output_complete = True
-                    
                     if not isinstance(agent_output, dict):
                         is_output_complete = False
                     else:
                         if "issues_found" in agent_output and not isinstance(agent_output.get("issues_found"), bool):
                             is_output_complete = False
-                        
                         if "observation" in agent_output and not isinstance(agent_output.get("observation"), str):
                             is_output_complete = False
-                        
                         if "recommendation" in agent_output and not isinstance(agent_output.get("recommendation"), str):
                             is_output_complete = False
 
@@ -158,7 +150,7 @@ def run_workflow():
                         agent_analysis_statuses[agent_name] = "Complete"
                     else:
                         agent_analysis_statuses[agent_name] = "Pending"
-                        overall_chunk_status = "Pending" # If any agent is pending, the overall chunk is pending
+                        overall_chunk_status = "Pending"
 
             save_results_to_mongo(
                 chunk_uuid=p1_chunk_uuid,
@@ -172,7 +164,7 @@ def run_workflow():
                 overall_chunk_status=overall_chunk_status,
                 agent_analysis_statuses=agent_analysis_statuses
             )
-            
+
             update_chunk_analysis_status(
                 doc_id=doc_id_p1,
                 chunk_id=p1_chunk_uuid,
@@ -189,21 +181,19 @@ def run_workflow():
                 print(f"  Confidence: {agent_output_data.get('confidence', 0)}%")
                 print(f"  Retries: {agent_output_data.get('retries', 0)}")
                 print(f"  Human Review Needed: {agent_output_data.get('human_review', False)}")
-            
+
             print(f"\n--- Overall Chunk Status: {overall_chunk_status} ---\n")
             print(f"--- Agent Analysis Statuses (per chunk, all agents included): {agent_analysis_statuses} ---\n")
-
             print("Full Result Dictionary (for debugging):\n")
             print(result_with_review)
             print("-" * 40)
 
-            """Update books end process date"""
-            books_collection = get_books_collection()
-            now_str = datetime.utcnow().isoformat()
-            books_collection.update_one(
-                {"doc_id": doc_id_p1},
-                {"$set": {"endDate": now_str}}
-            )
+        # ✅ Update endDate for the book
+        books_collection = get_books_collection()
+        books_collection.update_one(
+            {"doc_id": book_id},
+            {"$set": {"endDate":  time.strftime("%Y-%m-%d %H:%M:%S")}}
+        )
 
     else:
-        print("No PENDING chunks found from Pipeline 1's configured database and collection to process. All chunks might be processed, or none were pending.")
+        print(f"No PENDING chunks found for book_id={book_id}. All chunks might be processed, or none were pending.")

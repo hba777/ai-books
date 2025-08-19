@@ -366,7 +366,7 @@ def load_agents_from_mongo(llm_model: ChatGroq, eval_llm_model: ChatGroq):
     try:
         collection = get_agent_configs_collection()
 
-        rows = collection.find({})
+        rows = collection.find({"status": True})
 
         for doc in rows:
             agent_name = doc.get("agent_name")

@@ -4,6 +4,7 @@ import asyncio
 router = APIRouter()
 
 active_connections = {}
+analysis_connections = {}
 
 @router.websocket("/ws/progress/{book_id}")
 async def websocket_endpoint(websocket: WebSocket, book_id: str):
@@ -32,3 +33,24 @@ async def notify_indexing_done(book_id: str):
     print(f"[WebSocket Notify] Sending 'done' to {book_id}")
     if ws:
         await ws.send_text("done")
+
+
+@router.websocket("/ws/analysis-progress/{book_id}")
+async def analysis_progress_websocket(websocket: WebSocket, book_id: str):
+    await websocket.accept()
+    analysis_connections[book_id] = websocket
+    try:
+        while True:
+            await asyncio.sleep(1)
+    except WebSocketDisconnect:
+        if book_id in analysis_connections and analysis_connections[book_id] == websocket:
+            del analysis_connections[book_id]
+
+async def notify_analysis_progress(book_id: str, progress: int, total: int, done: int):
+    ws = analysis_connections.get(book_id)
+    if ws:
+        await ws.send_json({
+            "analysis_progress": progress,
+            "analysis_total": total,
+            "analysis_done": done
+        })

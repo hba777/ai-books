@@ -4,15 +4,16 @@ import {
   createBook as apiCreateBook, 
   getBookById, 
   getBookFile,
-  assignDepartments as apiAssignDepartments,
   assignSingleDepartment as apiAssignSingleDepartment,
   addFeedback as apiAddFeedback,
   indexBook as apiIndexBook,
   startClassification as apiStartClassification,
   connectToProgressWebSocket,
   connectToIndexProgressWebSocket,
+  connectToAnalysisProgressWebSocket,
   Book,
   ClassificationProgress,
+  AnalysisProgress,
   getReviewOutcomes,
   ReviewOutcomesResponse,
   getBookClassifications, 
@@ -32,11 +33,11 @@ import { useUser } from "../context/UserContext";
 interface BookContextType {
   books: Book[];
   activeClassifications: ClassificationProgress[];
+  activeAnalyses: AnalysisProgress[];
   fetchBooks: () => Promise<void>;
   createBook: (formData: FormData) => Promise<void>;
   getBookById: (bookId: string) => Promise<Book>;
   getBookFile: (bookId: string) => Promise<Blob>;
-  assignDepartments: (bookId: string, departments: string[]) => Promise<void>;
   assignSingleDepartment: (bookId: string, department: string) => Promise<void>;
   addFeedback: (bookId: string, department: string, comment?: string, image?: string) => Promise<void>;
   indexBook: (bookId: string) => Promise<void>;
@@ -59,6 +60,7 @@ const BookContext = createContext<BookContextType | undefined>(undefined);
 export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [books, setBooks] = useState<Book[]>([]);
   const [activeClassifications, setActiveClassifications] = useState<ClassificationProgress[]>([]);
+  const [activeAnalyses, setActiveAnalyses] = useState<AnalysisProgress[]>([]);
   const [reviewOutcomes, setReviewOutcomes] = useState<ReviewOutcomesResponse[]>([]);
   const classificationsCacheRef = useRef<Map<string, BookClassificationsResponse>>(new Map());
   const { user, loading: userLoading } = useUser(); 
@@ -81,11 +83,6 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchBookFile = async (bookId: string) => {
     return await getBookFile(bookId);
-  };
-
-  const assignDepartments = async (bookId: string, departments: string[]) => {
-    await apiAssignDepartments(bookId, departments);
-    await fetchBooks(); // Refresh books to get updated data
   };
 
   const assignSingleDepartment = async (bookId: string, department: string) => {
@@ -128,7 +125,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       
       setActiveClassifications(prev => [...prev, newClassification]);
-      
+
       // Connect to WebSocket for progress updates
       const ws = connectToProgressWebSocket(bookId, (progress: number, total?: number, done?: number, rawData?: any) => {
         setActiveClassifications(prev => 
@@ -157,6 +154,42 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       websocketRefs.current.set(bookId, ws);
+
+      // Also connect to Analysis progress for the same book
+      const analysisWs = connectToAnalysisProgressWebSocket(bookId, (progress: number, total?: number, done?: number) => {
+        setActiveAnalyses(prev => {
+          const bookName = getBookNameById(bookId);
+          const existing = prev.find(a => a.book_id === bookId);
+          const updated = { book_id: bookId, progress, total, done, book_name: bookName } as AnalysisProgress;
+          if (existing) {
+            return prev.map(a => a.book_id === bookId ? updated : a);
+          }
+          return [...prev, updated];
+        });
+        if (progress === 100) {
+          fetchBooks()
+          setTimeout(() => {
+            setActiveClassifications(prev => 
+              prev.filter(classification => classification.book_id !== bookId)
+            );
+            // Close WebSocket connection
+            const wsToClose = websocketRefs.current.get(bookId);
+            if (wsToClose) {
+              wsToClose.close();
+              websocketRefs.current.delete(bookId);
+            }
+          }, 2000); // Remove after 2 seconds
+          setTimeout(() => {
+            setActiveAnalyses(prev => prev.filter(a => a.book_id !== bookId));
+            const wsToClose = websocketRefs.current.get(`${bookId}-analysis`);
+            if (wsToClose) {
+              wsToClose.close();
+              websocketRefs.current.delete(`${bookId}-analysis`);
+            }
+          }, 2000);
+        }
+      });
+      websocketRefs.current.set(`${bookId}-analysis`, analysisWs);
       
     } catch (error) {
       console.error('Error starting classification:', error);
@@ -248,11 +281,11 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <BookContext.Provider value={{
       books,
       activeClassifications,
+      activeAnalyses,
       fetchBooks,
       createBook,
       getBookById: fetchBookById,
       getBookFile: fetchBookFile,
-      assignDepartments,
       assignSingleDepartment,
       addFeedback,
       indexBook,
@@ -267,7 +300,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       removeClassificationFromChunk: removeClassificationFromChunkHandler,
       jumpToClassificationCoordinates,
       updateClassificationFilter,
-      updateAnalysisFilters
+      updateAnalysisFilters,
     }}>
       {children}
     </BookContext.Provider>

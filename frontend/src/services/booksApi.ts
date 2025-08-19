@@ -44,6 +44,14 @@ export interface ClassificationProgress {
   book_name?: string;
 }
 
+export interface AnalysisProgress {
+  book_id: string;
+  progress: number;
+  total?: number;
+  done?: number;
+  book_name?: string;
+}
+
 export interface ReviewDetailResponse {
   confidence?: number;
   human_review?: boolean;
@@ -156,6 +164,31 @@ export function connectToIndexProgressWebSocket(
   return ws;
 }
 
+export function connectToAnalysisProgressWebSocket(
+  bookId: string,
+  onProgress: (progress: number, total?: number, done?: number, rawData?: any) => void
+): WebSocket {
+  const wsUrl = `ws://${process.env.NEXT_PUBLIC_BACKEND_HOST}/ws/analysis-progress/${bookId}`;
+  const ws = new WebSocket(wsUrl);
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.analysis_progress !== undefined) {
+        onProgress(data.analysis_progress, data.analysis_total, data.analysis_done, data);
+      }
+    } catch (error) {
+      console.error('Error parsing Analysis WebSocket message:', error);
+    }
+  };
+  ws.onerror = (error) => {
+    console.error('Analysis WebSocket error:', error);
+  };
+  ws.onclose = () => {
+    console.log('Analysis WebSocket connection closed');
+  };
+  return ws;
+}
+
 
 export async function getAllBooks(): Promise<Book[]> {
   const res = await api.get<Book[]>('/books/');
@@ -183,13 +216,6 @@ export async function getBookFile(bookId: string): Promise<Blob> {
   });
   return res.data;
 }
-
-// Assign book to departments
-export async function assignDepartments(bookId: string, departments: string[]): Promise<{ message: string }> {
-  const res = await api.put<{ message: string }>(`/books/${bookId}/assign`, departments);
-  return res.data;
-}
-
 // Add feedback to book
 export async function addFeedback(
   bookId: string, 
