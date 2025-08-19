@@ -130,17 +130,6 @@ def get_book_file(book_id: str):
         "Content-Disposition": f'attachment; filename="{file_obj.filename}"'
     })
 
-# Assign book to departmnent
-@router.put("/{book_id}/assign", dependencies=[Depends(get_user_from_cookie)])
-def assign_departments(book_id: str, departments: List[str]):
-    result = books_collection.update_one(
-        {"_id": ObjectId(book_id)},
-        {"$set": {"assigned_departments": departments}}
-    )
-    if result.modified_count == 0:
-        raise HTTPException(status_code=404, detail="Book not found or no change")
-    return {"message": "Departments assigned successfully"}
-
 # Add Feedback to book
 
 @router.post("/{book_id}/feedback")
@@ -231,6 +220,12 @@ async def assign_single_department(book_id: str, department: str = Form(...), us
             {"_id": ObjectId(book_id)},
             {"$set": {"assigned_departments": current_departments}}
         )
+        # Only change status if current one is exactly "Processed"
+        if book.get("status") == "Processed":
+            books_collection.update_one(
+                {"_id": ObjectId(book_id)},
+                {"$set": {"status": "Assigned"}}
+            )
 
     return {"message": f"Department {department} assigned successfully"}
 

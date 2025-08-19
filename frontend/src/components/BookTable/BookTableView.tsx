@@ -194,9 +194,9 @@ const BookTableView: React.FC<BookTableViewProps> = ({
                     indexBook(book._id);
                     toast.success("Chunking Started")
                   }}
-                  disabled={isAnyBookProcessing || book.status === "Pending" || book.status === "Processed"}
+                  disabled={isAnyBookProcessing || book.status === "Pending" || book.status === "Processed" || book.status === "Assigned"} 
                   className={`p-2 rounded ${
-                    isAnyBookProcessing || book.status === "Pending" || book.status === "Processed"
+                    isAnyBookProcessing || book.status === "Pending" || book.status === "Processed" || book.status === "Assigned"
                       ? 'text-gray-400 cursor-not-allowed'
                       : 'hover:bg-blue-100'
                   }`}
@@ -223,7 +223,7 @@ const BookTableView: React.FC<BookTableViewProps> = ({
                       ? "Processing..."
                       : book.status === "Indexing"
                         ? "Indexing..."
-                        : book.status === "Processed"
+                        : book.status === "Processed" || book.status === "Assigned"
                           ? "Classified"
                           : "Not Available"}
                 </button>

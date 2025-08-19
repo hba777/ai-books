@@ -216,13 +216,6 @@ export async function getBookFile(bookId: string): Promise<Blob> {
   });
   return res.data;
 }
-
-// Assign book to departments
-export async function assignDepartments(bookId: string, departments: string[]): Promise<{ message: string }> {
-  const res = await api.put<{ message: string }>(`/books/${bookId}/assign`, departments);
-  return res.data;
-}
-
 // Add feedback to book
 export async function addFeedback(
   bookId: string, 

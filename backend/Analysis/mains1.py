@@ -13,6 +13,7 @@ from db.mongo import get_books_collection, get_chunks_collection
 from datetime import datetime
 from bson import ObjectId
 import asyncio
+import time 
 
 def run_workflow(book_id: str):
     """
@@ -189,10 +190,9 @@ def run_workflow(book_id: str):
 
         # ✅ Update endDate for the book
         books_collection = get_books_collection()
-        now_str = datetime.utcnow().isoformat()
         books_collection.update_one(
             {"doc_id": book_id},
-            {"$set": {"endDate": now_str}}
+            {"$set": {"endDate":  time.strftime("%Y-%m-%d %H:%M:%S")}}
         )
 
     else:

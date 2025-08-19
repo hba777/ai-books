@@ -4,7 +4,6 @@ import {
   createBook as apiCreateBook, 
   getBookById, 
   getBookFile,
-  assignDepartments as apiAssignDepartments,
   assignSingleDepartment as apiAssignSingleDepartment,
   addFeedback as apiAddFeedback,
   indexBook as apiIndexBook,
@@ -39,7 +38,6 @@ interface BookContextType {
   createBook: (formData: FormData) => Promise<void>;
   getBookById: (bookId: string) => Promise<Book>;
   getBookFile: (bookId: string) => Promise<Blob>;
-  assignDepartments: (bookId: string, departments: string[]) => Promise<void>;
   assignSingleDepartment: (bookId: string, department: string) => Promise<void>;
   addFeedback: (bookId: string, department: string, comment?: string, image?: string) => Promise<void>;
   indexBook: (bookId: string) => Promise<void>;
@@ -85,11 +83,6 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchBookFile = async (bookId: string) => {
     return await getBookFile(bookId);
-  };
-
-  const assignDepartments = async (bookId: string, departments: string[]) => {
-    await apiAssignDepartments(bookId, departments);
-    await fetchBooks(); // Refresh books to get updated data
   };
 
   const assignSingleDepartment = async (bookId: string, department: string) => {
@@ -293,7 +286,6 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       createBook,
       getBookById: fetchBookById,
       getBookFile: fetchBookFile,
-      assignDepartments,
       assignSingleDepartment,
       addFeedback,
       indexBook,

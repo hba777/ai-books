@@ -109,27 +109,29 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
             <div className="flex items-center justify-between mb-2">
               <div className="font-bold text-lg text-gray-900">{book.doc_name}</div>
               <div className="flex items:center gap-2">                <button
-                  onClick={(e) => handleStartClassification(e, book._id)}
-                  disabled={isAnyBookProcessing || book.status === "Pending" || book.status === "Processed"}
-                  className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
-                    isAnyBookProcessing || book.status === "Pending" || book.status === "Processed"
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-blue-500 text-white hover:bg-blue-600'
-                  }`}
-                >
+                  onClick={(e) => openSidebarForBook(e, book._id)}
+                  disabled={(() => {
+                    const canStart = !isAnyBookProcessing && book.status === "Pending";
+                    return !canStart;
+                  })()}
+                    className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${(() => {
+                      const canStart = !isAnyBookProcessing && book.status === "Pending";
+                      return canStart ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed';
+                    })()}`}
+                    >
                   {book.status === "Pending"
                     ? "Start Classification"
                     : book.status === "Processing"
                       ? "Processing..."
                       : book.status === "Indexing"
                         ? "Indexing..."
-                        : book.status === "Processed"
+                        : book.status === "Processed" || book.status === "Assigned"
                           ? "Classified"
                           : "Not Available"}
                 </button>
-                <button className="text-gray-400 hover:text-gray-600 p-1 rounded-full">
+                {/* <button className="text-gray-400 hover:text-gray-600 p-1 rounded-full">
                   <span className="text-2xl">&#8942;</span>
-                </button>
+                </button> */}
               </div>
             </div>
             <div className="text-sm text-gray-500 mb-1">
@@ -161,9 +163,9 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
                   indexBook(book._id);
                   toast.success("Indexing Started")
                 }}
-                disabled={isAnyBookProcessing || book.status === "Pending" || book.status === "Processed"}
+                disabled={isAnyBookProcessing || book.status === "Pending" || book.status === "Processed" || book.status === "Assigned"}
                 className={`p-1 rounded-full ${
-                  isAnyBookProcessing || book.status === "Pending" || book.status === "Processed"
+                  isAnyBookProcessing || book.status === "Pending" || book.status === "Processed" || book.status === "Assigned"
                     ? 'text-gray-400 cursor-not-allowed'
                     : 'text-blue-500 hover:text-blue-700'
                 }`}
