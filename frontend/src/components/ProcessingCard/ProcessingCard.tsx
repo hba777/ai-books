@@ -58,7 +58,7 @@ const ProcessingCard: React.FC = () => {
             {/* Content */}
             <div className="flex-1">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-lg font-semibold text-gray-800">Analysis: {classification.book_name || 'Unknown Book'}</span>
+                <span className="text-lg font-semibold text-gray-800">Classifying: {classification.book_name || 'Unknown Book'}</span>
                 <span className="text-sm font-medium text-gray-600">
                    {classification.progress}%
                 </span>
@@ -92,7 +92,7 @@ const ProcessingCard: React.FC = () => {
             </span>
             <div className="flex-1">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-lg font-semibold text-gray-800">Analysis: {analysis.book_name || 'Unknown Book'}</span>
+                <span className="text-lg font-semibold text-gray-800">Analysing: {analysis.book_name || 'Unknown Book'}</span>
                 <span className="text-sm font-medium text-gray-600">{analysis.progress}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2 mb-2">

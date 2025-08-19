@@ -38,7 +38,7 @@ def insert_document(doc_id: str, chunks: list, summary: str):
             "page_number": page_number,
             "coordinates": coordinates,  # <-- NEW: Coordinates are now saved
             "status": "pending",
-            "analysis_status": "pending"
+            "analysis_status": "Pending"
         })
 
     # Insert all chunks
@@ -219,6 +219,14 @@ def mark_document_done(doc_id):
     """Update the status of a document to 'Processed' regardless of current status."""
     books_collection = get_books_collection()
     chunks_collection = get_chunks_collection()
+    # Ensure analysis_status is standardized to 'Pending' for this document before running workflow
+    try:
+        chunks_collection.update_many(
+            {"doc_id": doc_id, "analysis_status": {"$in": ["pending", "Pending", "PENDING"]}},
+            {"$set": {"analysis_status": "Pending"}}
+        )
+    except Exception as e:
+        print(f"⚠️ Failed to normalize analysis_status for doc_id {doc_id}: {e}")
     result = books_collection.update_one(
         {"_id": ObjectId(doc_id)},  
         {"$set": {"status": "Processed"}}

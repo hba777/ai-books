@@ -12,6 +12,7 @@ from .text_classifier import classify_text
 from db.mongo import get_books_collection, get_chunks_collection
 from datetime import datetime
 from bson import ObjectId
+import asyncio
 
 def run_workflow(book_id: str):
     """
@@ -61,6 +62,14 @@ def run_workflow(book_id: str):
     })
 
     documents_to_process = list(documents_to_process)
+
+    # ✅ Notify frontend that analysis has begun with 0% progress
+    try:
+        from api.chunks.websocket import notify_analysis_progress
+        total_chunks = chunks_collection.count_documents({"doc_id": book_id})
+        asyncio.run(notify_analysis_progress(book_id, 0, total_chunks, 0))
+    except Exception as notify_err:
+        print(f"[Analysis WS] Failed to send initial analysis progress: {notify_err}")
 
     if documents_to_process:
         print(f"Found {len(documents_to_process)} PENDING chunks for book {book_id} to process.")

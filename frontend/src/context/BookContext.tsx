@@ -132,7 +132,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       
       setActiveClassifications(prev => [...prev, newClassification]);
-      
+
       // Connect to WebSocket for progress updates
       const ws = connectToProgressWebSocket(bookId, (progress: number, total?: number, done?: number, rawData?: any) => {
         setActiveClassifications(prev => 
@@ -144,20 +144,20 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         );
         
         // If progress is 100%, remove from active classifications after a delay
-        // if (progress === 100) {
-        //   fetchBooks()
-        //   setTimeout(() => {
-        //     setActiveClassifications(prev => 
-        //       prev.filter(classification => classification.book_id !== bookId)
-        //     );
-        //     // Close WebSocket connection
-        //     const wsToClose = websocketRefs.current.get(bookId);
-        //     if (wsToClose) {
-        //       wsToClose.close();
-        //       websocketRefs.current.delete(bookId);
-        //     }
-        //   }, 2000); // Remove after 2 seconds
-        // }
+        if (progress === 100) {
+          fetchBooks()
+          setTimeout(() => {
+            setActiveClassifications(prev => 
+              prev.filter(classification => classification.book_id !== bookId)
+            );
+            // Close WebSocket connection
+            const wsToClose = websocketRefs.current.get(bookId);
+            if (wsToClose) {
+              wsToClose.close();
+              websocketRefs.current.delete(bookId);
+            }
+          }, 2000); // Remove after 2 seconds
+        }
       });
       
       websocketRefs.current.set(bookId, ws);
@@ -308,7 +308,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       removeClassificationFromChunk: removeClassificationFromChunkHandler,
       jumpToClassificationCoordinates,
       updateClassificationFilter,
-      updateAnalysisFilters
+      updateAnalysisFilters,
     }}>
       {children}
     </BookContext.Provider>
