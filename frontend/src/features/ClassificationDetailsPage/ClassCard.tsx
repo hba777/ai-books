@@ -191,9 +191,15 @@ const ClassCard: React.FC<ClassCardProps> = ({
       setShowDeleteModal(false);
 
       // Adjust selected index if needed
-      setSelectedClassificationIndex((prevIndex) =>
-        prevIndex >= filteredEntries.length - 1 ? 0 : prevIndex
-      );
+      const newIndex = selectedClassificationIndex >= filteredEntries.length - 1 ? 0 : selectedClassificationIndex;
+      setSelectedClassificationIndex(newIndex);
+
+      // Jump to the next instance's coordinates if available
+      const remainingEntries = filteredEntries.filter((_, idx) => idx !== selectedClassificationIndex);
+      if (remainingEntries.length > 0) {
+        // Call handleNavigateClassification to jump to next instance
+        handleNavigateClassification("next");
+      }
     } catch (error) {
       toast.error("Failed to remove classification");
     } finally {

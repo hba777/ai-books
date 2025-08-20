@@ -5,8 +5,8 @@ import { useBooks } from "@/context/BookContext";
 const DashboardCardRow: React.FC = () => {
   const { books } = useBooks();
   const totalBooks = books.length;
-  // const totalProcessed = books.filter((book) => book.status === "Processed").length;
-  const totalClassified = books.filter((book) => book.status === "Classified").length;
+  const totalProcessed = books.filter((book) => book.status === "Processed").length;
+  // const totalClassified = books.filter((book) => book.status === "Classified").length;
   const totalPending = books.filter((book) => book.status === "Pending").length;
   const totalAssigned = books.filter((book) => book.status === "Assigned").length;
 
@@ -50,7 +50,7 @@ const DashboardCardRow: React.FC = () => {
         }
       />
       <DashboardStatCard
-        value={totalClassified}
+        value={totalProcessed}
         label="Total Classified"
         subtitle=""
         bgColor={["#22C55E", "#16A34A"]}

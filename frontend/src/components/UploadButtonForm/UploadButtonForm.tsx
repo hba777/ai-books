@@ -195,7 +195,7 @@ const UploadButtonForm: React.FC<{ open: boolean; onClose: () => void }> = ({
             ×
           </button>
         </div>
-        <div className="p-4 pt-2 overflow-y-auto max-h-[90vh] rounded-2xl ">
+        <div className="p-4 pt-2 overflow-y-auto max-h-[80vh] rounded-2xl ">
           {/* Drag-and-drop area */}
           {!selectedFile && (
             <div

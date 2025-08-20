@@ -4,10 +4,10 @@ import { useAgents } from "@/context/AgentsContext"; // <-- Import the hook
 interface AgentFormValues {
   agent_name: string;
   status: "Active" | "Disabled";
-  classifier_prompt: string;
+  content_indicators: string;
+  authorship_indicators: string;
   evaluators_prompt: string;
   agentId?: string; 
-
 }
 
 interface ClassificationAgentFormProps {
@@ -21,7 +21,8 @@ interface ClassificationAgentFormProps {
 const defaultValues: AgentFormValues = {
   agent_name: "",
   status: "Active",
-  classifier_prompt: "",
+  content_indicators: "",
+  authorship_indicators: "",
   evaluators_prompt: ""
 };
 
@@ -53,7 +54,10 @@ const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
           agent_name: values.agent_name,
           status: values.status === "Active",
           type: "classification",
-          classifier_prompt: values.classifier_prompt,
+          classifier_prompt: {
+            content_indicators: values.content_indicators,
+            authorship_indicators: values.authorship_indicators
+          },
           evaluators_prompt: values.evaluators_prompt
         });
       }
@@ -98,17 +102,36 @@ const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
           </div>
         </div>
       
-        <div className="flex flex-col gap-2">
-          <label className="font-semibold">Classifier Prompt</label>
-          <textarea
-            className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            name="classifier_prompt"
-            value={values.classifier_prompt}
-            onChange={handleChange}
-            rows={2}
-            required
-          />
+        <div className="flex flex-col gap-4">
+          <h3 className="font-semibold text-lg text-gray-700">Classifier Prompt</h3>
+          <div className="flex flex-col gap-2">
+            <label className="font-semibold">Content Indicators</label>
+            <textarea
+              className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              name="content_indicators"
+              value={values.content_indicators}
+              onChange={handleChange}
+              rows={3}
+              placeholder={`* Content Indicator 1 
+* Content Indicator 2`}
+              required
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="font-semibold">Authorship Indicators</label>
+            <textarea
+              className="border border-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              name="authorship_indicators"
+              value={values.authorship_indicators}
+              onChange={handleChange}
+              rows={3}
+              placeholder={`* Authorship Indicator 1 
+* Authorship Indicator 2`}
+              required
+            />
+          </div>
         </div>
+        
         <div className="flex flex-col gap-2">
           <label className="font-semibold">Evaluators Prompt</label>
           <textarea
@@ -117,6 +140,10 @@ const ClassificationAgentForm: React.FC<ClassificationAgentFormProps> = ({
             value={values.evaluators_prompt}
             onChange={handleChange}
             rows={2}
+            placeholder={`1. Evaluator Criteria 1:
+- Point 1 
+2. Evaluator Criteria 2:
+- Point 1`}
             required
           />
         </div>

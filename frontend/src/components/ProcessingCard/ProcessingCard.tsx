@@ -13,9 +13,15 @@ const ProcessingCard: React.FC = () => {
     <div className="space-y-4">
       {activeClassifications.map((classification) => {
         // Log for debugging
-        console.log('[ProcessingCard] Classification progress:', classification);
+        console.log(
+          "[ProcessingCard] Classification progress:",
+          classification
+        );
         return (
-          <div key={classification.book_id} className="flex items-center bg-white rounded-xl shadow p-5 min-w-[260px] gap-4">
+          <div
+            key={classification.book_id}
+            className="flex items-center bg-white rounded-xl shadow p-5 min-w-[260px] gap-4"
+          >
             {/* Icon placeholder */}
             <span className="w-10 h-10 rounded-full p-2 bg-[#f66e14] flex items-center justify-center mr-2">
               <svg
@@ -57,12 +63,15 @@ const ProcessingCard: React.FC = () => {
             </span>
             {/* Content */}
             <div className="flex-1">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-lg font-semibold text-gray-800">Classifying: {classification.book_name || 'Unknown Book'}</span>
+              <div className="flex items-center justify-between mb-2 gap-x-2">
+                <span className="text-lg font-semibold text-gray-800">
+                  Classifying: {classification.book_name || "Unknown Book"}
+                </span>
                 <span className="text-sm font-medium text-gray-600">
-                   {classification.progress}%
+                  {classification.progress}%
                 </span>
               </div>
+
               {/* Progress Bar */}
               <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
                 <div
@@ -71,11 +80,13 @@ const ProcessingCard: React.FC = () => {
                 ></div>
               </div>
               {/* Show done/total if available */}
-              {(typeof classification.done === 'number' && typeof classification.total === 'number') && (
-                <div className="text-xs text-gray-600 font-mono">
-                  {classification.done} / {classification.total} chunks processed
-                </div>
-              )}
+              {typeof classification.done === "number" &&
+                typeof classification.total === "number" && (
+                  <div className="text-xs text-gray-600 font-mono">
+                    {classification.done} / {classification.total} chunks
+                    processed
+                  </div>
+                )}
             </div>
           </div>
         );
@@ -83,26 +94,53 @@ const ProcessingCard: React.FC = () => {
 
       {activeAnalyses.map((analysis) => {
         return (
-          <div key={`analysis-${analysis.book_id}`} className="flex items-center bg-white rounded-xl shadow p-5 min-w-[260px] gap-4">
+          <div
+            key={`analysis-${analysis.book_id}`}
+            className="flex items-center bg-white rounded-xl shadow p-5 min-w-[260px] gap-4"
+          >
             <span className="w-10 h-10 rounded-full p-2 bg-[#3b82f6] flex items-center justify-center mr-2">
-              <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4 17h26" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                <path d="M17 4v26" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+              <svg
+                width="34"
+                height="34"
+                viewBox="0 0 34 34"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M4 17h26"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M17 4v26"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
               </svg>
             </span>
             <div className="flex-1">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-lg font-semibold text-gray-800">Analysing: {analysis.book_name || 'Unknown Book'}</span>
-                <span className="text-sm font-medium text-gray-600">{analysis.progress}%</span>
+              <div className="flex items-center justify-between mb-2 gap-x-2">
+                <span className="text-lg font-semibold text-gray-800">
+                  Analysing: {analysis.book_name || "Unknown Book"}
+                </span>
+                <span className="text-sm font-medium text-gray-600">
+                  {analysis.progress}%
+                </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                <div className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-out" style={{ width: `${analysis.progress}%` }}></div>
+                <div
+                  className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${analysis.progress}%` }}
+                ></div>
               </div>
-              {(typeof analysis.done === 'number' && typeof analysis.total === 'number') && (
-                <div className="text-xs text-gray-600 font-mono">
-                  {analysis.done} / {analysis.total} chunks analyzed
-                </div>
-              )}
+              {typeof analysis.done === "number" &&
+                typeof analysis.total === "number" && (
+                  <div className="text-xs text-gray-600 font-mono">
+                    {analysis.done} / {analysis.total} chunks analyzed
+                  </div>
+                )}
             </div>
           </div>
         );
