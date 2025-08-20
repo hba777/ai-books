@@ -209,22 +209,22 @@ const BookTableView: React.FC<BookTableViewProps> = ({
                 <button
                   onClick={(e) => openSidebarForBook(e, book._id)}
                   disabled={(() => {
-                    const canStart = !isAnyBookProcessing && book.status === "Pending";
-                    return !canStart;
+                    const canOpen = !isAnyBookProcessing && (book.status === "Pending" || book.status === "Classified" || book.status === "Analyzed");
+                    return !canOpen;
                   })()}
                   className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${(() => {
-                    const canStart = !isAnyBookProcessing && book.status === "Pending";
-                    return canStart ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed';
+                    const canOpen = (!isAnyBookProcessing && (book.status === "Pending" || book.status === "Classified" || book.status === "Analyzed"));
+                    return canOpen ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed';
                   })()}`}
                 >
-                  {book.status === "Pending"
-                    ? "Start Classification"
+                  {book.status === "Pending" || book.status === "Analyzed" || book.status === "Classified"
+                    ? "Start Processing"
                     : book.status === "Processing"
                       ? "Processing..."
                       : book.status === "Indexing"
                         ? "Indexing..."
                         : book.status === "Processed" || book.status === "Assigned"
-                          ? "Classified"
+                          ? "Processed"
                           : "Not Available"}
                 </button>
               </td>

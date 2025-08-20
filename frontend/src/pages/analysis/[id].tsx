@@ -20,7 +20,15 @@ const AnalysisDetails: React.FC = () => {
   const [tags, setTags] = useState<string[]>([]);
   const router = useRouter();
   const { id } = router.query;
-  const { getBookById, reviewOutcomes, fetchReviewOutcomes, getBookClassifications, updateReviewOutcome, deleteReviewOutcome, updateAnalysisFilters } = useBooks();
+  const {
+    getBookById,
+    reviewOutcomes,
+    fetchReviewOutcomes,
+    getBookClassifications,
+    updateReviewOutcome,
+    deleteReviewOutcome,
+    updateAnalysisFilters,
+  } = useBooks();
 
   useEffect(() => {
     if (!id) return;
@@ -84,20 +92,25 @@ const AnalysisDetails: React.FC = () => {
       .replace(/_/g, " ")
       .replace(/([a-z])([A-Z])/g, "$1 $2");
     const trimmed = withSpaces.trim();
-    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1) + (rawKey.endsWith("Review") ? " Review" : "");
+    return (
+      trimmed.charAt(0).toUpperCase() +
+      trimmed.slice(1) +
+      (rawKey.endsWith("Review") ? " Review" : "")
+    );
   };
 
   const availableReviewTypes = Array.from(
     new Set(
       bookReviewOutcomes.flatMap((row) =>
         Object.entries(row as Record<string, unknown>)
-          .filter(([k, v]) =>
-            v && typeof v === "object" && (
-              "problematic_text" in (v as Record<string, unknown>) ||
-              "confidence" in (v as Record<string, unknown>) ||
-              "issue_found" in (v as Record<string, unknown>) ||
-              "human_review" in (v as Record<string, unknown>)
-            )
+          .filter(
+            ([k, v]) =>
+              v &&
+              typeof v === "object" &&
+              ("problematic_text" in (v as Record<string, unknown>) ||
+                "confidence" in (v as Record<string, unknown>) ||
+                "issue_found" in (v as Record<string, unknown>) ||
+                "human_review" in (v as Record<string, unknown>))
           )
           .map(([k]) => k)
       )
@@ -111,42 +124,51 @@ const AnalysisDetails: React.FC = () => {
         <Header />
         <div className="flex-1 flex flex-col items-center px-4 py-12 w-full">
           <div className="w-full max-w-7xl">
-            <TopSection bookTitle={book.doc_name} tags={tags} bookId={book._id} onSeeInfo={()=>setShowSeeInfo(true)} />
+            <TopSection
+              bookTitle={book.doc_name}
+              tags={tags}
+              bookId={book._id}
+              onSeeInfo={() => setShowSeeInfo(true)}
+            />
             {book.status === "Processed" && (
-            <>
-              <ReviewFilters
-                minConfidence={minConfidence}
-                onMinConfidenceChange={setMinConfidence}
-                onlyHumanReviewed={onlyHumanReviewed}
-                onOnlyHumanReviewedChange={setOnlyHumanReviewed}
-                selectedReviewTypes={selectedReviewTypes}
-                onSelectedReviewTypesChange={setSelectedReviewTypes}
-                availableReviewTypes={availableReviewTypes}
-                onSaveAnalysisFilters={(filters) => updateAnalysisFilters(book._id, filters)}
-              />
+              <>
+                <ReviewFilters
+                  minConfidence={minConfidence}
+                  onMinConfidenceChange={setMinConfidence}
+                  onlyHumanReviewed={onlyHumanReviewed}
+                  onOnlyHumanReviewedChange={setOnlyHumanReviewed}
+                  selectedReviewTypes={selectedReviewTypes}
+                  onSelectedReviewTypesChange={setSelectedReviewTypes}
+                  availableReviewTypes={availableReviewTypes}
+                  onSaveAnalysisFilters={(filters) =>
+                    updateAnalysisFilters(book._id, filters)
+                  }
+                />
 
-              <AnalysisTable
-                data={bookReviewOutcomes}
-                pageSize={10}
-                minConfidence={minConfidence}
-                onlyHumanReviewed={onlyHumanReviewed}
-                selectedReviewTypes={selectedReviewTypes}
-                updateReviewOutcome={updateReviewOutcome}
-                deleteReviewOutcome={deleteReviewOutcome}
-                fetchReviewOutcomes={fetchReviewOutcomes}
-              />
-            </>
-          )}
+                <AnalysisTable
+                  data={bookReviewOutcomes}
+                  pageSize={10}
+                  minConfidence={minConfidence}
+                  onlyHumanReviewed={onlyHumanReviewed}
+                  selectedReviewTypes={selectedReviewTypes}
+                  updateReviewOutcome={updateReviewOutcome}
+                  deleteReviewOutcome={deleteReviewOutcome}
+                  fetchReviewOutcomes={fetchReviewOutcomes}
+                />
+              </>
+            )}
 
-          {book.status !== "Processed" && (
-            <div className="flex justify-center items-center h-40 text-xl font-semibold text-gray-500">
-              Analysis Pending
-            </div>
-          )}
+            {book.status !== "Processed" && book.status !== "Analyzed" && (
+              <div className="flex justify-center items-center h-40 text-xl font-semibold text-gray-500">
+                Analysis Pending
+              </div>
+            )}
           </div>
         </div>
       </main>
-      {showSeeInfo && <SeeInfo book={book} onClose={() => setShowSeeInfo(false)} />}
+      {showSeeInfo && (
+        <SeeInfo book={book} onClose={() => setShowSeeInfo(false)} />
+      )}
     </div>
   );
 };

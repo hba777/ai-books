@@ -24,6 +24,7 @@ class BookModel(BaseModel):
     author: Optional[str] = None
     date: Optional[str] = None
     status: Optional[str] = "Pending"
+    lastFinalStatus: Optional[str] = None
     category: Optional[str] = None
     reference: Optional[str] = None
     summary: Optional[str] = None

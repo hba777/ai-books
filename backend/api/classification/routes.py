@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
-from typing import Dict, Any
+from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Body
+from typing import Dict, Any, Optional
 from models.user import User
 from utils.jwt_utils import get_user_from_cookie
 from db.mongo import books_collection,get_agent_configs_collection, get_chunks_collection
@@ -11,7 +11,12 @@ import asyncio
 router = APIRouter(prefix="/classification", tags=["Classification"])
 
 @router.post("/{book_id}/start", dependencies=[Depends(get_user_from_cookie)])
-async def start_classification(book_id: str, background_tasks: BackgroundTasks) -> Dict[str, Any]:
+async def start_classification(
+    book_id: str, 
+    background_tasks: BackgroundTasks,
+    run_classification: bool = Body(True, embed=True),
+    run_analysis: bool = Body(True, embed=True)
+) -> Dict[str, Any]:
     try:
         # Validate book_id format
         if not ObjectId.is_valid(book_id):
@@ -34,17 +39,17 @@ async def start_classification(book_id: str, background_tasks: BackgroundTasks) 
             {"_id": 0, "agent_name": 1, "classifier_prompt": 1, "evaluators_prompt": 1}
         ))
 
-        background_tasks.add_task(supervisor_loop, book_id, agents)
+        background_tasks.add_task(supervisor_loop, book_id, agents, run_classification, run_analysis)
         
         return {
-            "message": "Classification started successfully",
+            "message": "Processing started successfully",
             "book_id": book_id,
             "status": "Processing",
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
         }
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error starting classification: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error starting processing: {str(e)}")
 
     
 @router.get("/classifications/{book_id}", dependencies=[Depends(get_user_from_cookie)])

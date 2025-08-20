@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { useBooks } from '../../../context/BookContext';
 
-type FilterStatus = 'All' | 'Unprocessed' | 'Pending' | 'Processed' | 'Assigned' | 'Processing';
+type FilterStatus = 'All' | 'Unprocessed' | 'Pending' | 'Processed' | 'Assigned' | 'Processing' | 'Analyzed';
 
 interface ClassificationContextType {
   currentFilter: FilterStatus;

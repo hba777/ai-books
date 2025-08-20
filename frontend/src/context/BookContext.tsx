@@ -41,7 +41,7 @@ interface BookContextType {
   assignSingleDepartment: (bookId: string, department: string) => Promise<void>;
   addFeedback: (bookId: string, department: string, comment?: string, image?: string) => Promise<void>;
   indexBook: (bookId: string) => Promise<void>;
-  startClassification: (bookId: string) => Promise<void>;
+  startClassification: (bookId: string, runClassification?: boolean, runAnalysis?: boolean) => Promise<void>;
   getBookNameById: (bookId: string) => string | undefined;
   reviewOutcomes: ReviewOutcomesResponse[];
   fetchReviewOutcomes: () => Promise<void>;
@@ -109,87 +109,91 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return book?.doc_name;
   };
 
-  const startClassification = async (bookId: string) => {
+  const startClassification = async (bookId: string, runClassification: boolean = true, runAnalysis: boolean = true) => {
     try {
-      await apiStartClassification(bookId);
+      await apiStartClassification(bookId, runClassification, runAnalysis);
       await fetchBooks(); // Refresh books to get updated data
       
-      // Add to active classifications
-      const bookName = getBookNameById(bookId);
-      const newClassification: ClassificationProgress = {
-        book_id: bookId,
-        progress: 0,
-        total: undefined,
-        done: undefined,
-        book_name: bookName
-      };
-      
-      setActiveClassifications(prev => [...prev, newClassification]);
-
-      // Connect to WebSocket for progress updates
-      const ws = connectToProgressWebSocket(bookId, (progress: number, total?: number, done?: number, rawData?: any) => {
-        setActiveClassifications(prev => 
-          prev.map(classification => 
-            classification.book_id === bookId 
-              ? { ...classification, progress, total, done }
-              : classification
-          )
-        );
+      // Add to active classifications if running classification
+      if (runClassification) {
+        const bookName = getBookNameById(bookId);
+        const newClassification: ClassificationProgress = {
+          book_id: bookId,
+          progress: 0,
+          total: undefined,
+          done: undefined,
+          book_name: bookName
+        };
         
-        // If progress is 100%, remove from active classifications after a delay
-        if (progress === 100) {
-          fetchBooks()
-          setTimeout(() => {
-            setActiveClassifications(prev => 
-              prev.filter(classification => classification.book_id !== bookId)
-            );
-            // Close WebSocket connection
-            const wsToClose = websocketRefs.current.get(bookId);
-            if (wsToClose) {
-              wsToClose.close();
-              websocketRefs.current.delete(bookId);
-            }
-          }, 2000); // Remove after 2 seconds
-        }
-      });
-      
-      websocketRefs.current.set(bookId, ws);
+        setActiveClassifications(prev => [...prev, newClassification]);
 
-      // Also connect to Analysis progress for the same book
-      const analysisWs = connectToAnalysisProgressWebSocket(bookId, (progress: number, total?: number, done?: number) => {
-        setActiveAnalyses(prev => {
-          const bookName = getBookNameById(bookId);
-          const existing = prev.find(a => a.book_id === bookId);
-          const updated = { book_id: bookId, progress, total, done, book_name: bookName } as AnalysisProgress;
-          if (existing) {
-            return prev.map(a => a.book_id === bookId ? updated : a);
+        // Connect to WebSocket for progress updates
+        const ws = connectToProgressWebSocket(bookId, (progress: number, total?: number, done?: number, rawData?: any) => {
+          setActiveClassifications(prev => 
+            prev.map(classification => 
+              classification.book_id === bookId 
+                ? { ...classification, progress, total, done }
+                : classification
+            )
+          );
+          
+          // If progress is 100%, remove from active classifications after a delay
+          if (progress === 100) {
+            fetchBooks()
+            setTimeout(() => {
+              setActiveClassifications(prev => 
+                prev.filter(classification => classification.book_id !== bookId)
+              );
+              // Close WebSocket connection
+              const wsToClose = websocketRefs.current.get(bookId);
+              if (wsToClose) {
+                wsToClose.close();
+                websocketRefs.current.delete(bookId);
+              }
+            }, 2000); // Remove after 2 seconds
           }
-          return [...prev, updated];
         });
-        if (progress === 100) {
-          fetchBooks()
-          setTimeout(() => {
-            setActiveClassifications(prev => 
-              prev.filter(classification => classification.book_id !== bookId)
-            );
-            // Close WebSocket connection
-            const wsToClose = websocketRefs.current.get(bookId);
-            if (wsToClose) {
-              wsToClose.close();
-              websocketRefs.current.delete(bookId);
+        
+        websocketRefs.current.set(bookId, ws);
+      }
+
+      // Connect to Analysis progress if running analysis
+      if (runAnalysis) {
+        const analysisWs = connectToAnalysisProgressWebSocket(bookId, (progress: number, total?: number, done?: number) => {
+          setActiveAnalyses(prev => {
+            const bookName = getBookNameById(bookId);
+            const existing = prev.find(a => a.book_id === bookId);
+            const updated = { book_id: bookId, progress, total, done, book_name: bookName } as AnalysisProgress;
+            if (existing) {
+              return prev.map(a => a.book_id === bookId ? updated : a);
             }
-          }, 2000); // Remove after 2 seconds
-          setTimeout(() => {
-            setActiveAnalyses(prev => prev.filter(a => a.book_id !== bookId));
-            const wsToClose = websocketRefs.current.get(`${bookId}-analysis`);
-            if (wsToClose) {
-              wsToClose.close();
-              websocketRefs.current.delete(`${bookId}-analysis`);
-            }
-          }, 2000);
-        }
-      });
-      websocketRefs.current.set(`${bookId}-analysis`, analysisWs);
+            return [...prev, updated];
+          });
+          if (progress === 100) {
+            fetchBooks()
+            setTimeout(() => {
+              setActiveClassifications(prev => 
+                prev.filter(classification => classification.book_id !== bookId)
+              );
+              // Close WebSocket connection
+              const wsToClose = websocketRefs.current.get(bookId);
+              if (wsToClose) {
+                wsToClose.close();
+                websocketRefs.current.delete(bookId);
+              }
+            }, 2000); // Remove after 2 seconds
+            setTimeout(() => {
+              setActiveAnalyses(prev => prev.filter(a => a.book_id !== bookId));
+              const wsToClose = websocketRefs.current.get(`${bookId}-analysis`);
+              if (wsToClose) {
+                wsToClose.close();
+                websocketRefs.current.delete(`${bookId}-analysis`);
+              }
+            }, 2000);
+          }
+        });
+        websocketRefs.current.set(`${bookId}-analysis`, analysisWs);
+      }
       
     } catch (error) {
       console.error('Error starting classification:', error);

@@ -22,6 +22,7 @@ const defaultFilterOptions: FilterOption[] = [
   { value: "Processing", label: "Currently Processing" },
   { value: "Pending", label: "Pending Books" },
   { value: "Assigned", label: "Assigned" },
+  { value: "Analyzed", label: "Analyzed" },
 ];
 
 
@@ -31,6 +32,7 @@ const statusColors: Record<string, string> = {
   Assigned: "bg-blue-50 text-blue-600 border border-blue-200",
   Pending: "bg-orange-50 text-orange-600 border border-orange-200",
   Processing: "bg-purple-50 text-purple-600 border border-purple-200",
+  Analyzed: "bg-yellow-50 text-yellow-600 border border-yellow-200"
 };
 
 const viewOptions = [

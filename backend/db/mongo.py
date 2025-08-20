@@ -1,6 +1,8 @@
 from pymongo import MongoClient
 import gridfs
 import os
+from datetime import datetime 
+from bson import ObjectId
 
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
 
@@ -53,3 +55,36 @@ def set_all_agents_status_true():
         {"$set": {"status": True}}
     )
     return {"matched": result.matched_count, "modified": result.modified_count}
+
+
+def finalize_status(book_id: str, new_status: str):
+    if ObjectId.is_valid(book_id):
+        filter_query = {"_id": ObjectId(book_id)}
+    else:
+        filter_query = {"doc_id": book_id}
+
+    book = books_collection.find_one(filter_query, {"status": 1, "lastFinalStatus": 1})
+    if not book:
+        return None  
+
+    last_final_status = book.get("lastFinalStatus")
+
+    # If moving from Classified <-> Analyzed OR if last final status was the other one
+    if ((last_final_status == "Classified" and new_status == "Analyzed") or
+        (last_final_status == "Analyzed" and new_status == "Classified")):
+        return books_collection.update_one(
+            filter_query,
+            {"$set": {
+                "status": "Processed",
+                "lastFinalStatus": "Processed",
+                "endDate": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }}
+        )
+    else:
+        return books_collection.update_one(
+            filter_query,
+            {"$set": {
+                "status": new_status,
+                "lastFinalStatus": new_status
+            }}
+        )

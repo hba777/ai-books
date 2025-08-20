@@ -8,6 +8,7 @@ export interface Book {
   category: string;
   reference: string;
   status: string;
+  lastFinalstatus?: string;
   summary: string;
   labels?: string[] | null;    
   startDate?: string | null; 
@@ -247,8 +248,11 @@ export async function indexBook(bookId: string): Promise<{ message: string; inde
 }
 
 // Start classification for a book
-export async function startClassification(bookId: string): Promise<{ message: string; book_id: string; status: string; timestamp: string }> {
-  const res = await api.post<{ message: string; book_id: string; status: string; timestamp: string }>(`/classification/${bookId}/start`);
+export async function startClassification(bookId: string, runClassification: boolean = true, runAnalysis: boolean = true): Promise<{ message: string; book_id: string; status: string; timestamp: string }> {
+  const res = await api.post<{ message: string; book_id: string; status: string; timestamp: string }>(`/classification/${bookId}/start`, {
+    run_classification: runClassification,
+    run_analysis: runAnalysis
+  });
   return res.data;
 }
 

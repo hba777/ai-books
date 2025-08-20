@@ -10,14 +10,41 @@ interface AgentsSideBarProps {
   onClose: () => void;
 }
 
+type ProcessingMode = "classification" | "analysis" | "both";
+
 const AgentsSideBar: React.FC<AgentsSideBarProps> = ({
   open,
   bookId,
   onClose,
 }) => {
   const { agents, powerToggleAgent, updateAgentConfidenceScore } = useAgents();
-  const { startClassification } = useBooks();
+  const { startClassification, books } = useBooks();
   const [starting, setStarting] = useState<boolean>(false);
+  const [processingMode, setProcessingMode] = useState<ProcessingMode>("both");
+
+  // Get current book status
+  const currentBook = books.find((book: any) => book._id === bookId);
+  const bookStatus = currentBook?.status || "";
+
+  // Determine which options should be disabled based on book status
+  const isClassificationDisabled = bookStatus === "Classified"; // only disable classification when Classified
+  const isAnalysisDisabled = bookStatus === "Analyzed"; // only disable analysis when Analyzed
+  const isBothDisabled = bookStatus === "Classified" || bookStatus === "Analyzed"; // both disabled if either completed
+
+  // Ensure a valid selection if current selection becomes disabled
+  React.useEffect(() => {
+    if (processingMode === "both" && isBothDisabled) {
+      if (!isClassificationDisabled) {
+        setProcessingMode("classification");
+      } else if (!isAnalysisDisabled) {
+        setProcessingMode("analysis");
+      }
+    } else if (processingMode === "classification" && isClassificationDisabled) {
+      if (!isAnalysisDisabled) setProcessingMode("analysis");
+    } else if (processingMode === "analysis" && isAnalysisDisabled) {
+      if (!isClassificationDisabled) setProcessingMode("classification");
+    }
+  }, [processingMode, isBothDisabled, isClassificationDisabled, isAnalysisDisabled]);
 
   const { classificationAgents, analysisAgents } = useMemo(() => {
     const classificationAgents = agents.filter(
@@ -43,11 +70,14 @@ const AgentsSideBar: React.FC<AgentsSideBarProps> = ({
     if (!bookId) return;
     setStarting(true);
     try {
-      await startClassification(bookId);
-      toast.success("Classification started");
+      const runClassification = processingMode === "classification" || processingMode === "both";
+      const runAnalysis = processingMode === "analysis" || processingMode === "both";
+      console.log(runClassification, runAnalysis)
+      await startClassification(bookId, runClassification, runAnalysis);
+      toast.success(`${processingMode === "both" ? "Classification and Analysis" : processingMode === "classification" ? "Classification" : "Analysis"} started`);
       onClose();
     } catch (e) {
-      toast.error("Failed to start classification");
+      toast.error("Failed to start processing");
     } finally {
       setStarting(false);
     }
@@ -90,7 +120,78 @@ const AgentsSideBar: React.FC<AgentsSideBarProps> = ({
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto h-[calc(100%-140px)] p-5 space-y-6">
+        <div className="overflow-y-auto h-[calc(100%-200px)] p-5 space-y-6">
+          {/* Book Status */}
+          {bookStatus && (
+            <div>
+              <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                Current Status
+              </div>
+              <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                bookStatus === "Classified" ? "bg-green-100 text-green-800" :
+                bookStatus === "Analyzed" ? "bg-blue-100 text-blue-800" :
+                bookStatus === "Processing" ? "bg-yellow-100 text-yellow-800" :
+                "bg-gray-100 text-gray-800"
+              }`}>
+                {bookStatus}
+              </div>
+            </div>
+          )}
+
+          {/* Processing Mode Selection */}
+          <div>
+            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+              Processing Mode
+            </div>
+            <div className="space-y-2">
+              <label className={`flex items-center space-x-2 ${isBothDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
+                <input
+                  type="radio"
+                  name="processingMode"
+                  value="both"
+                  checked={processingMode === "both"}
+                  onChange={(e) => setProcessingMode(e.target.value as ProcessingMode)}
+                  className="text-blue-600 focus:ring-blue-500"
+                  disabled={isBothDisabled}
+                />
+                <span className={`text-sm ${isBothDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
+                  Classification & Analysis
+                  {isBothDisabled && <span className="text-xs text-red-500 ml-1">(Already completed)</span>}
+                </span>
+              </label>
+              <label className={`flex items-center space-x-2 ${isClassificationDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
+                <input
+                  type="radio"
+                  name="processingMode"
+                  value="classification"
+                  checked={processingMode === "classification"}
+                  onChange={(e) => setProcessingMode(e.target.value as ProcessingMode)}
+                  className="text-blue-600 focus:ring-blue-500"
+                  disabled={isClassificationDisabled}
+                />
+                <span className={`text-sm ${isClassificationDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
+                  Classification Only
+                  {isClassificationDisabled && <span className="text-xs text-red-500 ml-1">(Already completed)</span>}
+                </span>
+              </label>
+              <label className={`flex items-center space-x-2 ${isAnalysisDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
+                <input
+                  type="radio"
+                  name="processingMode"
+                  value="analysis"
+                  checked={processingMode === "analysis"}
+                  onChange={(e) => setProcessingMode(e.target.value as ProcessingMode)}
+                  className="text-blue-600 focus:ring-blue-500"
+                  disabled={isAnalysisDisabled}
+                />
+                <span className={`text-sm ${isAnalysisDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
+                  Analysis Only
+                  {isAnalysisDisabled && <span className="text-xs text-red-500 ml-1">(Already completed)</span>}
+                </span>
+              </label>
+            </div>
+          </div>
+
           {/* Classification Agents */}
           <div>
             <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
@@ -273,10 +374,16 @@ const AgentsSideBar: React.FC<AgentsSideBarProps> = ({
         <div className="p-4 border-t">
           <button
             onClick={handleStart}
-            disabled={starting || !bookId}
+            disabled={
+              starting ||
+              !bookId ||
+              (processingMode === "both" && isBothDisabled) ||
+              (processingMode === "classification" && isClassificationDisabled) ||
+              (processingMode === "analysis" && isAnalysisDisabled)
+            }
             className="w-full px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-50"
           >
-            {starting ? "Starting..." : "Start Processing"}
+            {starting ? "Starting..." : `Start ${processingMode === "both" ? "Processing" : processingMode === "classification" ? "Classification" : "Analysis"}`}
           </button>
         </div>
       </div>
