@@ -51,13 +51,26 @@ def log_previous_agent_data(agent: Dict[str, Any], agent_id: str):
         if agent.get("guidelines"):
             f.write(f"\n--- Guidelines ---\n{agent['guidelines']}\n")
 
+        # handle classifier_prompt as object
+        classifier_prompt = agent.get("classifier_prompt")
+        if classifier_prompt:
+            f.write(f"\n--- Classifier Prompt ---\n")
+            if isinstance(classifier_prompt, dict):
+                if classifier_prompt.get("content_indicators"):
+                    f.write("\nContent Indicators:\n")
+                    f.write(format_prompt(classifier_prompt["content_indicators"]) + "\n")
+                if classifier_prompt.get("authorship_indicators"):
+                    f.write("\nAuthorship Indicators:\n")
+                    f.write(format_prompt(classifier_prompt["authorship_indicators"]) + "\n")
+            else:
+                # fallback: treat as plain text if it comes in string format
+                f.write(format_prompt(str(classifier_prompt)) + "\n")
+
         if agent.get("evaluators_prompt"):
             f.write(f"\n--- Evaluator Prompt ---\n")
             f.write(format_prompt(agent["evaluators_prompt"]) + "\n")
 
-        if agent.get("classifier_prompt"):
-            f.write(f"\n--- Classifier Prompt ---\n")
-            f.write(format_prompt(agent["classifier_prompt"]) + "\n")
+
 
         if agent_type == "analysis":
             kb_items = agent.get("knowledge_base", [])

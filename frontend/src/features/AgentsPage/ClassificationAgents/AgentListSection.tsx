@@ -205,7 +205,8 @@ const AgentListSection: React.FC<AgentListSectionProps> = ({
           mode="edit"
           initialValues={
             { ...editingAgent,
-               classifier_prompt: editingAgent.classifier_prompt ?? "",
+               content_indicators: editingAgent.classifier_prompt?.content_indicators ?? "",
+               authorship_indicators: editingAgent.classifier_prompt?.authorship_indicators ?? "",
                evaluators_prompt: editingAgent.evaluators_prompt ?? "",
                status: editingAgent?.status === false ? "Disabled" : "Active" }}
           agentId={editingAgent._id}

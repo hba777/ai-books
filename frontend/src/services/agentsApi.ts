@@ -8,15 +8,20 @@ export interface KnowledgeBaseItem {
   topic: string;
 }
 
+export interface ClassifierConfig {
+  content_indicators: string;  // if you switch to List[str] in backend, make this string[]
+  authorship_indicators: string;
+}
+
 export interface Agent {
   _id: string;
   agent_name: string;
-  type: string;
+  type: "classification" | "analysis";  // matches Literal in backend
   criteria?: string | null;
   guidelines?: string | null;
   status?: boolean;
   evaluators_prompt?: string | null;
-  classifier_prompt?: string | null;
+  classifier_prompt?: ClassifierConfig | null; // changed from string to object
   knowledge_base?: KnowledgeBaseItem[] | null;
   confidence_score?: number;
 }

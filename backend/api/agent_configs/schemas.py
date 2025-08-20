@@ -12,6 +12,10 @@ class KnowledgeBaseItemResponse(BaseModel):
     class Config:
         populate_by_name = True
 
+class ClassifierConfig(BaseModel):
+    content_indicators: str
+    authorship_indicators: str
+    
 class AgentConfigResponse(BaseModel):
     id: str = Field(..., alias="_id")
     agent_name: str
@@ -20,7 +24,7 @@ class AgentConfigResponse(BaseModel):
     guidelines: Optional[str] = None
     status: Optional[bool] = False
     evaluators_prompt: Optional[str] = None
-    classifier_prompt: Optional[str] = None
+    classifier_prompt: Optional[ClassifierConfig] = None
     confidence_score: Optional[int] = None
     knowledge_base: Optional[List[KnowledgeBaseItemResponse]] = None
 

@@ -362,23 +362,37 @@ def load_agents_from_mongo(llm_model: ChatGroq, eval_llm_model: ChatGroq):
     """
     Loads agent configurations (name, criteria, guidelines) from a MongoDB collection
     and registers them as review agents.
+    Only agents with status=True and type="analysis" are retrieved.
     """
     try:
         collection = get_agent_configs_collection()
 
-        rows = collection.find({"status": True})
+        # ✅ Retrieve only agents with active status and type = analysis
+        rows = collection.find({"status": True, "type": "analysis"})
 
         for doc in rows:
             agent_name = doc.get("agent_name")
             criteria = doc.get("criteria")
             guidelines = doc.get("guidelines")
-            confidence_score = doc.get("confidence_score") # --- MODIFICATION ---
+            confidence_score = doc.get("confidence_score")
 
-            if agent_name and criteria and guidelines and confidence_score is not None: # --- MODIFICATION ---
-                agent = create_review_agent(agent_name, criteria, guidelines, confidence_score, llm_model, eval_llm_model) # --- MODIFICATION ---
+            if agent_name and criteria and guidelines and confidence_score is not None:
+                agent = create_review_agent(
+                    agent_name,
+                    criteria,
+                    guidelines,
+                    confidence_score,
+                    llm_model,
+                    eval_llm_model
+                )
                 register_agent(agent_name, agent)
-                print(f"Agent '{agent_name}' loaded from MongoDB with confidence score: {confidence_score}.") # --- MODIFICATION ---
+                print(
+                    f"✅ Agent '{agent_name}' loaded from MongoDB with confidence score: {confidence_score}."
+                )
             else:
-                print(f"Error: Missing 'criteria', 'guidelines' or 'confidence_score' for agent '{agent_name}' in MongoDB document: {doc}") # --- MODIFICATION ---
+                print(
+                    f"⚠️ Error: Missing 'criteria', 'guidelines' or 'confidence_score' "
+                    f"for agent '{agent_name}' in MongoDB document: {doc}"
+                )
     except Exception as e:
-        print(f"An unexpected error occurred during agent loading: {e}")
+        print(f"❌ An unexpected error occurred during agent loading: {e}")
