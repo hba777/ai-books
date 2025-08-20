@@ -9,18 +9,20 @@ from .workflow_nodes import main_node, final_report_generator
 from .pdf_processor import get_first_pipeline1_chunk, get_all_pipeline1_chunks_details, get_next_pending_pipeline1_chunk, get_all_pending_pipeline1_chunks_details
 from .database_saver import save_results_to_mongo, clear_results_collection, update_chunk_analysis_status
 from .text_classifier import classify_text
-from db.mongo import get_books_collection, get_chunks_collection
+from db.mongo import get_books_collection, get_chunks_collection, set_all_agents_status_true, finalize_status
 from datetime import datetime
 from bson import ObjectId
 import asyncio
 import time 
 
-def run_workflow(book_id: str):
+def run_workflow(book_id: str, run_analysis: bool, run_classification: bool):
     """
     Run workflow for a specific book by its book_id.
     Loads agents, builds the graph, and processes all pending chunks
     that belong to the specified book.
     """
+    
+        
     # Load agents dynamically from MongoDB
     print("Loading agents from MongoDB...")
     load_agents_from_mongo(llm, eval_llm)
@@ -187,13 +189,24 @@ def run_workflow(book_id: str):
             print("Full Result Dictionary (for debugging):\n")
             print(result_with_review)
             print("-" * 40)
-
-        # ✅ Update endDate for the book
-        books_collection = get_books_collection()
-        books_collection.update_one(
+        
+        
+        if run_classification and run_analysis:
+            books_collection = get_books_collection()
+            books_collection.update_one(
             {"doc_id": book_id},
-            {"$set": {"endDate":  time.strftime("%Y-%m-%d %H:%M:%S")}}
+            {
+                "$set": {
+                    "status": "Processed",
+                    "endDate": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
+            }
         )
+        elif(run_analysis):
+            finalize_status(book_id, "Analyzed")
+            set_all_agents_status_true() # Call this at end of run workflow
+    
+        
 
     else:
         print(f"No PENDING chunks found for book_id={book_id}. All chunks might be processed, or none were pending.")

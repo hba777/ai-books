@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { useBooks } from "../../context/BookContext";
-import { toast } from "react-toastify"
-import { useClassificationContext } from '../../features/ClassificationPage/ClassificationCardRow/ClassificationContext';
+import { toast } from "react-toastify";
+import { useClassificationContext } from "../../features/ClassificationPage/ClassificationCardRow/ClassificationContext";
 import AgentsSideBar from "../../features/ClassificationPage/AgentsSideBar.";
-
 
 interface Book {
   _id: string;
@@ -25,7 +24,10 @@ interface BookGridViewProps {
   books: Book[];
 }
 
-const statusStyles: Record<string, { border: string; bar: string; text: string }> = {
+const statusStyles: Record<
+  string,
+  { border: string; bar: string; text: string }
+> = {
   Unprocessed: {
     border: "border-gray-400",
     bar: "bg-gray-500",
@@ -51,6 +53,16 @@ const statusStyles: Record<string, { border: string; bar: string; text: string }
     bar: "bg-orange-500",
     text: "text-orange-600",
   },
+  Classified: {
+    border: "border-indigo-400",
+    bar: "bg-indigo-500",
+    text: "text-indigo-600",
+  },
+  Analyzed: {
+    border: "border-teal-400",
+    bar: "bg-teal-500",
+    text: "text-teal-600",
+  },
 };
 
 const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
@@ -62,7 +74,9 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
   const [sidebarBookId, setSidebarBookId] = useState<string | null>(null);
 
   const handleBookClick = (id: string) => {
-    const basePath = router.pathname.startsWith('/analysis') ? '/analysis' : '/classification';
+    const basePath = router.pathname.startsWith("/analysis")
+      ? "/analysis"
+      : "/classification";
     router.push(`${basePath}/${id}`);
   };
 
@@ -72,11 +86,6 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
     setSidebarOpen(true);
   };
 
-  const handleStartClassification = async (e: React.MouseEvent, bookId: string) => {
-    e.stopPropagation();
-    setSidebarBookId(bookId);
-    setSidebarOpen(true);
-  };
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
       {books.map((book, idx) => {
@@ -86,14 +95,18 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
           typeof book.percent === "number"
             ? book.percent
             : book.status === "Processed"
-              ? 100
-              : book.status === "Processing"
-                ? 50
-              : book.status === "Assigned"
-                ? 100
-                : book.status === "Pending"
-                  ? 0
-                  : 0;
+            ? 100
+            : book.status === "Processing"
+            ? 50
+            : book.status === "Classified"
+            ? 70
+            : book.status === "Analyzed"
+            ? 70
+            : book.status === "Assigned"
+            ? 100
+            : book.status === "Pending"
+            ? 0
+            : 0;
         return (
           <div
             key={book._id}
@@ -101,33 +114,41 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
             className={`relative bg-white rounded-2xl shadow p-6 min-w-[320px] max-w-[380px] mx-auto cursor-pointer`}
           >
             {/* Colored top border */}
-            <div className={`absolute top-0 left-0 w-full h-1.5 rounded-t-2xl ${style.bar}`} />
+            <div
+              className={`absolute top-0 left-0 w-full h-1.5 rounded-t-2xl ${style.bar}`}
+            />
             {/* Book image placeholder */}
             <div className="flex justify-center mb-4">
               <div className="w-28 h-36 bg-gray-100 rounded shadow-inner" />
             </div>
             <div className="flex items-center justify-between mb-2">
-              <div className="font-bold text-lg text-gray-900">{book.doc_name}</div>
-              <div className="flex items:center gap-2">                <button
+              <div className="font-bold text-lg text-gray-900">
+                {book.doc_name}
+              </div>
+              <div className="flex items:center gap-2">
+                {" "}
+                <button
                   onClick={(e) => openSidebarForBook(e, book._id)}
                   disabled={(() => {
-                    const canStart = !isAnyBookProcessing && book.status === "Pending";
-                    return !canStart;
+                    const canOpen = !isAnyBookProcessing && (book.status === "Pending" || book.status === "Classified" || book.status === "Analyzed");
+                    return !canOpen;
                   })()}
-                    className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${(() => {
-                      const canStart = !isAnyBookProcessing && book.status === "Pending";
-                      return canStart ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed';
-                    })()}`}
-                    >
-                  {book.status === "Pending"
-                    ? "Start Classification"
+                  className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${(() => {
+                    const canOpen = (!isAnyBookProcessing && (book.status === "Pending" || book.status === "Classified" || book.status === "Analyzed"));
+                    return canOpen
+                      ? "bg-blue-500 text-white hover:bg-blue-600"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed";
+                  })()}`}
+                >
+                  {book.status === "Pending" || book.status === "Classified" || book.status === "Analyzed"
+                    ? "Start Processing"
                     : book.status === "Processing"
-                      ? "Processing..."
-                      : book.status === "Indexing"
-                        ? "Indexing..."
-                        : book.status === "Processed" || book.status === "Assigned"
-                          ? "Classified"
-                          : "Not Available"}
+                    ? "Processing..."
+                    : book.status === "Indexing"
+                    ? "Indexing..."
+                    : book.status === "Processed" || book.status === "Assigned"
+                    ? "Processed"
+                    : "Not Available"}
                 </button>
                 {/* <button className="text-gray-400 hover:text-gray-600 p-1 rounded-full">
                   <span className="text-2xl">&#8942;</span>
@@ -152,25 +173,44 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
                   ? "Process Completed"
                   : book.status}
               </span>
-              <span className="text-xs text-gray-500 font-bold">{percent}%</span>
+              <span className="text-xs text-gray-500 font-bold">
+                {percent}%
+              </span>
             </div>
             <div className="flex items-center justify-between mb-2">
-              <div className="font-bold text-lg text-gray-900">{book.doc_name}</div>
+              <div className="font-bold text-lg text-gray-900">
+                {book.doc_name}
+              </div>
               <button
                 title="Index"
-                onClick={e => {
+                onClick={(e) => {
                   e.stopPropagation();
                   indexBook(book._id);
-                  toast.success("Indexing Started")
+                  toast.success("Indexing Started");
                 }}
-                disabled={isAnyBookProcessing || book.status === "Pending" || book.status === "Processed" || book.status === "Assigned"}
+                disabled={
+                  isAnyBookProcessing ||
+                  book.status === "Pending" ||
+                  book.status === "Processed" ||
+                  book.status === "Assigned"
+                }
                 className={`p-1 rounded-full ${
-                  isAnyBookProcessing || book.status === "Pending" || book.status === "Processed" || book.status === "Assigned"
-                    ? 'text-gray-400 cursor-not-allowed'
-                    : 'text-blue-500 hover:text-blue-700'
+                  isAnyBookProcessing ||
+                  book.status === "Pending" ||
+                  book.status === "Processed" ||
+                  book.status === "Assigned"
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-blue-500 hover:text-blue-700"
                 }`}
               >
-                <svg width="20" height="20" fill="none" stroke="currentColor"><path d="M5 13l4 4L19 7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                <svg width="20" height="20" fill="none" stroke="currentColor">
+                  <path
+                    d="M5 13l4 4L19 7"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </button>
             </div>
             <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -184,9 +224,13 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
       })}
 
       {/* Sidebar */}
-      <AgentsSideBar open={sidebarOpen} bookId={sidebarBookId || ""} onClose={() => setSidebarOpen(false)} />
+      <AgentsSideBar
+        open={sidebarOpen}
+        bookId={sidebarBookId || ""}
+        onClose={() => setSidebarOpen(false)}
+      />
     </div>
   );
 };
 
-export default BookGridView; 
+export default BookGridView;

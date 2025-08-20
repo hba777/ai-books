@@ -9,7 +9,8 @@ from bson import ObjectId
 from db.mongo import (
     get_books_collection,
     get_chunks_collection,
-    set_all_agents_status_true
+    set_all_agents_status_true,
+    finalize_status
 )
 
 from Analysis.mains1 import run_workflow
@@ -215,11 +216,11 @@ def extract_summary_for_pdf(doc_id):
         "class_counts": class_counts
     }
 
-def mark_document_done(doc_id):
+def mark_document_done(doc_id, run_classification:bool ,run_analysis=True):
     """Update the status of a document to 'Processed' regardless of current status."""
     books_collection = get_books_collection()
     chunks_collection = get_chunks_collection()
-    # Ensure analysis_status is standardized to 'Pending' for this document before running workflow
+
     try:
         chunks_collection.update_many(
             {"doc_id": doc_id, "analysis_status": {"$in": ["pending", "Pending", "PENDING"]}},
@@ -227,12 +228,10 @@ def mark_document_done(doc_id):
         )
     except Exception as e:
         print(f"⚠️ Failed to normalize analysis_status for doc_id {doc_id}: {e}")
-    result = books_collection.update_one(
-        {"_id": ObjectId(doc_id)},  
-        {"$set": {"status": "Processed"}}
-    )
-    if result.matched_count == 0:
-        print(f"⚠️ Document with id {doc_id} not found.")
+
+    if run_classification and not run_analysis:
+        finalize_status(book_id=doc_id,new_status= "Classified")
+        
 
     """Add Classification labels to the book"""    
     chunks = chunks_collection.find({"doc_id": doc_id}, {"classification": 1})
@@ -251,13 +250,16 @@ def mark_document_done(doc_id):
         {"$set": {"labels": list(unique_labels)}}
     )
 
-    run_workflow(book_id=doc_id)
+    # Only run workflow if analysis is requested
+    if run_analysis:
+        run_workflow(book_id=doc_id, run_analysis=run_analysis, run_classification=run_classification)
 
     set_all_agents_status_true() # Call this at end of run workflow
 
     print("\n####################")
     print("Document Marked Processed")
     print("Labels updated:", list(unique_labels))
+    print("Analysis run:", run_analysis)
     print("####################\n")
     print("\n####################\nDocument Marked Processed\n####################\n")
 

@@ -37,6 +37,7 @@ class BookResponse(BaseModel):
     author: str
     date: str
     status: str = "Pending"
+    lastFinalStatus: Optional[str] = None
     category: str
     reference: str
     summary: str
