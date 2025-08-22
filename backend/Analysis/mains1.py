@@ -14,8 +14,61 @@ from datetime import datetime
 from bson import ObjectId
 import asyncio
 import time 
+import fitz
 
-def run_workflow(book_id: str, run_analysis: bool, run_classification: bool):
+
+def find_text_coordinates_in_pdf(pdf_path: str, search_text: str):
+    """
+    Searches for a text string in a PDF, handling multi-line and single-line cases.
+    Returns a list of dictionaries, each containing page number and bbox.
+    """
+    if not search_text:
+        return []
+
+    cleaned_search_text = " ".join(search_text.split())
+    search_words = cleaned_search_text.split()
+    
+    coordinates_list = []
+    
+    try:
+        doc = fitz.open(pdf_path)
+        for page_num in range(len(doc)):
+            page = doc[page_num]
+            
+            # Use `get_text("words")` to get a list of all words and their bboxes on the page
+            words_on_page = page.get_text("words")
+            
+            # Create a list of tuples: (word, bbox)
+            word_bboxes = [(word[4], fitz.Rect(word[:4])) for word in words_on_page]
+            
+            # Simple word-based matching
+            for i in range(len(word_bboxes) - len(search_words) + 1):
+                # Check if the sequence of words matches
+                match = True
+                for j in range(len(search_words)):
+                    if search_words[j] != word_bboxes[i+j][0]:
+                        match = False
+                        break
+                
+                if match:
+                    # Found a match, merge the bboxes
+                    combined_bbox = word_bboxes[i][1]
+                    for j in range(1, len(search_words)):
+                        combined_bbox.include_rect(word_bboxes[i+j][1])
+                    
+                    coordinates_list.append({
+                        "page": page_num + 1,
+                        "bbox": [combined_bbox.x0, combined_bbox.y0, combined_bbox.x1, combined_bbox.y1]
+                    })
+            
+        doc.close()
+    except Exception as e:
+        print(f"Error finding coordinates in PDF: {e}")
+        return []
+    
+    return coordinates_list
+
+def run_workflow(book_id: str, run_analysis: bool, run_classification: bool, pdf_path: str):
     """
     Run workflow for a specific book by its book_id.
     Loads agents, builds the graph, and processes all pending chunks
@@ -149,7 +202,14 @@ def run_workflow(book_id: str, run_analysis: bool, run_classification: bool):
                             is_output_complete = False
 
                     if is_output_complete:
-                        agent_analysis_statuses[agent_name] = "Complete"
+                        problematic_text = agent_output.get("problematic_text")
+                        if problematic_text and problematic_text.lower() != 'n/a':
+                            coordinates = find_text_coordinates_in_pdf(pdf_path, problematic_text)
+                            agent_output["problematic_text_coordinates"] = coordinates
+                            print(f"✅ Coordinates for {agent_name} added: {coordinates}")
+                        else:
+                            agent_output["problematic_text_coordinates"] = []
+                            agent_analysis_statuses[agent_name] = "Complete"
                     else:
                         agent_analysis_statuses[agent_name] = "Pending"
                         overall_chunk_status = "Pending"

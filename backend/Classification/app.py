@@ -22,7 +22,7 @@ def get_text_from_context(context):
     else:
         return str(context)
 
-def supervisor_loop(doc_id, agent_list, run_classification=True, run_analysis=True):
+def supervisor_loop(doc_id, agent_list, run_classification=True, run_analysis=True, pdf_path=""):
     print("#####-----START-----#####")
     if doc_id in done:
         return doc_id
@@ -31,7 +31,7 @@ def supervisor_loop(doc_id, agent_list, run_classification=True, run_analysis=Tr
     if not run_classification and run_analysis:
         print("Running analysis only - calling run_workflow directly")
         from Analysis.mains1 import run_workflow
-        run_workflow(doc_id, run_analysis=run_analysis, run_classification=run_classification)
+        run_workflow(doc_id, run_analysis=run_analysis, run_classification=run_classification, pdf_path= pdf_path)
         return doc_id
 
     # If only classification is requested, run classification loop
@@ -42,7 +42,7 @@ def supervisor_loop(doc_id, agent_list, run_classification=True, run_analysis=Tr
             if chunk_index is None:
                 # print(f"Indexing of document: {doc_id} complete!\nAll chunks processed.")
                 # create_pdf_to_html(doc_id)
-                mark_document_done(doc_id, run_classification, run_analysis)
+                mark_document_done(doc_id, run_classification, run_analysis, pdf_path= pdf_path)
                 break
 
             print(f"Processing chunk {chunk_index}...")

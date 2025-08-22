@@ -2,11 +2,12 @@ from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Body
 from typing import Dict, Any, Optional
 from models.user import User
 from utils.jwt_utils import get_user_from_cookie
-from db.mongo import books_collection,get_agent_configs_collection, get_chunks_collection
+from db.mongo import books_collection,get_agent_configs_collection, get_chunks_collection, fs
 from bson import ObjectId
 import time
 from Classification.app import supervisor_loop
 import asyncio
+import tempfile
 
 router = APIRouter(prefix="/classification", tags=["Classification"])
 
@@ -27,6 +28,14 @@ async def start_classification(
         if not book:
             raise HTTPException(status_code=404, detail="Book not found")
         
+        file_id = book["file_id"]
+
+        # 3. Retrieve the file from GridFS and write to a temp file
+        file_obj = fs.get(file_id)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+            tmp.write(file_obj.read())
+            tmp_path = tmp.name
+
         # Update book status to "Processing"
         books_collection.update_one(
             {"_id": ObjectId(book_id)},
@@ -39,7 +48,7 @@ async def start_classification(
             {"_id": 0, "agent_name": 1, "classifier_prompt": 1, "evaluators_prompt": 1}
         ))
 
-        background_tasks.add_task(supervisor_loop, book_id, agents, run_classification, run_analysis)
+        background_tasks.add_task(supervisor_loop, book_id, agents, run_classification, run_analysis, tmp_path)
         
         return {
             "message": "Processing started successfully",
