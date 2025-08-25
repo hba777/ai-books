@@ -18,10 +18,12 @@ const AnalysisDetails: React.FC = () => {
   const [selectedReviewTypes, setSelectedReviewTypes] = useState<string[]>([]);
   const [book, setBook] = useState<Book>();
   const [tags, setTags] = useState<string[]>([]);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
   const router = useRouter();
   const { id } = router.query;
   const {
     getBookById,
+    getBookFile,
     reviewOutcomes,
     fetchReviewOutcomes,
     getBookClassifications,
@@ -39,16 +41,34 @@ const AnalysisDetails: React.FC = () => {
         // Initialize selected review types from saved filters if present
         const saved = bookData.filters?.analysisFilters || [];
         if (Array.isArray(saved)) setSelectedReviewTypes(saved);
+        
+        // Load PDF file
+        try {
+          const fileBlob = await getBookFile(id as string);
+          const objectUrl = URL.createObjectURL(fileBlob);
+          setFileUrl(objectUrl);
+        } catch (fileErr) {
+          console.error("Failed to load PDF file:", fileErr);
+        }
       } catch (err) {
         console.error("Failed to fetch book or file:", err);
       }
     };
     fetchData();
-  }, [id, getBookById]);
+  }, [id, getBookById, getBookFile]);
 
   useEffect(() => {
     fetchReviewOutcomes();
   }, []);
+
+  // Cleanup blob URL when component unmounts
+  useEffect(() => {
+    return () => {
+      if (fileUrl) {
+        URL.revokeObjectURL(fileUrl);
+      }
+    };
+  }, [fileUrl]);
 
   useEffect(() => {
     const fetchTags = async () => {
@@ -130,33 +150,35 @@ const AnalysisDetails: React.FC = () => {
               bookId={book._id}
               onSeeInfo={() => setShowSeeInfo(true)}
             />
-            {book.status === "Processed" && (
-              <>
-                <ReviewFilters
-                  minConfidence={minConfidence}
-                  onMinConfidenceChange={setMinConfidence}
-                  onlyHumanReviewed={onlyHumanReviewed}
-                  onOnlyHumanReviewedChange={setOnlyHumanReviewed}
-                  selectedReviewTypes={selectedReviewTypes}
-                  onSelectedReviewTypesChange={setSelectedReviewTypes}
-                  availableReviewTypes={availableReviewTypes}
-                  onSaveAnalysisFilters={(filters) =>
-                    updateAnalysisFilters(book._id, filters)
-                  }
-                />
+            {(book.status === "Processed" || book.status === "Analyzed") && (
+  <>
+    <ReviewFilters
+      minConfidence={minConfidence}
+      onMinConfidenceChange={setMinConfidence}
+      onlyHumanReviewed={onlyHumanReviewed}
+      onOnlyHumanReviewedChange={setOnlyHumanReviewed}
+      selectedReviewTypes={selectedReviewTypes}
+      onSelectedReviewTypesChange={setSelectedReviewTypes}
+      availableReviewTypes={availableReviewTypes}
+      onSaveAnalysisFilters={(filters) =>
+        updateAnalysisFilters(book._id, filters)
+      }
+    />
 
-                <AnalysisTable
-                  data={bookReviewOutcomes}
-                  pageSize={10}
-                  minConfidence={minConfidence}
-                  onlyHumanReviewed={onlyHumanReviewed}
-                  selectedReviewTypes={selectedReviewTypes}
-                  updateReviewOutcome={updateReviewOutcome}
-                  deleteReviewOutcome={deleteReviewOutcome}
-                  fetchReviewOutcomes={fetchReviewOutcomes}
-                />
-              </>
-            )}
+    <AnalysisTable
+      data={bookReviewOutcomes}
+      pageSize={10}
+      minConfidence={minConfidence}
+      onlyHumanReviewed={onlyHumanReviewed}
+      selectedReviewTypes={selectedReviewTypes}
+      updateReviewOutcome={updateReviewOutcome}
+      deleteReviewOutcome={deleteReviewOutcome}
+      fetchReviewOutcomes={fetchReviewOutcomes}
+      fileUrl={fileUrl}
+      doc_name={book.doc_name}
+    />
+  </>
+)}
 
             {book.status !== "Processed" && book.status !== "Analyzed" && (
               <div className="flex justify-center items-center h-40 text-xl font-semibold text-gray-500">

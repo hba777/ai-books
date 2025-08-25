@@ -216,7 +216,7 @@ def extract_summary_for_pdf(doc_id):
         "class_counts": class_counts
     }
 
-def mark_document_done(doc_id, run_classification:bool ,run_analysis=True):
+def mark_document_done(doc_id, run_classification:bool ,run_analysis=True, pdf_path=""):
     """Update the status of a document to 'Processed' regardless of current status."""
     books_collection = get_books_collection()
     chunks_collection = get_chunks_collection()
@@ -252,7 +252,7 @@ def mark_document_done(doc_id, run_classification:bool ,run_analysis=True):
 
     # Only run workflow if analysis is requested
     if run_analysis:
-        run_workflow(book_id=doc_id, run_analysis=run_analysis, run_classification=run_classification)
+        run_workflow(book_id=doc_id, run_analysis=run_analysis, run_classification=run_classification, pdf_path= pdf_path)
 
     set_all_agents_status_true() # Call this at end of run workflow
 

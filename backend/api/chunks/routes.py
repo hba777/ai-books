@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 from utils.jwt_utils import get_user_from_cookie
-from db.mongo import get_chunks_collection, get_agent_configs_collection, books_collection, fs
+from db.mongo import get_chunks_collection, books_collection, fs
 from .schemas import ChunkResponse, ChunkListResponse
 import tempfile
 from bson import ObjectId
