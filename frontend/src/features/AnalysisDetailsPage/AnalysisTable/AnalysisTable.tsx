@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { ReviewOutcomesResponse } from "../../../context/BookContext";
-import { FaEdit, FaTrash, FaSave, FaTimes } from "react-icons/fa";
+import { FaEdit, FaTrash, FaSave, FaTimes, FaEye } from "react-icons/fa";
 import ConfirmationModal from "./ConfirmationModel";
+import PDFViewerDialog from "./PDFViewerDialog";
 
 interface AnalysisTableProps {
   data: ReviewOutcomesResponse[];
@@ -12,6 +13,8 @@ interface AnalysisTableProps {
   updateReviewOutcome?: (outcomeId: string, reviewType: string, data: { observation?: string; recommendation?: string }) => Promise<any>;
   deleteReviewOutcome?: (outcomeId: string, reviewType: string) => Promise<any>;
   fetchReviewOutcomes?: () => Promise<void>;
+  fileUrl?: string | null; // PDF file URL for viewing
+  doc_name?: string | null; // Document name for the PDF
 }
 interface EditableFields {
   observation: string;
@@ -49,7 +52,7 @@ const deriveReviewTables = (rows: ReviewOutcomesResponse[]): { key: string; titl
   return Array.from(keys).map((key) => ({ key, title: formatKeyToTitle(key) }));
 };
 
-const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50, onlyHumanReviewed = false, selectedReviewTypes, updateReviewOutcome, deleteReviewOutcome, fetchReviewOutcomes }) => {
+const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50, onlyHumanReviewed = false, selectedReviewTypes, updateReviewOutcome, deleteReviewOutcome, fetchReviewOutcomes, fileUrl, doc_name }) => {
   const [editingRows, setEditingRows] = useState<Set<string>>(new Set());
   const [editableFields, setEditableFields] = useState<Record<string, EditableFields>>({});
   const [confirmationModal, setConfirmationModal] = useState<{
@@ -64,6 +67,15 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
     textIndex: 0,
     reviewType: '',
     review: undefined
+  });
+  const [pdfViewerDialog, setPdfViewerDialog] = useState<{
+    isOpen: boolean;
+    coordinates?: number[];
+    pageNumber?: number;
+  }>({
+    isOpen: false,
+    coordinates: undefined,
+    pageNumber: undefined
   });
 
   // Get unique problematic texts and group reviews by text
@@ -269,6 +281,40 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
     }));
   };
 
+  const handleViewInPDF = (textIndex: number, reviewType: string) => {
+    // Find the review that contains coordinates for this text
+    const review = groupedData[textIndex]?.reviews[reviewType];
+    if (review?.coordinates && review.coordinates.length >= 4) {
+      // Try to get page number from the review or from the parent document
+      let pageNumber = 1;
+      if (review.page_number) {
+        pageNumber = typeof review.page_number === 'string' ? parseInt(review.page_number) : review.page_number;
+      } else {
+        // Find the parent document that contains this review
+        const parentDoc = data.find(row => {
+          const rowReview = (row as any)[reviewType];
+          return rowReview && rowReview.problematic_text === groupedData[textIndex]?.problematicText;
+        });
+        if (parentDoc?.Page_Number) {
+          pageNumber = typeof parentDoc.Page_Number === 'string' ? parseInt(parentDoc.Page_Number) : parentDoc.Page_Number;
+        }
+      }
+      
+      setPdfViewerDialog({
+        isOpen: true,
+        coordinates: review.coordinates,
+        pageNumber: pageNumber
+      });
+    } else {
+      // If no coordinates, just open the PDF without highlighting
+      setPdfViewerDialog({
+        isOpen: true,
+        coordinates: undefined,
+        pageNumber: 1
+      });
+    }
+  };
+
   // Note: Avoid early returns before all hooks are called; render fallbacks conditionally instead.
 
   // Build a flat list of human-reviewed items (across all texts and review types), honoring filters
@@ -316,7 +362,35 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
         <div key={textIndex} className="w-full">
           {/* Problematic Text Header */}
           <div className="mb-4">
-            <h4 className="text-lg font-semibold text-gray-800 mb-2">Paragraph {textIndex + 1}:</h4>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-lg font-semibold text-gray-800">Paragraph {textIndex + 1}:</h4>
+              {fileUrl && (
+                <button
+                  onClick={() => {
+                    // Find the first review with coordinates for this text
+                    const firstReviewWithCoords = Object.entries(group.reviews).find(([_, review]) => 
+                      (review as any)?.coordinates && (review as any).coordinates.length >= 4
+                    );
+                    if (firstReviewWithCoords) {
+                      const [reviewType, review] = firstReviewWithCoords;
+                      handleViewInPDF(textIndex, reviewType);
+                    } else {
+                      // If no coordinates found, open PDF without highlighting
+                      setPdfViewerDialog({
+                        isOpen: true,
+                        coordinates: undefined,
+                        pageNumber: 1
+                      });
+                    }
+                  }}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
+                  title="View in PDF"
+                >
+                  <FaEye size={12} />
+                  View in PDF
+                </button>
+              )}
+            </div>
             <div className="bg-gray-50 p-4 rounded-lg border-l-4 border-blue-500">
               <p className="text-gray-700 whitespace-normal break-words">
                 {group.problematicText}
@@ -679,6 +753,16 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
         confirmText={confirmationModal.type === 'edit' ? 'Save' : 'Delete'}
         cancelText="Cancel"
         type={confirmationModal.type}
+      />
+
+      {/* PDF Viewer Dialog */}
+      <PDFViewerDialog
+        isOpen={pdfViewerDialog.isOpen}
+        onClose={() => setPdfViewerDialog(prev => ({ ...prev, isOpen: false }))}
+        fileUrl={fileUrl}
+        doc_name={doc_name ? doc_name : 'Document'}
+        coordinates={pdfViewerDialog.coordinates}
+        pageNumber={pdfViewerDialog.pageNumber}
       />
     </div>
   );

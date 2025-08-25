@@ -59,9 +59,11 @@ export interface ReviewDetailResponse {
   issue_found?: boolean;
   observation?: string;
   problematic_text?: string;
+  coordinates?: number[];
   recommendation?: string;
   retries?: number;
   status?: string;
+  page_number?: number;
 }
 
 export interface ReviewOutcomesResponse {
@@ -71,12 +73,6 @@ export interface ReviewOutcomesResponse {
   Chunk_ID?: string;
   doc_id?: string;
   FactCheckingReview?: ReviewDetailResponse;
-  FederalUnityReview?: ReviewDetailResponse;
-  ForeignRelationsReview?: ReviewDetailResponse;
-  HistoricalNarrativeReview?: ReviewDetailResponse;
-  InstitutionalIntegrityReview?: ReviewDetailResponse;
-  NationalSecurityReview?: ReviewDetailResponse;
-  RhetoricToneReview?: ReviewDetailResponse;
   overall_status?: string;
   Page_Number?: string;
   Predicted_Label?: string;
