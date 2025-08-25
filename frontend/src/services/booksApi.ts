@@ -59,7 +59,10 @@ export interface ReviewDetailResponse {
   issue_found?: boolean;
   observation?: string;
   problematic_text?: string;
-  coordinates?: number[];
+  problematic_text_coordinates?: Array<{
+    page: number;
+    bbox: number[];
+  }>;
   recommendation?: string;
   retries?: number;
   status?: string;
@@ -72,7 +75,7 @@ export interface ReviewOutcomesResponse {
   Chunk_no?: number;
   Chunk_ID?: string;
   doc_id?: string;
-  FactCheckingReview?: ReviewDetailResponse;
+  [key: string]: ReviewDetailResponse | string | number | undefined; // Allow any agent review type
   overall_status?: string;
   Page_Number?: string;
   Predicted_Label?: string;

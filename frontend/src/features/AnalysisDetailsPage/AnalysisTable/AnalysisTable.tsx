@@ -284,27 +284,26 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
   const handleViewInPDF = (textIndex: number, reviewType: string) => {
     // Find the review that contains coordinates for this text
     const review = groupedData[textIndex]?.reviews[reviewType];
-    if (review?.coordinates && review.coordinates.length >= 4) {
-      // Try to get page number from the review or from the parent document
-      let pageNumber = 1;
-      if (review.page_number) {
-        pageNumber = typeof review.page_number === 'string' ? parseInt(review.page_number) : review.page_number;
-      } else {
-        // Find the parent document that contains this review
-        const parentDoc = data.find(row => {
-          const rowReview = (row as any)[reviewType];
-          return rowReview && rowReview.problematic_text === groupedData[textIndex]?.problematicText;
-        });
-        if (parentDoc?.Page_Number) {
-          pageNumber = typeof parentDoc.Page_Number === 'string' ? parseInt(parentDoc.Page_Number) : parentDoc.Page_Number;
-        }
-      }
+    if (review?.problematic_text_coordinates && review.problematic_text_coordinates.length > 0) {
+      // Get the first coordinate entry (assuming single match for now)
+      const coordEntry = review.problematic_text_coordinates[0];
+      const bbox = coordEntry?.bbox;
+      const pageNumber = coordEntry?.page || 1;
       
-      setPdfViewerDialog({
-        isOpen: true,
-        coordinates: review.coordinates,
-        pageNumber: pageNumber
-      });
+      if (bbox && bbox.length >= 4) {
+        setPdfViewerDialog({
+          isOpen: true,
+          coordinates: bbox,
+          pageNumber: pageNumber
+        });
+      } else {
+        // If no valid bbox, just open the PDF without highlighting
+        setPdfViewerDialog({
+          isOpen: true,
+          coordinates: undefined,
+          pageNumber: 1
+        });
+      }
     } else {
       // If no coordinates, just open the PDF without highlighting
       setPdfViewerDialog({
@@ -364,12 +363,12 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-lg font-semibold text-gray-800">Paragraph {textIndex + 1}:</h4>
-              {fileUrl && (
+              {fileUrl ? (
                 <button
                   onClick={() => {
                     // Find the first review with coordinates for this text
                     const firstReviewWithCoords = Object.entries(group.reviews).find(([_, review]) => 
-                      (review as any)?.coordinates && (review as any).coordinates.length >= 4
+                      (review as any)?.problematic_text_coordinates && (review as any).problematic_text_coordinates.length > 0
                     );
                     if (firstReviewWithCoords) {
                       const [reviewType, review] = firstReviewWithCoords;
@@ -388,6 +387,14 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
                 >
                   <FaEye size={12} />
                   View in PDF
+                </button>
+              ) : (
+                <button
+                  disabled
+                  className="flex items-center gap-2 px-3 py-1.5 bg-gray-400 text-white text-sm rounded-md cursor-not-allowed"
+                  title="PDF file loading..."
+                >
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
                 </button>
               )}
             </div>

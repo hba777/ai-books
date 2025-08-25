@@ -1,7 +1,6 @@
- import React from "react";
- 
+import React from "react";
 
- interface ConfirmationModalProps {
+interface ConfirmationModalProps {
     isOpen: boolean;
     onClose: () => void;
     onConfirm: () => void;

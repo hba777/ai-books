@@ -204,9 +204,13 @@ def run_workflow(book_id: str, run_analysis: bool, run_classification: bool, pdf
                     if is_output_complete:
                         problematic_text = agent_output.get("problematic_text")
                         if problematic_text and problematic_text.lower() != 'n/a':
+                            print(f"🔍 Searching for coordinates for text: '{problematic_text[:100]}...' in PDF: {pdf_path}")
                             coordinates = find_text_coordinates_in_pdf(pdf_path, problematic_text)
                             agent_output["problematic_text_coordinates"] = coordinates
-                            print(f"✅ Coordinates for {agent_name} added: {coordinates}")
+                            if coordinates:
+                                print(f"✅ Coordinates for {agent_name} found: {coordinates}")
+                            else:
+                                print(f"⚠️ No coordinates found for {agent_name} - text may not be in PDF")
                         else:
                             agent_output["problematic_text_coordinates"] = []
                             agent_analysis_statuses[agent_name] = "Complete"

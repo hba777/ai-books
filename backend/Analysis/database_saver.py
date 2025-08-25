@@ -60,6 +60,7 @@ def save_results_to_mongo(
             agent_result = {
                 "issue_found": agent_output.get("issues_found", False),
                 "problematic_text": agent_output.get("problematic_text", ""),
+                "problematic_text_coordinates": agent_output.get("problematic_text_coordinates", []),
                 "observation": agent_output.get("observation", ""),
                 "recommendation": agent_output.get("recommendation", ""),
                 "confidence": agent_data.get("confidence", 0),
