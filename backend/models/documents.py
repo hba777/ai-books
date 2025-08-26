@@ -16,6 +16,7 @@ class ClassificationFilters(BaseModel):
 class FiltersModel(BaseModel):
     classificationFilters: Optional[List[ClassificationFilters]] = []
     analysisFilters: Optional[List[str]] = []
+    analysisConfidence: Optional[int] = 50
 
 class BookModel(BaseModel):
     id: Optional[str] = Field(default=None, alias="_id")
@@ -31,7 +32,6 @@ class BookModel(BaseModel):
     labels: Optional[List[str]] = []
     startDate: Optional[str] = None
     endDate: Optional[str] = None
-
     assigned_departments: Optional[List[str]] = []
     feedback: Optional[List["FeedbackModel"]] = []
 

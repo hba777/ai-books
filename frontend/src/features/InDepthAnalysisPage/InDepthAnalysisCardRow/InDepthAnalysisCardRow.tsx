@@ -3,8 +3,8 @@ import { useBooks } from '@/context/BookContext';
 
 const InDepthAnalysisCardRow: React.FC = () => {
   const  { books } = useBooks();
-  const totalProcessed = books.filter((book) => book.status === "Processed").length;
-  const totalClassified = books.filter((book) => book.status === "Processed").length;
+  const totalProcessed = books.filter((book) => book.status === "Processed" || book.status === "Assigned").length;
+  const totalClassified = books.filter((book) => book.status === "Classified" || book.status === "Assigned").length;
   const totalPending = books.filter((book) => book.status === "Pending").length;
 
   const cardData = [
@@ -51,7 +51,7 @@ const InDepthAnalysisCardRow: React.FC = () => {
     {cardData.map((card, idx) => (
       <div
         key={idx}
-        className="flex flex-col items-start bg-white rounded-xl shadow-lg p-4 lg:p-6 w-full sm:w-[200px] md:w-[240px] lg:w-[280px] xl:w-[320px] h-36 lg:h-44"
+        className="flex flex-col items-start bg-white rounded-xl shadow-lg p-4 lg:p-6 w-full sm:w-[300px] md:w-[350px] lg:w-[400px] xl:w-[500px] h-36 lg:h-49"
       >
         <div className={`w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-md mb-2 lg:mb-3 ${card.iconBg}`}>
           <span className="text-white text-xl lg:text-2xl">{card.icon}</span>

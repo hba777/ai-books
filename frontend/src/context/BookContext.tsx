@@ -52,7 +52,7 @@ interface BookContextType {
   removeClassificationFromChunk: (chunkId: string, label: string) => Promise<void>;
   jumpToClassificationCoordinates: (coordinates: number[], pageNumber: number) => void;
   updateClassificationFilter: (bookId: string, name: string, value: number) => Promise<void>;
-  updateAnalysisFilters: (bookId: string, analysisFilters: string[]) => Promise<void>;
+  updateAnalysisFilters: (bookId: string, analysisFilters?: string[], analysisConfidence?: number) => Promise<void>;
 }
 
 const BookContext = createContext<BookContextType | undefined>(undefined);
@@ -257,8 +257,8 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await fetchBooks();
   };
 
-  const updateAnalysisFilters = async (bookId: string, analysisFilters: string[]) => {
-    await apiUpdateAnalysisFilters(bookId, analysisFilters);
+  const updateAnalysisFilters = async (bookId: string, analysisFilters?: string[], analysisConfidence?: number) => {
+    await apiUpdateAnalysisFilters(bookId, analysisFilters, analysisConfidence);
     await fetchBooks();
   };
 

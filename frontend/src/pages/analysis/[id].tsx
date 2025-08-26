@@ -9,7 +9,6 @@ import { useRouter } from "next/router";
 import { Book } from "@/services/booksApi";
 import { useBooks } from "@/context/BookContext";
 
-const mockTags = ["Political", "Maths", "IT/CS", "Maths", "Maths"];
 
 const AnalysisDetails: React.FC = () => {
   const [showSeeInfo, setShowSeeInfo] = useState(false);
@@ -41,7 +40,10 @@ const AnalysisDetails: React.FC = () => {
         // Initialize selected review types from saved filters if present
         const saved = bookData.filters?.analysisFilters || [];
         if (Array.isArray(saved)) setSelectedReviewTypes(saved);
-        
+        // Initialize confidence from saved filters or default to 50
+        const savedConfidence = (bookData as any)?.filters?.analysisConfidence;
+        setMinConfidence(typeof savedConfidence === 'number' ? savedConfidence : 50);
+
         // Load PDF file
         try {
           const fileBlob = await getBookFile(id as string);
@@ -127,12 +129,15 @@ const AnalysisDetails: React.FC = () => {
             ([k, v]) =>
               v &&
               typeof v === "object" &&
-              ("problematic_text" in (v as Record<string, unknown>) ||
+              v !== null &&
+              ("issue_found" in (v as Record<string, unknown>) ||
                 "confidence" in (v as Record<string, unknown>) ||
-                "issue_found" in (v as Record<string, unknown>) ||
-                "human_review" in (v as Record<string, unknown>))
+                "human_review" in (v as Record<string, unknown>) ||
+                "observation" in (v as Record<string, unknown>) ||
+                "recommendation" in (v as Record<string, unknown>))
           )
           .map(([k]) => k)
+          .filter(k => !["_id", "timestamp", "doc_id", "Book Name", "Page Number", "Chunk_ID", "Chunk no.", "Text Analyzed", "Predicted Label", "Predicted Label Confidence", "overall_status"].includes(k))
       )
     )
   ).map((key) => ({ key, title: formatKeyToTitle(key) }));
@@ -150,37 +155,37 @@ const AnalysisDetails: React.FC = () => {
               bookId={book._id}
               onSeeInfo={() => setShowSeeInfo(true)}
             />
-            {(book.status === "Processed" || book.status === "Analyzed") && (
-  <>
-    <ReviewFilters
-      minConfidence={minConfidence}
-      onMinConfidenceChange={setMinConfidence}
-      onlyHumanReviewed={onlyHumanReviewed}
-      onOnlyHumanReviewedChange={setOnlyHumanReviewed}
-      selectedReviewTypes={selectedReviewTypes}
-      onSelectedReviewTypesChange={setSelectedReviewTypes}
-      availableReviewTypes={availableReviewTypes}
-      onSaveAnalysisFilters={(filters) =>
-        updateAnalysisFilters(book._id, filters)
-      }
-    />
+            {(book.status === "Processed" || book.status === "Analyzed" || book.status === "Assigned") && (
+              <>
+                <ReviewFilters
+                  minConfidence={minConfidence}
+                  onMinConfidenceChange={setMinConfidence}
+                  onlyHumanReviewed={onlyHumanReviewed}
+                  onOnlyHumanReviewedChange={setOnlyHumanReviewed}
+                  selectedReviewTypes={selectedReviewTypes}
+                  onSelectedReviewTypesChange={setSelectedReviewTypes}
+                  availableReviewTypes={availableReviewTypes}
+                  onSaveAnalysisFilters={(filters, confidence) =>
+                    updateAnalysisFilters(book._id, filters, confidence)
+                  }
+                />
 
-    <AnalysisTable
-      data={bookReviewOutcomes}
-      pageSize={10}
-      minConfidence={minConfidence}
-      onlyHumanReviewed={onlyHumanReviewed}
-      selectedReviewTypes={selectedReviewTypes}
-      updateReviewOutcome={updateReviewOutcome}
-      deleteReviewOutcome={deleteReviewOutcome}
-      fetchReviewOutcomes={fetchReviewOutcomes}
-      fileUrl={fileUrl}
-      doc_name={book.doc_name}
-    />
-  </>
-)}
+                <AnalysisTable
+                  data={bookReviewOutcomes}
+                  pageSize={10}
+                  minConfidence={minConfidence}
+                  onlyHumanReviewed={onlyHumanReviewed}
+                  selectedReviewTypes={selectedReviewTypes}
+                  updateReviewOutcome={updateReviewOutcome}
+                  deleteReviewOutcome={deleteReviewOutcome}
+                  fetchReviewOutcomes={fetchReviewOutcomes}
+                  fileUrl={fileUrl}
+                  doc_name={book.doc_name}
+                />
+              </>
+            )}
 
-            {book.status !== "Processed" && book.status !== "Analyzed" && (
+            {book.status !== "Processed" && book.status !== "Analyzed" && book.status !== "Assigned" && (
               <div className="flex justify-center items-center h-40 text-xl font-semibold text-gray-500">
                 Analysis Pending
               </div>

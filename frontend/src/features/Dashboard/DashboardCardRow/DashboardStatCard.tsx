@@ -23,7 +23,7 @@ const DashboardStatCard: React.FC<DashboardStatCardProps> = ({ value, label, sub
 
   return (
     <div 
-      className="flex flex-col items-start bg-white rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8 w-full min-w-[200px] sm:min-w-[240px] lg:min-w-[260px] max-w-[280px] h-40 sm:h-48 lg:h-55 relative"
+      className="flex flex-col items-start bg-white rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8 w-full min-w-[200px] sm:min-w-[250px] lg:min-w-[300px] max-w-[400px] h-40 sm:h-48 lg:h-55 relative"
     >
       <div className="flex items-center mb-3 sm:mb-4">
         <div

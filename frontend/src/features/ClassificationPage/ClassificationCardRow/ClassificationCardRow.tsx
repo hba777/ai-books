@@ -7,7 +7,7 @@ const ClassificationCardRow: React.FC = () => {
   const { currentFilter, setCurrentFilter } = useClassificationContext();
   const { books } = useBooks();
   const totalBooks = books.length;
-  const totalProcessed = books.filter((book) => book.status === "Processed").length;
+  const totalProcessed = books.filter((book) => book.status === "Processed" || book.status === "Assigned").length;
   const totalPending = books.filter((book) => book.status === "Pending").length;
   const totalAssigned = books.filter((book) => book.status === "Assigned").length;
 

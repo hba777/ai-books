@@ -193,7 +193,7 @@ const AgentsSideBar: React.FC<AgentsSideBarProps> = ({
           </div>
 
           {/* Classification Agents */}
-          <div>
+          <div className={processingMode === "analysis" ? "opacity-50 pointer-events-none" : ""}>
             <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
               Classification
             </div>
@@ -271,7 +271,7 @@ const AgentsSideBar: React.FC<AgentsSideBarProps> = ({
           </div>
 
           {/* Analysis Agents */}
-          <div>
+          <div className={processingMode === "classification" ? "opacity-50 pointer-events-none" : ""}>
             <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
               Analysis
             </div>

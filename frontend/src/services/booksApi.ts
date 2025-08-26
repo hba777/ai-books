@@ -35,6 +35,7 @@ export interface ClassificationFilter {
 export interface Filters {
   classificationFilters?: ClassificationFilter[];
   analysisFilters?: string[];
+  analysisConfidence?: number;
 }
 
 export interface ClassificationProgress {
@@ -314,7 +315,11 @@ export async function updateClassificationFilter(bookId: string, name: string, v
   return res.data;
 }
 
-export async function updateAnalysisFilters(bookId: string, analysisFilters: string[]): Promise<Book> {
-  const res = await api.patch<Book>(`/books/${bookId}/filters/analysis`, { analysisFilters });
+export async function updateAnalysisFilters(bookId: string, analysisFilters?: string[], analysisConfidence?: number): Promise<Book> {
+  const payload: any = {};
+  if (analysisFilters !== undefined) payload.analysisFilters = analysisFilters;
+  if (analysisConfidence !== undefined) payload.confidence = analysisConfidence;
+  
+  const res = await api.patch<Book>(`/books/${bookId}/filters/analysis`, payload);
   return res.data;
 }

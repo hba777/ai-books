@@ -9,8 +9,7 @@ import HeroSection from "@/features/InDepthAnalysisPage/HeroSection/HeroSection"
 
 const bookTableFilters = [
   { value: "All", label: "All Classified Books" },
-  { value: "Analysed", label: "Analysed Books" },
-  { value: "Analysing", label: "Currently Analysing Books" },
+  { value: "Analyzed", label: "Analyzed Books" },
   { value: "Pending", label: "Pending Books" },
 ];
 

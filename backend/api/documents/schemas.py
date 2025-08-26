@@ -22,13 +22,15 @@ class ClassificationFilters(BaseModel):
 class FiltersModel(BaseModel):
     classificationFilters: Optional[List[ClassificationFilters]] = []
     analysisFilters: Optional[List[str]] = []
+    analysisConfidence: Optional[int] = None
 
 class UpdateClassificationFilterRequest(BaseModel):
     name: str
     value: int
 
 class UpdateAnalysisFiltersRequest(BaseModel):
-    analysisFilters: List[str]
+    analysisFilters: Optional[List[str]] = None
+    confidence: Optional[int] = None
     
 class BookResponse(BaseModel):
     id: str = Field(alias="_id")       # Internal name `id`, accepts/returns `_id`
