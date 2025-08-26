@@ -32,24 +32,24 @@ const navLinks = [
     icon: <LuBookOpenCheck className="text-2xl" />,
     subtitle: "Review of Classified Books",
   },
-  {
-    label: "Reports",
-    href: "/reports",
-    icon: <MdAccessTime className="text-2xl" />,
-    subtitle: "Of Books",
-  },
+  // {
+  //   label: "Reports",
+  //   href: "/reports",
+  //   icon: <MdAccessTime className="text-2xl" />,
+  //   subtitle: "Of Books",
+  // },
   {
     label: "Agents",
     href: "/agents",
     icon: <LuBrain className="text-2xl" />,
     subtitle: "AI Training & Settings",
   },
-  {
-    label: "Archived Books",
-    href: "/archivedBooks",
-    icon: <RiArchiveDrawerLine className="text-2xl" />,
-    subtitle: "View Archived Books",
-  }
+  // {
+  //   label: "Archived Books",
+  //   href: "/archivedBooks",
+  //   icon: <RiArchiveDrawerLine className="text-2xl" />,
+  //   subtitle: "View Archived Books",
+  // }
 ];
 
 const Sidebar: React.FC = () => {

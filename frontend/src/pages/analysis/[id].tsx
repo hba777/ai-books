@@ -41,7 +41,7 @@ const AnalysisDetails: React.FC = () => {
         // Initialize selected review types from saved filters if present
         const saved = bookData.filters?.analysisFilters || [];
         if (Array.isArray(saved)) setSelectedReviewTypes(saved);
-        
+
         // Load PDF file
         try {
           const fileBlob = await getBookFile(id as string);
@@ -150,35 +150,35 @@ const AnalysisDetails: React.FC = () => {
               bookId={book._id}
               onSeeInfo={() => setShowSeeInfo(true)}
             />
-            {(book.status === "Processed" || book.status === "Analyzed") && (
-  <>
-    <ReviewFilters
-      minConfidence={minConfidence}
-      onMinConfidenceChange={setMinConfidence}
-      onlyHumanReviewed={onlyHumanReviewed}
-      onOnlyHumanReviewedChange={setOnlyHumanReviewed}
-      selectedReviewTypes={selectedReviewTypes}
-      onSelectedReviewTypesChange={setSelectedReviewTypes}
-      availableReviewTypes={availableReviewTypes}
-      onSaveAnalysisFilters={(filters) =>
-        updateAnalysisFilters(book._id, filters)
-      }
-    />
+            {(book.status === "Processed" || book.status === "Analyzed" || book.status === "Assigned") && (
+              <>
+                <ReviewFilters
+                  minConfidence={minConfidence}
+                  onMinConfidenceChange={setMinConfidence}
+                  onlyHumanReviewed={onlyHumanReviewed}
+                  onOnlyHumanReviewedChange={setOnlyHumanReviewed}
+                  selectedReviewTypes={selectedReviewTypes}
+                  onSelectedReviewTypesChange={setSelectedReviewTypes}
+                  availableReviewTypes={availableReviewTypes}
+                  onSaveAnalysisFilters={(filters) =>
+                    updateAnalysisFilters(book._id, filters)
+                  }
+                />
 
-    <AnalysisTable
-      data={bookReviewOutcomes}
-      pageSize={10}
-      minConfidence={minConfidence}
-      onlyHumanReviewed={onlyHumanReviewed}
-      selectedReviewTypes={selectedReviewTypes}
-      updateReviewOutcome={updateReviewOutcome}
-      deleteReviewOutcome={deleteReviewOutcome}
-      fetchReviewOutcomes={fetchReviewOutcomes}
-      fileUrl={fileUrl}
-      doc_name={book.doc_name}
-    />
-  </>
-)}
+                <AnalysisTable
+                  data={bookReviewOutcomes}
+                  pageSize={10}
+                  minConfidence={minConfidence}
+                  onlyHumanReviewed={onlyHumanReviewed}
+                  selectedReviewTypes={selectedReviewTypes}
+                  updateReviewOutcome={updateReviewOutcome}
+                  deleteReviewOutcome={deleteReviewOutcome}
+                  fetchReviewOutcomes={fetchReviewOutcomes}
+                  fileUrl={fileUrl}
+                  doc_name={book.doc_name}
+                />
+              </>
+            )}
 
             {book.status !== "Processed" && book.status !== "Analyzed" && (
               <div className="flex justify-center items-center h-40 text-xl font-semibold text-gray-500">
