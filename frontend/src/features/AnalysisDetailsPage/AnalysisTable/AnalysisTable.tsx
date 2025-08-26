@@ -402,7 +402,7 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
         <div key={textIndex} className="w-full">
           {/* Problematic Text Header */}
           <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 mb-2">
               <h4 className="text-lg font-semibold text-gray-800">Paragraph {textIndex + 1}:</h4>
               {fileUrl && (
                 <button
@@ -423,7 +423,7 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
                       });
                     }
                   }}
-                  className="p-2 text-blue-600 hover:text-blue-800 transition-colors"
+                  className="p-2 text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
                   title="View in PDF"
                 >
                   <FaEye size={16} />
