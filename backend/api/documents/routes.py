@@ -264,7 +264,12 @@ async def update_analysis_filters(book_id: str, payload: UpdateAnalysisFiltersRe
         raise HTTPException(status_code=404, detail="Book not found")
 
     filters = book.get("filters", {}) or {}
-    filters["analysisFilters"] = payload.analysisFilters or []
+    
+    # Only update fields that are provided
+    if payload.analysisFilters is not None:
+        filters["analysisFilters"] = payload.analysisFilters
+    if payload.confidence is not None:
+        filters["analysisConfidence"] = payload.confidence
 
     books_collection.update_one({"_id": ObjectId(book_id)}, {"$set": {"filters": filters}})
     updated_book = books_collection.find_one({"_id": ObjectId(book_id)})

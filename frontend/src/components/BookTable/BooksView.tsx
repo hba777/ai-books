@@ -23,6 +23,7 @@ const defaultFilterOptions: FilterOption[] = [
   { value: "Pending", label: "Pending Books" },
   { value: "Assigned", label: "Assigned" },
   { value: "Analyzed", label: "Analyzed" },
+  { value: "Classified", label: "Classified" },
 ];
 
 

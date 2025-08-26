@@ -8,7 +8,7 @@ interface ReviewFiltersProps {
   selectedReviewTypes: string[];
   onSelectedReviewTypesChange: (value: string[]) => void;
   availableReviewTypes?: { key: string; title: string }[];
-  onSaveAnalysisFilters?: (filters: string[]) => void;
+  onSaveAnalysisFilters?: (filters?: string[], confidence?: number) => void;
 }
 
 const ReviewFilters: React.FC<ReviewFiltersProps> = ({
@@ -25,6 +25,7 @@ const ReviewFilters: React.FC<ReviewFiltersProps> = ({
     availableReviewTypes && availableReviewTypes.length > 0
       ? availableReviewTypes
       : [];
+      
   const toggleReviewType = (key: string) => {
     if (selectedReviewTypes.includes(key)) {
       const next = selectedReviewTypes.filter((k) => k !== key);
@@ -36,6 +37,7 @@ const ReviewFilters: React.FC<ReviewFiltersProps> = ({
       onSaveAnalysisFilters?.(next);
     }
   };
+
   return (
     <div className="w-full mb-4 flex flex-wrap items-center gap-4 bg-white rounded-xl shadow p-4">
       {/* Multi-select for review types (agents) */}
@@ -59,6 +61,7 @@ const ReviewFilters: React.FC<ReviewFiltersProps> = ({
           ))}
         </div>
       </div>
+      
       <div className="flex items-center gap-2">
         <label className="text-sm font-semibold text-gray-700">
           Min Confidence
@@ -66,7 +69,11 @@ const ReviewFilters: React.FC<ReviewFiltersProps> = ({
         <select
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={minConfidence}
-          onChange={(e) => onMinConfidenceChange(Number(e.target.value))}
+          onChange={(e) => {
+            const newConfidence = Number(e.target.value);
+            onMinConfidenceChange(newConfidence);
+            onSaveAnalysisFilters?.(undefined, newConfidence);
+          }}
         >
           <option value={50}>50+</option>
           <option value={60}>60+</option>
@@ -88,6 +95,7 @@ const ReviewFilters: React.FC<ReviewFiltersProps> = ({
       >
         {onlyHumanReviewed ? "View All Issues" : "View Human Review"}
       </button>
+    
     </div>
   );
 };

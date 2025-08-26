@@ -34,20 +34,24 @@ const formatKeyToTitle = (rawKey: string): string => {
 const deriveReviewTables = (rows: ReviewOutcomesResponse[]): { key: string; title: string }[] => {
   const keys = new Set<string>();
   for (const row of rows) {
-    for (const [k, v] of Object.entries(row as Record<string, unknown>)) {
-      if (v && typeof v === "object") {
-        const obj = v as Record<string, unknown>;
-        // Heuristics to detect a review block
+    Object.entries(row as Record<string, unknown>).forEach(([key, value]) => {
+      if (value && typeof value === "object" && value !== null) {
+        const obj = value as Record<string, unknown>;
+        // Check if this is a review object by looking for review-specific fields
         if (
-          "problematic_text" in obj ||
-          "confidence" in obj ||
           "issue_found" in obj ||
-          "human_review" in obj
+          "confidence" in obj ||
+          "human_review" in obj ||
+          "observation" in obj ||
+          "recommendation" in obj
         ) {
-          keys.add(k);
+          // Only include if it's not the main metadata fields
+          if (!["_id", "timestamp", "doc_id", "Book Name", "Page Number", "Chunk_ID", "Chunk no.", "Text Analyzed", "Predicted Label", "Predicted Label Confidence", "overall_status"].includes(key)) {
+            keys.add(key);
+          }
         }
       }
-    }
+    });
   }
   return Array.from(keys).map((key) => ({ key, title: formatKeyToTitle(key) }));
 };
@@ -85,20 +89,39 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
     const textGroups: Record<string, any> = {};
     
     data.forEach((row) => {
-      reviewTables.forEach(({ key, title }) => {
-        if (selectedReviewTypes && selectedReviewTypes.length > 0 && !selectedReviewTypes.includes(String(key))) {
-          return;
-        }
-        const review = (row as any)[key];
-        if (review && review.problematic_text) {
-          const text = review.problematic_text;
-          if (!textGroups[text]) {
-            textGroups[text] = {
-              problematicText: text,
-              reviews: {}
-            };
+      // Get the text analyzed from the main row
+      const textAnalyzed = (row as any)["Text Analyzed"];
+      if (!textAnalyzed) return;
+      
+      // Initialize the group if it doesn't exist
+      if (!textGroups[textAnalyzed]) {
+        textGroups[textAnalyzed] = {
+          textAnalyzed: textAnalyzed,
+          reviews: {}
+        };
+      }
+      
+      // Iterate over all properties to find review objects
+      Object.entries(row as Record<string, unknown>).forEach(([key, value]) => {
+        if (value && typeof value === "object" && value !== null) {
+          const obj = value as Record<string, unknown>;
+          // Check if this is a review object by looking for review-specific fields
+          if (
+            "issue_found" in obj ||
+            "confidence" in obj ||
+            "human_review" in obj ||
+            "observation" in obj ||
+            "recommendation" in obj
+          ) {
+            // Only include if it's not the main metadata fields
+            if (!["_id", "timestamp", "doc_id", "Book Name", "Page Number", "Chunk_ID", "Chunk no.", "Text Analyzed", "Predicted Label", "Predicted Label Confidence", "overall_status"].includes(key)) {
+              // Apply review type filter if any are selected
+              if (selectedReviewTypes && selectedReviewTypes.length > 0 && !selectedReviewTypes.includes(key)) {
+                return; // Skip this review type
+              }
+              textGroups[textAnalyzed].reviews[key] = obj;
+            }
           }
-          textGroups[text].reviews[key] = review;
         }
       });
     });
@@ -141,10 +164,10 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
     const fields = editableFields[rowKey];
     
     try {
-      // Find the review outcome document that contains this review
+      // Find the review outcome document that contains this text analyzed
       const outcomeDoc = data.find(row => {
-        const review = (row as any)[reviewType];
-        return review && review.problematic_text === groupedData[textIndex]?.problematicText;
+        const textAnalyzed = (row as any)["Text Analyzed"];
+        return textAnalyzed === groupedData[textIndex]?.textAnalyzed;
       });
       
       if (outcomeDoc?._id) {
@@ -231,10 +254,10 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
     }
 
     try {
-      // Find the review outcome document that contains this review
+      // Find the review outcome document that contains this text analyzed
       const outcomeDoc = data.find(row => {
-        const review = (row as any)[reviewType];
-        return review && review.problematic_text === groupedData[textIndex]?.problematicText;
+        const textAnalyzed = (row as any)["Text Analyzed"];
+        return textAnalyzed === groupedData[textIndex]?.textAnalyzed;
       });
       
       if (outcomeDoc?._id) {
@@ -320,22 +343,40 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
   const humanReviewedItems = useMemo(() => {
     const items: Array<{ key: string; title: string; review: any }> = [];
     data.forEach((row) => {
-      reviewTables.forEach(({ key, title }) => {
-        if (selectedReviewTypes && selectedReviewTypes.length > 0 && !selectedReviewTypes.includes(String(key))) return;
-        const review = (row as any)[key];
-        if (!review) return;
-        // Must be human reviewed
-        if (!review.human_review) return;
-        // Respect issue_found rule from current table (show only issues)
-        if (!review.issue_found) return;
-        // Confidence filter
-        const numericConfidence = typeof review.confidence === 'number' ? review.confidence : Number(review.confidence);
-        if (!Number.isFinite(numericConfidence) || numericConfidence < minConfidence) return;
-        items.push({ key, title, review });
+      Object.entries(row as Record<string, unknown>).forEach(([key, value]) => {
+        if (value && typeof value === "object" && value !== null) {
+          const obj = value as Record<string, unknown>;
+          // Check if this is a review object by looking for review-specific fields
+          if (
+            "issue_found" in obj ||
+            "confidence" in obj ||
+            "human_review" in obj ||
+            "observation" in obj ||
+            "recommendation" in obj
+          ) {
+            // Only include if it's not the main metadata fields
+            if (!["_id", "timestamp", "doc_id", "Book Name", "Page Number", "Chunk_ID", "Chunk no.", "Text Analyzed", "Predicted Label", "Predicted Label Confidence", "overall_status"].includes(key)) {
+              // Apply review type filter if any are selected
+              if (selectedReviewTypes && selectedReviewTypes.length > 0 && !selectedReviewTypes.includes(key)) {
+                return; // Skip this review type
+              }
+              
+              // Apply other filters
+              if (!obj.human_review) return;
+              if (!obj.issue_found) return;
+              
+              // Confidence filter
+              const numericConfidence = typeof obj.confidence === 'number' ? obj.confidence : Number(obj.confidence);
+              if (!Number.isFinite(numericConfidence) || numericConfidence < minConfidence) return;
+              
+              items.push({ key, title: formatKeyToTitle(key), review: obj });
+            }
+          }
+        }
       });
     });
     return items;
-  }, [data, minConfidence, selectedReviewTypes, reviewTables]);
+  }, [data, minConfidence, selectedReviewTypes]);
 
   // Pagination for paragraph tables (10 paragraphs per page)
   const PARAGRAPHS_PER_PAGE = 10;
@@ -363,7 +404,7 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-lg font-semibold text-gray-800">Paragraph {textIndex + 1}:</h4>
-              {fileUrl ? (
+              {fileUrl && (
                 <button
                   onClick={() => {
                     // Find the first review with coordinates for this text
@@ -382,25 +423,18 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
                       });
                     }
                   }}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
+                  className="p-2 text-blue-600 hover:text-blue-800 transition-colors"
                   title="View in PDF"
                 >
-                  <FaEye size={12} />
-                  View in PDF
-                </button>
-              ) : (
-                <button
-                  disabled
-                  className="flex items-center gap-2 px-3 py-1.5 bg-gray-400 text-white text-sm rounded-md cursor-not-allowed"
-                  title="PDF file loading..."
-                >
-                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                  <FaEye size={16} />
                 </button>
               )}
             </div>
             <div className="bg-gray-50 p-4 rounded-lg border-l-4 border-blue-500">
               <p className="text-gray-700 whitespace-normal break-words">
-                {group.problematicText}
+                {group.textAnalyzed && group.textAnalyzed.length > 200 
+                  ? `${group.textAnalyzed.substring(0, 200)}...` 
+                  : group.textAnalyzed}
               </p>
             </div>
           </div>
@@ -411,9 +445,9 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
               <thead>
                 <tr className="text-sm border-b bg-[#f7f9fc]">
                   <th className="py-4 px-6 font-semibold text-left">Review Type</th>
-                  <th className="py-4 px-6 font-semibold text-center">Confidence</th>
-                  <th className="py-4 px-6 font-semibold text-center">Human Review</th>
-                  <th className="py-4 px-6 font-semibold text-center">Observation</th>
+                  <th className="py-4 px-3 font-semibold text-center">Confidence</th>
+                  <th className="py-4 px-3 font-semibold text-center">Human Review</th>
+                  <th className="py-4 px-8 font-semibold text-center">Observation</th>
                   <th className="py-4 px-6 font-semibold text-center">Recommendation</th>
                   <th className="py-4 px-6 font-semibold text-center">Actions</th>
                 </tr>
@@ -450,18 +484,18 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
                       
                       
                       {/* Confidence */}
-                      <td className="py-4 px-6 text-center font-semibold">
+                      <td className="py-4 px-3 text-center font-semibold">
                         {review.confidence || "-"}
                       </td>
                       
                       {/* Human Review */}
-                      <td className="py-4 px-6 text-center font-semibold">
+                      <td className="py-4 px-3 text-center font-semibold">
                         {renderBool(review.human_review)}
                       </td>
                       
                       
                       {/* Observation */}
-                      <td className="py-4 px-6 text-center">
+                      <td className="py-4 px-8 text-center">
                         {isEditing ? (
                           <textarea
                             value={currentEditableFields.observation}
@@ -471,7 +505,7 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
                             placeholder="Enter observation..."
                           />
                         ) : (
-                          <div className="max-w-[200px] whitespace-normal break-words text-sm">
+                          <div className="max-w-[300px] whitespace-normal break-words text-sm">
                             {review.observation || "-"}
                           </div>
                         )}
@@ -568,8 +602,8 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
               <thead>
                 <tr className="text-sm border-b bg-[#f7f9fc]">
                   <th className="py-4 px-6 font-semibold text-left">Review Type</th>
-                  <th className="py-4 px-6 font-semibold text-center">Confidence</th>
-                  <th className="py-4 px-6 font-semibold text-center">Observation</th>
+                  <th className="py-4 px-3 font-semibold text-center">Confidence</th>
+                  <th className="py-4 px-8 font-semibold text-center">Observation</th>
                   <th className="py-4 px-6 font-semibold text-center">Recommendation</th>
                   <th className="py-4 px-6 font-semibold text-center">Status</th>
                   <th className="py-4 px-6 font-semibold text-center">Actions</th>
@@ -581,7 +615,7 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
                   const isEditing = editingRows.has(rowKey);
                   const currentEditableFields = editableFields[rowKey] || { observation: "", recommendation: "" };
 
-                  const analyzedText = review.problematic_text || "-";
+                  const analyzedText = review.text_analyzed || "-";
 
                   return (
                     <React.Fragment key={`${String(key)}-${idx}`}>
@@ -596,8 +630,8 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
                       {/* Data row */}
                       <tr className="border-b hover:bg-gray-50">
                         <td className="py-4 px-6 text-gray-700 font-medium">{title}</td>
-                        <td className="py-4 px-6 text-center font-semibold">{review.confidence ?? '-'}</td>
-                        <td className="py-4 px-6 text-center">
+                        <td className="py-4 px-3 text-center font-semibold">{review.confidence ?? '-'}</td>
+                        <td className="py-4 px-8 text-center">
                           {isEditing ? (
                             <textarea
                               value={currentEditableFields.observation}
@@ -607,7 +641,7 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
                               placeholder="Enter observation..."
                             />
                           ) : (
-                            <div className="max-w-[260px] whitespace-normal break-words text-sm">{review.observation || '-'}</div>
+                            <div className="max-w-[300px] whitespace-normal break-words text-sm">{review.observation || '-'}</div>
                           )}
                         </td>
                         <td className="py-4 px-6 text-center">
