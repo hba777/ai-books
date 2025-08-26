@@ -4,10 +4,10 @@ import { useBooks } from "@/context/BookContext";
 
 const AnalysisCardRow: React.FC = () => {
   const { books } = useBooks();
-  const totalProcessed = books.filter((book) => book.status === "Processed").length;
-  const totalPending = books.filter((book) => book.status === "Pending").length;
+  const totalProcessed = books.filter((book) => book.status === "Processed" || book.status === "Assigned").length;
+  const totalPending = books.filter((book) => book.status === "Classified").length;
   return (
-    <div className="flex w-full mx-auto mt-4 justify-around">
+    <div className="flex w-full mx-auto mt-4 justify-around ">
       <AnalysisCard
         value={totalProcessed}
         label="Total In-Depth Reviewed Books"

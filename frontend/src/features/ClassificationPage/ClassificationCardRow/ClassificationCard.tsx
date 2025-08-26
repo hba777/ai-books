@@ -25,7 +25,7 @@ const ClassificationStatCard: React.FC<ClassificationStatCardProps> = ({ value, 
 
   return (
     <div 
-      className={`flex flex-col items-start bg-white rounded-2xl shadow-md p-4 sm:p-6 lg:p-8 w-full min-w-[200px] sm:min-w-[240px] lg:min-w-[270px] max-w-[320px] h-40 sm:h-44 lg:h-49 relative cursor-pointer transition-all duration-200 ${
+      className={`flex flex-col items-start bg-white rounded-2xl shadow-md p-4 sm:p-6 lg:p-8 w-full min-w-[200px] sm:min-w-[240px] lg:min-w-[300px] max-w-[400px] h-40 sm:h-44 lg:h-50 relative cursor-pointer transition-all duration-200 ${
         isActive ? 'shadow-lg hover:scale-105' : 'hover:shadow-lg hover:scale-105'
       }`}
       style={isActive && Array.isArray(bgColor) && bgColor.length === 2 ? {

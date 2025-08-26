@@ -181,37 +181,31 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
               <div className="font-bold text-lg text-gray-900">
                 {book.doc_name}
               </div>
-              <button
-                title="Index"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  indexBook(book._id);
-                  toast.success("Indexing Started");
-                }}
-                disabled={
-                  isAnyBookProcessing ||
-                  book.status === "Pending" ||
-                  book.status === "Processed" ||
-                  book.status === "Assigned"
-                }
-                className={`p-1 rounded-full ${
-                  isAnyBookProcessing ||
-                  book.status === "Pending" ||
-                  book.status === "Processed" ||
-                  book.status === "Assigned"
-                    ? "text-gray-400 cursor-not-allowed"
-                    : "text-blue-500 hover:text-blue-700"
-                }`}
-              >
-                <svg width="20" height="20" fill="none" stroke="currentColor">
-                  <path
-                    d="M5 13l4 4L19 7"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
+              {book.status === "Unprocessed" && (
+                <button
+                  title="Index"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    indexBook(book._id);
+                    toast.success("Indexing Started");
+                  }}
+                  disabled={isAnyBookProcessing}
+                  className={`p-1 rounded-full ${
+                    isAnyBookProcessing
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-blue-500 hover:text-blue-700"
+                  }`}
+                >
+                  <svg width="20" height="20" fill="none" stroke="currentColor">
+                    <path
+                      d="M5 13l4 4L19 7"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+              )}
             </div>
             <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
               <div

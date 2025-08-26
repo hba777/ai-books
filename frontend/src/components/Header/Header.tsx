@@ -39,7 +39,7 @@ export const Header: React.FC = () => {
   return (
     <header className="flex items-end justify-end w-full py-6 px-6 bg-white border-b border-gray-100 shadow-sm">
       <div className="flex items-end gap-6">
-        <div className="relative">
+        {/* <div className="relative">
           <button className="relative p-2 rounded-full hover:bg-gray-100 transition">
             <LuBell className="text-2xl text-gray-500" />
             <span
@@ -49,7 +49,7 @@ export const Header: React.FC = () => {
               3
             </span>
           </button>
-        </div>
+        </div> */}
         <div className="relative" ref={avatarRef}>
           <div
             className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center font-bold text-blue-700 text-lg shadow cursor-pointer select-none"

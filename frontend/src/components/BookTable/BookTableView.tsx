@@ -147,7 +147,7 @@ const BookTableView: React.FC<BookTableViewProps> = ({
             </th>
             <th className="py-4 px-6 font-semibold">Date Submitted</th>
             <th className="py-4 px-6 font-semibold">Labels (If Classified)</th>
-            <th className="py-4 px-6 font-semibold">Actions</th>
+            <th className="py-4 px-6 font-semibold text-center">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -186,47 +186,49 @@ const BookTableView: React.FC<BookTableViewProps> = ({
                   <span className="text-gray-700 font-bold">-- NIL --</span>
                 )}
               </td>
-              <td>
-                <button
-                  title="Index"
-                  onClick={e => {
-                    e.stopPropagation();
-                    indexBook(book._id);
-                    toast.success("Chunking Started")
-                  }}
-                  disabled={isAnyBookProcessing || book.status === "Pending" || book.status === "Processed" || book.status === "Assigned"} 
-                  className={`p-2 rounded ${
-                    isAnyBookProcessing || book.status === "Pending" || book.status === "Processed" || book.status === "Assigned"
-                      ? 'text-gray-400 cursor-not-allowed'
-                      : 'hover:bg-blue-100'
-                  }`}
-                >
-                  {/* Use any icon you like */}
-                  <svg width="20" height="20" fill="none" stroke="currentColor"><path d="M5 13l4 4L19 7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                </button>
-              </td>
-              <td className="py-4 px-6 text-gray-500 whitespace-nowrap">
-                <button
-                  onClick={(e) => openSidebarForBook(e, book._id)}
-                  disabled={(() => {
-                    const canOpen = !isAnyBookProcessing && (book.status === "Pending" || book.status === "Classified" || book.status === "Analyzed");
-                    return !canOpen;
-                  })()}
-                  className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${(() => {
-                    const canOpen = (!isAnyBookProcessing && (book.status === "Pending" || book.status === "Classified" || book.status === "Analyzed"));
-                    return canOpen ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed';
-                  })()}`}
-                >
-                  {book.status === "Pending" || book.status === "Analyzed" || book.status === "Classified"
-                    ? "Start Processing"
-                    : book.status === "Processing"
-                      ? "Processing..."
-                      : book.status === "Indexing"
-                        ? "Indexing..."
-                        : book.status === "Processed" || book.status === "Assigned"
-                          ? "Processed"
-                          : "Not Available"}
-                </button>
+              <td className="py-4 px-6 text-center">
+                <div className="flex items-center justify-center gap-2">
+                  {book.status === "Unprocessed" && (
+                    <button
+                      title="Index"
+                      onClick={e => {
+                        e.stopPropagation();
+                        indexBook(book._id);
+                        toast.success("Chunking Started")
+                      }}
+                      disabled={isAnyBookProcessing} 
+                      className={`p-2 rounded ${
+                        isAnyBookProcessing
+                          ? 'text-gray-400 cursor-not-allowed'
+                          : 'hover:bg-blue-100'
+                      }`}
+                    >
+                      {/* Use any icon you like */}
+                      <svg width="20" height="20" fill="none" stroke="currentColor"><path d="M5 13l4 4L19 7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    </button>
+                  )}
+                  <button
+                    onClick={(e) => openSidebarForBook(e, book._id)}
+                    disabled={(() => {
+                      const canOpen = !isAnyBookProcessing && (book.status === "Pending" || book.status === "Classified" || book.status === "Analyzed");
+                      return !canOpen;
+                    })()}
+                    className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${(() => {
+                      const canOpen = (!isAnyBookProcessing && (book.status === "Pending" || book.status === "Classified" || book.status === "Analyzed"));
+                      return canOpen ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed';
+                    })()}`}
+                  >
+                    {book.status === "Pending" || book.status === "Analyzed" || book.status === "Classified"
+                      ? "Start Processing"
+                      : book.status === "Processing"
+                        ? "Processing..."
+                        : book.status === "Indexing"
+                          ? "Indexing..."
+                          : book.status === "Processed" || book.status === "Assigned"
+                            ? "Processed"
+                            : "Not Available"}
+                  </button>
+                </div>
               </td>
             </tr>
           ))}
