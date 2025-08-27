@@ -1,4 +1,5 @@
 import os
+import json # Import the json module
 from datetime import datetime
 from typing import Dict, Any
 
@@ -70,8 +71,6 @@ def log_previous_agent_data(agent: Dict[str, Any], agent_id: str):
             f.write(f"\n--- Evaluator Prompt ---\n")
             f.write(format_prompt(agent["evaluators_prompt"]) + "\n")
 
-
-
         if agent_type == "analysis":
             kb_items = agent.get("knowledge_base", [])
             if kb_items:
@@ -84,5 +83,15 @@ def log_previous_agent_data(agent: Dict[str, Any], agent_id: str):
                         f.write(f"  Sub Category: {item['sub_category']}\n")
                     if item.get("topic"):
                         f.write(f"  Topic: {item['topic']}\n")
+                    
+                    # New logic to parse and write JSON data
                     if item.get("json_data"):
-                        f.write(f"  Description: {item['json_data']}\n")
+                        try:
+                            # Parse the JSON string into a Python dictionary
+                            kb_data = json.loads(item['json_data'])
+                            f.write("  Knowledge Base Content:\n")
+                            # Write the dictionary in a readable format
+                            f.write(json.dumps(kb_data, indent=2, ensure_ascii=False) + "\n")
+                        except json.JSONDecodeError as e:
+                            f.write(f"  Error parsing JSON for item {idx}: {e}\n")
+                            f.write(f"  Raw JSON data: {item['json_data']}\n")

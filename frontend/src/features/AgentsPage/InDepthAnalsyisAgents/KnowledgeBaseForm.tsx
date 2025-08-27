@@ -64,7 +64,6 @@ const KnowledgeBaseForm: React.FC<KnowledgeBaseFormProps> = ({
 
   const validateJsonData = (jsonData: string): string | null => {
     if (!jsonData.trim()) return "Description is required";
-    if (jsonData.length > 2000) return "Description must be less than 2000 characters";
     
     // Try to parse JSON if it looks like JSON
     if (jsonData.trim().startsWith('{') || jsonData.trim().startsWith('[')) {

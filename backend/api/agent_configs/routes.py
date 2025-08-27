@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Body
+from fastapi import APIRouter, Depends, HTTPException, status, Body, UploadFile, File
 from models.agent_configs import AgentConfigModel
 from utils.jwt_utils import get_user_from_cookie
 from db.mongo import get_agent_configs_collection, kb_data_collection
@@ -6,6 +6,9 @@ from bson import ObjectId
 from pydantic import BaseModel
 from .schemas import AgentConfigResponse, AgentConfigListResponse, AgentDeleteResponse, TestAgentRequest
 from utils.agent_logger import log_previous_agent_data
+from pathlib import Path
+from tempfile import NamedTemporaryFile
+from PolicyExtractor.Policy_guidence import analyze_document_with_agent
 
 router = APIRouter(prefix="/agents", tags=["Agent Configurations"])
 
@@ -263,3 +266,41 @@ def update_confidence_score(agent_id: str, confidence_score: float = Body(..., e
                 kb_item["_id"] = str(kb_item["_id"])
 
     return AgentConfigResponse(**result)
+
+@router.post(
+    "/{agent_id}/analyze-pdf",
+    dependencies=[Depends(get_user_from_cookie)]
+)
+def analyze_agent_pdf(agent_id: str, file: UploadFile = File(...)):
+    collection = get_agent_configs_collection()
+    agent = collection.find_one({"_id": ObjectId(agent_id)})
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    # Ensure it's a PDF
+    if file.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail="Only PDF files are allowed")
+
+    # Persist upload to a temp file
+    try:
+        suffix = Path(file.filename or "uploaded").suffix or ".pdf"
+        with NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            tmp.write(file.file.read())
+            tmp_path = tmp.name
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save uploaded file: {e}")
+
+    agent_name = agent.get("agent_name")
+
+    try:
+        result_text = analyze_document_with_agent(tmp_path, agent_name)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {e}")
+    finally:
+        try:
+            Path(tmp_path).unlink(missing_ok=True)
+        except Exception:
+            pass
+
+    return {"agent_id": agent_id, "agent_name": agent_name, "result": result_text}
+
