@@ -13,4 +13,4 @@ venv/
 # Editor / IDE folders
 .vscode/
 .idea/
-backend/chrome_dB/
+chrome_dB/
