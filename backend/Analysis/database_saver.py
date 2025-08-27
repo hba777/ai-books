@@ -26,6 +26,8 @@ def save_results_to_mongo(
     book_name: str,
     predicted_label: str,
     classification_scores: Dict[str, float],
+    coordinates: Any,
+    page_number: int,
     result_with_review: Dict,
     overall_chunk_status: str,
     agent_analysis_statuses: Dict # This dictionary will now contain statuses for all agents
@@ -39,10 +41,11 @@ def save_results_to_mongo(
             "timestamp": datetime.now(),
             "doc_id": doc_id,
             "Book Name": book_name,
-            "Page Number": "N/A",
+            "Page Number": page_number,
             "Chunk_ID": chunk_uuid,
             "Chunk no.": chunk_index,
             "Text Analyzed": report_text,
+            "coordinates": coordinates, # <-- MODIFICATION HERE
             "Predicted Label": predicted_label,
             "Predicted Label Confidence": classification_scores.get(predicted_label, 0.0),
             "overall_status": overall_chunk_status,
@@ -60,7 +63,6 @@ def save_results_to_mongo(
             agent_result = {
                 "issue_found": agent_output.get("issues_found", False),
                 "problematic_text": agent_output.get("problematic_text", ""),
-                "problematic_text_coordinates": agent_output.get("problematic_text_coordinates", []),
                 "observation": agent_output.get("observation", ""),
                 "recommendation": agent_output.get("recommendation", ""),
                 "confidence": agent_data.get("confidence", 0),

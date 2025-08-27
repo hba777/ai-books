@@ -59,8 +59,22 @@ const BookContext = createContext<BookContextType | undefined>(undefined);
 
 export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [books, setBooks] = useState<Book[]>([]);
-  const [activeClassifications, setActiveClassifications] = useState<ClassificationProgress[]>([]);
-  const [activeAnalyses, setActiveAnalyses] = useState<AnalysisProgress[]>([]);
+  const [activeClassifications, setActiveClassifications] = useState<ClassificationProgress[]>(() => {
+    // Load from localStorage on initial render
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('activeClassifications');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+  const [activeAnalyses, setActiveAnalyses] = useState<AnalysisProgress[]>(() => {
+    // Load from localStorage on initial render
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('activeAnalyses');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
   const [reviewOutcomes, setReviewOutcomes] = useState<ReviewOutcomesResponse[]>([]);
   const classificationsCacheRef = useRef<Map<string, BookClassificationsResponse>>(new Map());
   const { user, loading: userLoading } = useUser(); 
@@ -262,6 +276,92 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await fetchBooks();
   };
 
+  // Clean up completed items from localStorage
+  const cleanupCompletedItems = () => {
+    if (typeof window !== 'undefined') {
+      const incompleteClassifications = activeClassifications.filter(c => c.progress < 100);
+      const incompleteAnalyses = activeAnalyses.filter(a => a.progress < 100);
+      
+      localStorage.setItem('activeClassifications', JSON.stringify(incompleteClassifications));
+      localStorage.setItem('activeAnalyses', JSON.stringify(incompleteAnalyses));
+    }
+  };
+
+  // Restore WebSocket connections for existing progress items
+  const restoreWebSocketConnections = () => {
+    // Restore classification WebSockets
+    activeClassifications.forEach(classification => {
+      if (classification.progress < 100) {
+        const ws = connectToProgressWebSocket(classification.book_id, (progress: number, total?: number, done?: number, rawData?: any) => {
+          setActiveClassifications(prev => 
+            prev.map(c => 
+              c.book_id === classification.book_id 
+                ? { ...c, progress, total, done }
+                : c
+            )
+          );
+          
+          // If progress is 100%, remove from active classifications after a delay
+          if (progress === 100) {
+            fetchBooks();
+            setTimeout(() => {
+              setActiveClassifications(prev => 
+                prev.filter(c => c.book_id !== classification.book_id)
+              );
+              // Close WebSocket connection
+              const wsToClose = websocketRefs.current.get(classification.book_id);
+              if (wsToClose) {
+                wsToClose.close();
+                websocketRefs.current.delete(classification.book_id);
+              }
+            }, 2000);
+          }
+        });
+        websocketRefs.current.set(classification.book_id, ws);
+      }
+    });
+
+    // Restore analysis WebSockets
+    activeAnalyses.forEach(analysis => {
+      if (analysis.progress < 100) {
+        const analysisWs = connectToAnalysisProgressWebSocket(analysis.book_id, (progress: number, total?: number, done?: number) => {
+          setActiveAnalyses(prev => {
+            const bookName = getBookNameById(analysis.book_id);
+            const existing = prev.find(a => a.book_id === analysis.book_id);
+            const updated = { book_id: analysis.book_id, progress, total, done, book_name: bookName } as AnalysisProgress;
+            if (existing) {
+              return prev.map(a => a.book_id === analysis.book_id ? updated : a);
+            }
+            return [...prev, updated];
+          });
+          if (progress === 100) {
+            fetchBooks();
+            setTimeout(() => {
+              setActiveClassifications(prev => 
+                prev.filter(c => c.book_id !== analysis.book_id)
+              );
+              // Close WebSocket connection
+              const wsToClose = websocketRefs.current.get(analysis.book_id);
+              if (wsToClose) {
+                wsToClose.close();
+                websocketRefs.current.delete(analysis.book_id);
+              }
+            }, 2000);
+            setTimeout(() => {
+              setActiveAnalyses(prev => prev.filter(a => a.book_id !== analysis.book_id));
+              const wsToClose = websocketRefs.current.get(`${analysis.book_id}-analysis`);
+              if (wsToClose) {
+                wsToClose.close();
+                websocketRefs.current.delete(`${analysis.book_id}-analysis`);
+              }
+            }, 2000);
+          }
+        });
+        websocketRefs.current.set(`${analysis.book_id}-analysis`, analysisWs);
+      }
+    });
+  };
+
   // Cleanup WebSocket connections on unmount
   useEffect(() => {
     return () => {
@@ -272,9 +372,25 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
+  // Save progress state to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('activeClassifications', JSON.stringify(activeClassifications));
+      cleanupCompletedItems();
+    }
+  }, [activeClassifications]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('activeAnalyses', JSON.stringify(activeAnalyses));
+      cleanupCompletedItems();
+    }
+  }, [activeAnalyses]);
+
   useEffect(() => {
     if (!userLoading && user) {
       fetchBooks();
+      restoreWebSocketConnections(); // Call the new function here
     } else if (!userLoading && !user) {
       setBooks([]); // clear if logged out
       setActiveClassifications([]); // clear active classifications

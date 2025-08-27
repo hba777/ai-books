@@ -30,6 +30,8 @@ const PDFViewerContent: React.FC<PDFViewerContentProps> = ({
   const [currentPage, setCurrentPage] = useState(pageNumber);
   const [scale, setScale] = useState(1.5);
   const viewerRef = useRef<HTMLDivElement>(null);
+  const pageContainerRef = useRef<HTMLDivElement>(null);
+  const [canvasHeight, setCanvasHeight] = useState<number>(0);
   const [pendingHighlight, setPendingHighlight] = useState<boolean>(false);
 
   const goToPrevPage = () => setCurrentPage((p) => Math.max(1, p - 1));
@@ -59,16 +61,16 @@ const PDFViewerContent: React.FC<PDFViewerContentProps> = ({
       const [x0, y0, x1, y1] = coords;
       const centerX = (x0 + x1) / 2;
       const centerY = (y0 + y1) / 2;
-      
+
       const scaledCenterX = centerX * scale;
       const scaledCenterY = centerY * scale;
-      
+
       if (viewerRef.current) {
         const container = viewerRef.current;
         const containerRect = container.getBoundingClientRect();
         const scrollLeft = scaledCenterX - containerRect.width / 2;
         const scrollTop = scaledCenterY - containerRect.height / 2;
-        
+
         container.scrollTo({
           left: Math.max(0, scrollLeft),
           top: Math.max(0, scrollTop),
@@ -77,6 +79,21 @@ const PDFViewerContent: React.FC<PDFViewerContentProps> = ({
       }
     }
   };
+
+  // Measure canvas height whenever page or scale changes
+  useEffect(() => {
+    const measure = () => {
+      if (pageContainerRef.current) {
+        const canvasEl = pageContainerRef.current.querySelector('canvas');
+        if (canvasEl) {
+          setCanvasHeight(canvasEl.clientHeight);
+        }
+      }
+    };
+    // small delay to allow canvas render
+    const t = setTimeout(measure, 50);
+    return () => clearTimeout(t);
+  }, [currentPage, scale]);
 
   // Navigate to specific coordinates when they change
   useEffect(() => {
@@ -109,6 +126,21 @@ const PDFViewerContent: React.FC<PDFViewerContentProps> = ({
       setPendingHighlight(false);
     }
   }, [isOpen, pageNumber]);
+
+  // Compute highlight style using top-left origin (same as PDFViewerActual)
+  const highlightStyle = React.useMemo(() => {
+    if (!coordinates || coordinates.length < 4) return undefined;
+    const [x0, y0, x1, y1] = coordinates;
+    return {
+      top: y0 * scale,
+      left: x0 * scale,
+      width: (x1 - x0) * scale,
+      height: (y1 - y0) * scale,
+      background: "rgba(255, 255, 0, 0.25)",
+      border: "2px solid #F59E0B",
+      pointerEvents: "none" as const,
+    };
+  }, [coordinates, scale]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
@@ -195,21 +227,15 @@ const PDFViewerContent: React.FC<PDFViewerContentProps> = ({
               file={fileUrl}
               onLoadSuccess={({ numPages }) => setNumPages(numPages)}
             >
-              <div className="relative mb-6">
+              <div ref={pageContainerRef} className="relative mb-6">
                 <Page pageNumber={currentPage} scale={scale} />
                 {/* Show highlight if coordinates are available */}
                 {coordinates && 
-                 coordinates.length >= 4 && (
+                 coordinates.length >= 4 &&
+                 highlightStyle && (
                   <div
-                    className="absolute border-2 border-yellow-500 z-10"
-                    style={{
-                      top: coordinates[1] * scale,
-                      left: coordinates[0] * scale,
-                      width: (coordinates[2] - coordinates[0]) * scale,
-                      height: (coordinates[3] - coordinates[1]) * scale,
-                      background: "rgba(255, 255, 0, 0.25)",
-                      pointerEvents: "none",
-                    }}
+                    className="absolute z-10"
+                    style={highlightStyle}
                   />
                 )}
               </div>

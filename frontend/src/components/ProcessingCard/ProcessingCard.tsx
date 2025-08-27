@@ -2,7 +2,7 @@ import React from "react";
 import { useBooks } from "../../context/BookContext";
 
 const ProcessingCard: React.FC = () => {
-  const { activeClassifications, activeAnalyses } = useBooks();
+  const { activeClassifications, activeAnalyses, getBookNameById } = useBooks();
 
   const hasAny = activeClassifications.length > 0 || activeAnalyses.length > 0;
   if (!hasAny) {
@@ -12,6 +12,9 @@ const ProcessingCard: React.FC = () => {
   return (
     <div className="space-y-4">
       {activeClassifications.map((classification) => {
+        // Get book name if not available
+        const bookName = classification.book_name || getBookNameById(classification.book_id) || "Unknown Book";
+        
         // Log for debugging
         console.log(
           "[ProcessingCard] Classification progress:",
@@ -65,7 +68,7 @@ const ProcessingCard: React.FC = () => {
             <div className="flex-1">
               <div className="flex items-center justify-between mb-2 gap-x-2">
                 <span className="text-lg font-semibold text-gray-800">
-                  Classifying: {classification.book_name || "Unknown Book"}
+                  Classifying: {bookName}
                 </span>
                 <span className="text-sm font-medium text-gray-600">
                   {classification.progress}%
@@ -93,6 +96,9 @@ const ProcessingCard: React.FC = () => {
       })}
 
       {activeAnalyses.map((analysis) => {
+        // Get book name if not available
+        const bookName = analysis.book_name || getBookNameById(analysis.book_id) || "Unknown Book";
+        
         return (
           <div
             key={`analysis-${analysis.book_id}`}
@@ -123,7 +129,7 @@ const ProcessingCard: React.FC = () => {
             <div className="flex-1">
               <div className="flex items-center justify-between mb-2 gap-x-2">
                 <span className="text-lg font-semibold text-gray-800">
-                  Analysing: {analysis.book_name || "Unknown Book"}
+                  Analysing: {bookName}
                 </span>
                 <span className="text-sm font-medium text-gray-600">
                   {analysis.progress}%
