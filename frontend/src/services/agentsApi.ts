@@ -86,3 +86,15 @@ export const testAgent = async (agentId: string, text: string): Promise<{
   const response = await api.post(`/agents/${agentId}/test`, { text });
   return response.data;
 };
+
+export const analyzeAgentPdf = async (
+  agentId: string,
+  file: File
+): Promise<{ agent_id: string; agent_name: string; result: string }> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post(`/agents/${agentId}/analyze-pdf`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};

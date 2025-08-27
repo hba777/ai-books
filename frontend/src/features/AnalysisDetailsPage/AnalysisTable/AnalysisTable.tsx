@@ -398,6 +398,12 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
           <div className="mb-4">
             <div className="flex items-center gap-2 mb-2">
               <h4 className="text-lg font-semibold text-gray-800">Paragraph {textIndex + 1}:</h4>
+              {!fileUrl && (
+                <span className="inline-flex items-center gap-2 text-xs text-gray-500">
+                  <span className="animate-spin rounded-full h-3 w-3 border-2 border-gray-300 border-t-gray-500"></span>
+                  Loading PDF...
+                </span>
+              )}
               {fileUrl && (
                 <button
                   onClick={() => {

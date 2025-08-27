@@ -9,7 +9,8 @@ import {
   deleteAgent as apiDeleteAgent,
   powerToggleAgent as apiPowerToggleAgent,
   updateAgentConfidenceScore as apiUpdateAgentConfidenceScore,
-  testAgent as apiTestAgent
+  testAgent as apiTestAgent,
+  analyzeAgentPdf as apiAnalyzeAgentPdf
 } from '../services/agentsApi';
 import { useUser } from "../context/UserContext";
 interface AgentsContextType {
@@ -33,6 +34,7 @@ interface AgentsContextType {
     test_text: string;
     result: string;
   }>;
+  analyzePolicyWithAgent: (agentId: string, file: File) => Promise<{ agent_id: string; agent_name: string; result: string }>;
 }
 
 const AgentsContext = createContext<AgentsContextType | undefined>(undefined);
@@ -101,6 +103,10 @@ export const AgentsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return await apiTestAgent(id, text);
   };
 
+  const analyzePolicyWithAgent = async (agentId: string, file: File) => {
+    return await apiAnalyzeAgentPdf(agentId, file);
+  };
+
   useEffect(() => {
     if (!userLoading && user) {
       fetchAgents();
@@ -120,7 +126,8 @@ export const AgentsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       deleteAgent, 
       powerToggleAgent,
       updateAgentConfidenceScore,
-      testAgent
+      testAgent,
+      analyzePolicyWithAgent
     }}>
       {children}
     </AgentsContext.Provider>
