@@ -542,14 +542,14 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
                                 className="p-2 text-green-600 hover:text-green-800 transition-colors"
                                 title="Save"
                               >
-                                <FaSave size={14} />
+                                <FaSave size={16} />
                               </button>
                               <button
                                 onClick={() => handleCancel(textIndex, key)}
                                 className="p-2 text-gray-600 hover:text-gray-800 transition-colors"
                                 title="Cancel"
                               >
-                                <FaTimes size={14} />
+                                <FaTimes size={16} />
                               </button>
                             </>
                           ) : (
@@ -559,14 +559,14 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
                                 className="p-2 text-blue-600 hover:text-blue-800 transition-colors"
                                 title="Edit"
                               >
-                                <FaEdit size={14} />
+                                <FaEdit size={16} />
                               </button>
                               <button
                                 onClick={() => handleDelete(textIndex, key)}
                                 className="p-2 text-red-600 hover:text-red-800 transition-colors"
                                 title="Delete"
                               >
-                                <FaTrash size={14} />
+                                <FaTrash size={16} />
                               </button>
                             </>
                           )}
