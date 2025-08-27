@@ -4,7 +4,7 @@ import { useBooks } from '@/context/BookContext';
 const InDepthAnalysisCardRow: React.FC = () => {
   const  { books } = useBooks();
   const totalProcessed = books.filter((book) => book.status === "Processed" || book.status === "Assigned").length;
-  const totalClassified = books.filter((book) => book.status === "Classified" || book.status === "Assigned").length;
+  const totalClassified = books.filter((book) => book.status === "Classified" || book.status === "Assigned" || book.status === "Processed").length ;
   const totalPending = books.filter((book) => book.status === "Pending").length;
 
   const cardData = [

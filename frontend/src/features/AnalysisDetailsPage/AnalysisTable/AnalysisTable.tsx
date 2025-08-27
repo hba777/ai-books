@@ -305,34 +305,28 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
   };
 
   const handleViewInPDF = (textIndex: number, reviewType: string) => {
-    // Find the review that contains coordinates for this text
-    const review = groupedData[textIndex]?.reviews[reviewType];
-    if (review?.problematic_text_coordinates && review.problematic_text_coordinates.length > 0) {
-      // Get the first coordinate entry (assuming single match for now)
-      const coordEntry = review.problematic_text_coordinates[0];
-      const bbox = coordEntry?.bbox;
-      const pageNumber = coordEntry?.page || 1;
-      
-      if (bbox && bbox.length >= 4) {
-        setPdfViewerDialog({
-          isOpen: true,
-          coordinates: bbox,
-          pageNumber: pageNumber
-        });
-      } else {
-        // If no valid bbox, just open the PDF without highlighting
-        setPdfViewerDialog({
-          isOpen: true,
-          coordinates: undefined,
-          pageNumber: 1
-        });
-      }
+    // Find the review outcome document that contains this text analyzed
+    const outcomeDoc = data.find(row => {
+      const textAnalyzed = (row as any)["Text Analyzed"];
+      return textAnalyzed === groupedData[textIndex]?.textAnalyzed;
+    });
+    
+    const coords = (outcomeDoc as any)?.coordinates as number[] | undefined;
+    const pageNumRaw = (outcomeDoc as any)?.["Page Number"] as string | number | undefined;
+    const pageNumber = typeof pageNumRaw === 'string' ? parseInt(pageNumRaw, 10) : (pageNumRaw || 1);
+
+    if (Array.isArray(coords) && coords.length >= 4) {
+      setPdfViewerDialog({
+        isOpen: true,
+        coordinates: coords,
+        pageNumber: Number.isFinite(pageNumber as number) ? (pageNumber as number) : 1,
+      });
     } else {
       // If no coordinates, just open the PDF without highlighting
       setPdfViewerDialog({
         isOpen: true,
         coordinates: undefined,
-        pageNumber: 1
+        pageNumber: Number.isFinite(pageNumber as number) ? (pageNumber as number) : 1,
       });
     }
   };
@@ -407,23 +401,33 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
               {fileUrl && (
                 <button
                   onClick={() => {
-                    // Find the first review with coordinates for this text
-                    const firstReviewWithCoords = Object.entries(group.reviews).find(([_, review]) => 
-                      (review as any)?.problematic_text_coordinates && (review as any).problematic_text_coordinates.length > 0
-                    );
-                    if (firstReviewWithCoords) {
-                      const [reviewType, review] = firstReviewWithCoords;
-                      handleViewInPDF(textIndex, reviewType);
+                    // Find the review outcome document that contains this text analyzed
+                    const outcomeDoc = data.find(row => {
+                      const textAnalyzed = (row as any)["Text Analyzed"];
+                      return textAnalyzed === group.textAnalyzed;
+                    });
+
+                    const coords = (outcomeDoc as any)?.coordinates as number[] | undefined;
+                    console.log(coords)
+                    const pageNumRaw = (outcomeDoc as any)?.["Page Number"] as string | number | undefined;
+                    const pageNumber = typeof pageNumRaw === 'string' ? parseInt(pageNumRaw, 10) : (pageNumRaw || 1);
+
+                    if (Array.isArray(coords) && coords.length >= 4) {
+                      setPdfViewerDialog({
+                        isOpen: true,
+                        coordinates: coords,
+                        pageNumber: Number.isFinite(pageNumber as number) ? (pageNumber as number) : 1,
+                      });
                     } else {
                       // If no coordinates found, open PDF without highlighting
                       setPdfViewerDialog({
                         isOpen: true,
                         coordinates: undefined,
-                        pageNumber: 1
+                        pageNumber: Number.isFinite(pageNumber as number) ? (pageNumber as number) : 1,
                       });
                     }
                   }}
-                  className="p-2 text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
+                  className="p-2 text-blue-600 hover:text-blue-800 transition-colors"
                   title="View in PDF"
                 >
                   <FaEye size={16} />
@@ -538,14 +542,14 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
                                 className="p-2 text-green-600 hover:text-green-800 transition-colors"
                                 title="Save"
                               >
-                                <FaSave size={14} />
+                                <FaSave size={16} />
                               </button>
                               <button
                                 onClick={() => handleCancel(textIndex, key)}
                                 className="p-2 text-gray-600 hover:text-gray-800 transition-colors"
                                 title="Cancel"
                               >
-                                <FaTimes size={14} />
+                                <FaTimes size={16} />
                               </button>
                             </>
                           ) : (
@@ -555,14 +559,14 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
                                 className="p-2 text-blue-600 hover:text-blue-800 transition-colors"
                                 title="Edit"
                               >
-                                <FaEdit size={14} />
+                                <FaEdit size={16} />
                               </button>
                               <button
                                 onClick={() => handleDelete(textIndex, key)}
                                 className="p-2 text-red-600 hover:text-red-800 transition-colors"
                                 title="Delete"
                               >
-                                <FaTrash size={14} />
+                                <FaTrash size={16} />
                               </button>
                             </>
                           )}
@@ -615,7 +619,7 @@ const AnalysisTable: React.FC<AnalysisTableProps> = ({ data, minConfidence = 50,
                   const isEditing = editingRows.has(rowKey);
                   const currentEditableFields = editableFields[rowKey] || { observation: "", recommendation: "" };
 
-                  const analyzedText = review.text_analyzed || "-";
+                  const analyzedText = review.problematic_text || "-";
 
                   return (
                     <React.Fragment key={`${String(key)}-${idx}`}>

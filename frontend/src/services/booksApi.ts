@@ -60,10 +60,6 @@ export interface ReviewDetailResponse {
   issue_found?: boolean;
   observation?: string;
   problematic_text?: string;
-  problematic_text_coordinates?: Array<{
-    page: number;
-    bbox: number[];
-  }>;
   recommendation?: string;
   retries?: number;
   status?: string;
@@ -76,13 +72,14 @@ export interface ReviewOutcomesResponse {
   Chunk_no?: number;
   Chunk_ID?: string;
   doc_id?: string;
-  [key: string]: ReviewDetailResponse | string | number | undefined; // Allow any agent review type
   overall_status?: string;
-  Page_Number?: string;
+  Page_Number?: string | number;
   Predicted_Label?: string;
   Predicted_Label_Confidence?: number;
   Text_Analyzed?: string;
+  coordinates?: number[]; // [x0, y0, x1, y1] at document level
   timestamp?: string;
+  [key: string]: ReviewDetailResponse | string | number | number[] | undefined; // Added number[]
 }
 
 export interface ClassificationEntry {

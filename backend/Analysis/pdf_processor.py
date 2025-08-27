@@ -142,6 +142,7 @@ def get_all_pending_pipeline1_chunks_details() -> List[Dict]:
         # Case-insensitive match for "Pending"
         all_pending_chunks = list(pdf_collection.find(
             {"analysis_status": {"$regex": "^pending$", "$options": "i"}},
+            {"_id": 1, "text": 1, "doc_id": 1, "chunk_index": 1, "coordinates": 1, "page_number": 1}, 
             sort=[('doc_id', 1), ('chunk_index', 1)]
         ))
     except Exception as e:

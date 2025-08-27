@@ -14,59 +14,7 @@ from datetime import datetime
 from bson import ObjectId
 import asyncio
 import time 
-import fitz
 
-
-def find_text_coordinates_in_pdf(pdf_path: str, search_text: str):
-    """
-    Searches for a text string in a PDF, handling multi-line and single-line cases.
-    Returns a list of dictionaries, each containing page number and bbox.
-    """
-    if not search_text:
-        return []
-
-    cleaned_search_text = " ".join(search_text.split())
-    search_words = cleaned_search_text.split()
-    
-    coordinates_list = []
-    
-    try:
-        doc = fitz.open(pdf_path)
-        for page_num in range(len(doc)):
-            page = doc[page_num]
-            
-            # Use `get_text("words")` to get a list of all words and their bboxes on the page
-            words_on_page = page.get_text("words")
-            
-            # Create a list of tuples: (word, bbox)
-            word_bboxes = [(word[4], fitz.Rect(word[:4])) for word in words_on_page]
-            
-            # Simple word-based matching
-            for i in range(len(word_bboxes) - len(search_words) + 1):
-                # Check if the sequence of words matches
-                match = True
-                for j in range(len(search_words)):
-                    if search_words[j] != word_bboxes[i+j][0]:
-                        match = False
-                        break
-                
-                if match:
-                    # Found a match, merge the bboxes
-                    combined_bbox = word_bboxes[i][1]
-                    for j in range(1, len(search_words)):
-                        combined_bbox.include_rect(word_bboxes[i+j][1])
-                    
-                    coordinates_list.append({
-                        "page": page_num + 1,
-                        "bbox": [combined_bbox.x0, combined_bbox.y0, combined_bbox.x1, combined_bbox.y1]
-                    })
-            
-        doc.close()
-    except Exception as e:
-        print(f"Error finding coordinates in PDF: {e}")
-        return []
-    
-    return coordinates_list
 
 def run_workflow(book_id: str, run_analysis: bool, run_classification: bool, pdf_path: str):
     """
@@ -139,6 +87,8 @@ def run_workflow(book_id: str, run_analysis: bool, run_classification: bool, pdf
             chunk_index_p1 = doc_to_process.get("chunk_index")
             original_chunk_text = doc_to_process.get("text")
             book_name_p1 = doc_to_process.get("doc_name", "Unknown Document")
+            p1_coordinates = doc_to_process.get("coordinates")
+            p1_page_number = doc_to_process.get("page_number")
 
             merged_text_for_id = original_chunk_text
 
@@ -157,7 +107,10 @@ def run_workflow(book_id: str, run_analysis: bool, run_classification: bool, pdf
                     "title": book_name_p1,
                     "chunk_id": p1_chunk_uuid,
                     "predicted_label": predicted_label,
-                    "classification_scores": classification_result['all_scores']
+                    "classification_scores": classification_result['all_scores'],
+                    "coordinates": p1_coordinates,
+                    "page_number": p1_page_number,
+
                 },
                 "main_node_output": {},
                 "aggregate": [],
@@ -202,18 +155,7 @@ def run_workflow(book_id: str, run_analysis: bool, run_classification: bool, pdf
                             is_output_complete = False
 
                     if is_output_complete:
-                        problematic_text = agent_output.get("problematic_text")
-                        if problematic_text and problematic_text.lower() != 'n/a':
-                            print(f"🔍 Searching for coordinates for text: '{problematic_text[:100]}...' in PDF: {pdf_path}")
-                            coordinates = find_text_coordinates_in_pdf(pdf_path, problematic_text)
-                            agent_output["problematic_text_coordinates"] = coordinates
-                            if coordinates:
-                                print(f"✅ Coordinates for {agent_name} found: {coordinates}")
-                            else:
-                                print(f"⚠️ No coordinates found for {agent_name} - text may not be in PDF")
-                        else:
-                            agent_output["problematic_text_coordinates"] = []
-                            agent_analysis_statuses[agent_name] = "Complete"
+                        agent_analysis_statuses[agent_name] = "Complete"
                     else:
                         agent_analysis_statuses[agent_name] = "Pending"
                         overall_chunk_status = "Pending"
@@ -226,6 +168,8 @@ def run_workflow(book_id: str, run_analysis: bool, run_classification: bool, pdf
                 book_name=book_name_p1,
                 predicted_label=predicted_label,
                 classification_scores=classification_result['all_scores'],
+                coordinates=p1_coordinates,
+                page_number=p1_page_number,
                 result_with_review=result_with_review,
                 overall_chunk_status=overall_chunk_status,
                 agent_analysis_statuses=agent_analysis_statuses
@@ -238,7 +182,7 @@ def run_workflow(book_id: str, run_analysis: bool, run_classification: bool, pdf
             )
 
             print("\n--- Langgraph Workflow Final Output (from State) ---")
-            for agent_name, agent_output_data in result_with_review["main_node_output"].items():
+            for agent_name, agent_output_data in result_with_review.get("main_node_output", {}).items():
                 print(f"\n--- Summary for {agent_name} ---\n")
                 output_content = agent_output_data.get('output', {})
                 print(f"  Parsed Output: {output_content.get('problematic_text', 'No problematic text found.')}")
