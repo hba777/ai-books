@@ -112,24 +112,12 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const indexBook = async (bookId: string, chunkSize?: number) => {
-    try {
-      await apiIndexBook(bookId, chunkSize ?? 1000);
-      fetchBooks();
-
-      wsRef.current = connectToIndexProgressWebSocket(bookId, async () => {
-        console.log("Triggered");
-        await fetchBooks();
-      }, async (evt: any) => {
-        toast.error('Indexing encountered an error. Status may have reverted.');
-        await fetchBooks();
-      });
-    } catch (error: any) {
-      const detail = error?.response?.data?.detail || error?.message || 'Failed to start indexing';
-      toast.error(`Indexing failed: ${detail}`);
-      // Ensure UI refresh to pick latest book status from backend
-      fetchBooks();
-      throw error;
-    }
+    await apiIndexBook(bookId, chunkSize);
+    fetchBooks();
+    wsRef.current = connectToIndexProgressWebSocket(bookId, () => {
+    console.log("Triggered");
+    fetchBooks();
+  });
   };
 
   const getBookNameById = (bookId: string): string | undefined => {

@@ -181,7 +181,12 @@ const PDFViewerActual: React.FC<PDFViewerActualProps> = ({
           onLoadSuccess={({ numPages }) => setNumPages(numPages)}
         >
           <div className="relative mb-6">
-            <Page pageNumber={pageNumber} scale={scale} />
+            <Page
+              pageNumber={pageNumber}
+              scale={scale}
+              renderTextLayer={false}
+              renderAnnotationLayer={false}
+            />
             {/* Show current classification highlight if coordinates are available */}
             {currentClassificationCoordinates && 
              currentClassificationPage === pageNumber && 

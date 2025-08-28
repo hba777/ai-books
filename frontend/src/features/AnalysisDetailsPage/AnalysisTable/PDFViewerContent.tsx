@@ -74,7 +74,7 @@ const PDFViewerContent: React.FC<PDFViewerContentProps> = ({
         container.scrollTo({
           left: Math.max(0, scrollLeft),
           top: Math.max(0, scrollTop),
-          behavior: 'smooth'
+          behavior: "smooth",
         });
       }
     }
@@ -84,7 +84,7 @@ const PDFViewerContent: React.FC<PDFViewerContentProps> = ({
   useEffect(() => {
     const measure = () => {
       if (pageContainerRef.current) {
-        const canvasEl = pageContainerRef.current.querySelector('canvas');
+        const canvasEl = pageContainerRef.current.querySelector("canvas");
         if (canvasEl) {
           setCanvasHeight(canvasEl.clientHeight);
         }
@@ -186,7 +186,7 @@ const PDFViewerContent: React.FC<PDFViewerContentProps> = ({
               <FiChevronRight className="text-gray-700" />
             </button>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <button onClick={zoomOut} className="p-2 hover:bg-gray-200 rounded">
               <RiSubtractFill className="text-gray-700" />
@@ -218,25 +218,22 @@ const PDFViewerContent: React.FC<PDFViewerContentProps> = ({
         </div>
 
         {/* PDF Viewer */}
-        <div
-          ref={viewerRef}
-          className="flex-1 overflow-auto bg-gray-50 p-4"
-        >
+        <div ref={viewerRef} className="flex-1 overflow-auto bg-gray-50 p-4">
           {fileUrl ? (
             <Document
               file={fileUrl}
               onLoadSuccess={({ numPages }) => setNumPages(numPages)}
             >
               <div ref={pageContainerRef} className="relative mb-6">
-                <Page pageNumber={currentPage} scale={scale} />
+                <Page
+                  pageNumber={currentPage}
+                  scale={scale}
+                  renderTextLayer={false}
+                  renderAnnotationLayer={false}
+                />{" "}
                 {/* Show highlight if coordinates are available */}
-                {coordinates && 
-                 coordinates.length >= 4 &&
-                 highlightStyle && (
-                  <div
-                    className="absolute z-10"
-                    style={highlightStyle}
-                  />
+                {coordinates && coordinates.length >= 4 && highlightStyle && (
+                  <div className="absolute z-10" style={highlightStyle} />
                 )}
               </div>
             </Document>
@@ -251,4 +248,4 @@ const PDFViewerContent: React.FC<PDFViewerContentProps> = ({
   );
 };
 
-export default PDFViewerContent; 
+export default PDFViewerContent;

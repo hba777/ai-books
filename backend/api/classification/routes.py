@@ -48,9 +48,7 @@ async def start_classification(
             {"_id": 0, "agent_name": 1, "classifier_prompt": 1, "evaluators_prompt": 1}
         ))
 
-        previous_status = book.get("status")
-        
-        background_tasks.add_task(lambda: _supervisor_wrapper(book_id, agents, run_classification, run_analysis, tmp_path, previous_status))
+        background_tasks.add_task(supervisor_loop, book_id, agents, run_classification, run_analysis, tmp_path)
         
         return {
             "message": "Processing started successfully",
@@ -61,22 +59,6 @@ async def start_classification(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error starting processing: {str(e)}")
-
-
-def _supervisor_wrapper(book_id: str, agents, run_classification: bool, run_analysis: bool, tmp_path: str, previous_status: str | None):
-    try:
-        supervisor_loop(book_id, agents, run_classification, run_analysis, tmp_path)
-    except Exception as e:
-        # Revert status to lastFinalstatus on error
-        from db.mongo import books_collection
-        from bson import ObjectId
-        current = books_collection.find_one({"_id": ObjectId(book_id)}) or {}
-        fallback_status = current.get("lastFinalstatus") or previous_status or "Pending"
-        books_collection.update_one(
-            {"_id": ObjectId(book_id)},
-            {"$set": {"status": fallback_status}}
-        )
-        raise e
     
 @router.get("/classifications/{book_id}", dependencies=[Depends(get_user_from_cookie)])
 def get_book_classifications(book_id: str):

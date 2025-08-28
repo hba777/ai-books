@@ -27,6 +27,7 @@ def test_model_load():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Model load failed: {e}")
 
+
 @router.post("/index-book/{book_id}")
 def index_book(book_id: str, request: IndexBookRequest, background_tasks: BackgroundTasks):
     # 1. Get the book document
@@ -38,11 +39,10 @@ def index_book(book_id: str, request: IndexBookRequest, background_tasks: Backgr
     
     file_id = book["file_id"]
 
-    # 2. Update book status to 'Indexing' and store previous status in lastFinalstatus
-    previous_status = book.get("status")
+    # 2. Update book status to 'Indexing'
     books_collection.update_one(
         {"_id": ObjectId(book_id)},
-        {"$set": {"status": "Indexing", "lastFinalstatus": previous_status}}
+        {"$set": {"status": "Indexing"}}
     )
 
     # 3. Retrieve the file from GridFS and write to a temp file
@@ -51,21 +51,8 @@ def index_book(book_id: str, request: IndexBookRequest, background_tasks: Backgr
         tmp.write(file_obj.read())
         tmp_path = tmp.name
 
-    # 4. Add background task with error handling and chunk_size
-    def _task():
-        try:
-            index(tmp_path, book_id, request.chunk_size)
-        except Exception as e:
-            # Revert status to lastFinalstatus on error
-            current = books_collection.find_one({"_id": ObjectId(book_id)}) or {}
-            fallback_status = current.get("lastFinalstatus") or previous_status or "Unprocessed"
-            books_collection.update_one(
-                {"_id": ObjectId(book_id)},
-                {"$set": {"status": fallback_status}}
-            )
-            raise e
-
-    background_tasks.add_task(_task)
+    # 4. Add background task with chunk_size
+    background_tasks.add_task(index, tmp_path, book_id, request.chunk_size)
 
     return {
         "message": f"Indexing and classification started for book {book_id}"

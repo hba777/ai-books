@@ -131,7 +131,6 @@ export function connectToProgressWebSocket(
 export function connectToIndexProgressWebSocket(
   bookId: string,
   onDone: () => void,
-  onError?: (event: any) => void
 ): WebSocket {
   const wsUrl = `ws://${process.env.NEXT_PUBLIC_BACKEND_HOST}/ws/index-progress/${bookId}`;
 
@@ -152,13 +151,11 @@ export function connectToIndexProgressWebSocket(
 
   ws.onerror = (error) => {
     console.error('[WebSocket] Error:', error);
-    if (onError) onError(error);
   };
 
   ws.onclose = (event) => {
     console.log('[WebSocket] Connection closed', event);
     // If it closed without sending 'done', surface as error
-    if (onError) onError(event);
   };
 
   return ws;
