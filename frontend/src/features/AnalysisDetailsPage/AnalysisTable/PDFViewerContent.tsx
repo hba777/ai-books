@@ -95,19 +95,13 @@ const PDFViewerContent: React.FC<PDFViewerContentProps> = ({
     return () => clearTimeout(t);
   }, [currentPage, scale]);
 
-  // Navigate to specific coordinates when they change
+  // Navigate to specific coordinates when the highlight props change
   useEffect(() => {
     if (coordinates && pageNumber) {
-      if (pageNumber !== currentPage) {
-        setCurrentPage(pageNumber);
-        setPendingHighlight(true);
-      } else {
-        setTimeout(() => {
-          scrollToCoordinates(coordinates);
-        }, 100);
-      }
+      setCurrentPage(pageNumber);
+      setPendingHighlight(true);
     }
-  }, [coordinates, pageNumber, currentPage]);
+  }, [coordinates, pageNumber]);
 
   // When page changes, scroll to pending highlight if needed
   useEffect(() => {

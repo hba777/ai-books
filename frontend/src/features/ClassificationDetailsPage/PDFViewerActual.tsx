@@ -59,21 +59,13 @@ const PDFViewerActual: React.FC<PDFViewerActualProps> = ({
     }
   };
 
-  // Navigate to specific coordinates when they change
+  // Navigate to specific coordinates when the highlight props change
   useEffect(() => {
     if (currentClassificationCoordinates && currentClassificationPage) {
-      // Navigate to the page if it's different
-      if (currentClassificationPage !== pageNumber) {
-        setPageNumber(currentClassificationPage);
-        setPendingHighlightId('current-classification');
-      } else {
-        // If already on the right page, scroll to coordinates
-        setTimeout(() => {
-          scrollToCoordinates(currentClassificationCoordinates);
-        }, 100);
-      }
+      setPageNumber(currentClassificationPage);
+      setPendingHighlightId('current-classification');
     }
-  }, [currentClassificationCoordinates, currentClassificationPage, pageNumber]);
+  }, [currentClassificationCoordinates, currentClassificationPage]);
 
   const scrollToCoordinates = (coordinates: number[]) => {
     if (coordinates.length >= 4) {
