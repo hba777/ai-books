@@ -324,3 +324,9 @@ export async function updateAnalysisFilters(bookId: string, analysisFilters?: st
   const res = await api.patch<Book>(`/books/${bookId}/filters/analysis`, payload);
   return res.data;
 }
+
+// Test model load on backend
+export async function testModelLoad(): Promise<{ status: string }> {
+  const res = await api.get<{ status: string }>(`/chunks/test-model`);
+  return res.data;
+}

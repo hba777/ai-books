@@ -11,6 +11,7 @@ import {
   connectToProgressWebSocket,
   connectToIndexProgressWebSocket,
   connectToAnalysisProgressWebSocket,
+  testModelLoad,
   Book,
   ClassificationProgress,
   AnalysisProgress,
@@ -115,43 +116,11 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await apiIndexBook(bookId, chunkSize ?? 1000);
       fetchBooks();
 
-      let pollId: number | undefined;
-      const stopPolling = () => {
-        if (pollId !== undefined) {
-          clearInterval(pollId);
-          pollId = undefined;
-        }
-      };
-
-      // Start polling as a fallback in case WS doesn't emit
-      if (typeof window !== 'undefined') {
-        pollId = window.setInterval(async () => {
-          try {
-            const latest = await getBookById(bookId);
-            // If status moved out of Indexing/Processing, stop and refresh
-            if (latest.status !== 'Indexing' && latest.status !== 'Processing') {
-              stopPolling();
-              await fetchBooks();
-              if (latest.status !== 'Processed') {
-                toast.error('Indexing failed or was reverted.');
-              }
-            }
-          } catch (e) {
-            // On polling error, stop and refresh
-            stopPolling();
-            await fetchBooks();
-          }
-        }, 4000);
-      }
-
       wsRef.current = connectToIndexProgressWebSocket(bookId, async () => {
         console.log("Triggered");
-        stopPolling();
-        await fetchBooks(); // this should work now
+        await fetchBooks();
       }, async (evt: any) => {
-        // Error or unexpected close: show toast and refresh
-        stopPolling();
-        toast.error('Indexing encountered an error. Status reverted if needed.');
+        toast.error('Indexing encountered an error. Status may have reverted.');
         await fetchBooks();
       });
     } catch (error: any) {
@@ -439,6 +408,15 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!userLoading && user) {
       fetchBooks();
       restoreWebSocketConnections(); // Call the new function here
+      // Attempt to load model on backend once user is available
+      (async () => {
+        try {
+          await testModelLoad();
+        } catch (e: any) {
+          const msg = e?.response?.data?.detail || e?.message || 'Model load failed';
+          toast.error(`Model loading failed: ${msg}`);
+        }
+      })();
     } else if (!userLoading && !user) {
       setBooks([]); // clear if logged out
       setActiveClassifications([]); // clear active classifications

@@ -13,6 +13,20 @@ done = []
 
 
 
+@router.get("/test-model")
+def test_model_load():
+    """Try to query the LLM; return 200 if ok, 500 if it fails."""
+    from Classification.models import LLAMA
+    try:
+        # Run a lightweight inference
+        resp = LLAMA.invoke("ping")
+        if resp and hasattr(resp, "content"):
+            return {"status": "ok", "response": resp.content}
+        else:
+            raise RuntimeError("Model responded unexpectedly")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Model load failed: {e}")
+
 @router.post("/index-book/{book_id}")
 def index_book(book_id: str, request: IndexBookRequest, background_tasks: BackgroundTasks):
     # 1. Get the book document
