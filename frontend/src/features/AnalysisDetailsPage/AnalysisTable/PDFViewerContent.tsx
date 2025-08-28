@@ -33,10 +33,18 @@ const PDFViewerContent: React.FC<PDFViewerContentProps> = ({
   const pageContainerRef = useRef<HTMLDivElement>(null);
   const [canvasHeight, setCanvasHeight] = useState<number>(0);
   const [pendingHighlight, setPendingHighlight] = useState<boolean>(false);
+  const [userNavigating, setUserNavigating] = useState<boolean>(false);
 
-  const goToPrevPage = () => setCurrentPage((p) => Math.max(1, p - 1));
-  const goToNextPage = () =>
+  const goToPrevPage = () => {
+    setUserNavigating(true);
+    setPendingHighlight(false);
+    setCurrentPage((p) => Math.max(1, p - 1));
+  };
+  const goToNextPage = () => {
+    setUserNavigating(true);
+    setPendingHighlight(false);
     setCurrentPage((p) => (numPages ? Math.min(numPages, p + 1) : p));
+  };
   const zoomIn = () => setScale((s) => Math.min(3, s + 0.2));
   const zoomOut = () => setScale((s) => Math.max(0.5, s - 0.2));
 
@@ -105,13 +113,21 @@ const PDFViewerContent: React.FC<PDFViewerContentProps> = ({
 
   // When page changes, scroll to pending highlight if needed
   useEffect(() => {
-    if (pendingHighlight && coordinates) {
+    if (pendingHighlight && coordinates && !userNavigating) {
       setTimeout(() => {
         scrollToCoordinates(coordinates);
         setPendingHighlight(false);
       }, 200);
     }
-  }, [currentPage, pendingHighlight, coordinates]);
+  }, [currentPage, pendingHighlight, coordinates, userNavigating]);
+
+  // Reset navigation suppression shortly after page settles
+  useEffect(() => {
+    if (userNavigating) {
+      const t = setTimeout(() => setUserNavigating(false), 150);
+      return () => clearTimeout(t);
+    }
+  }, [currentPage, userNavigating]);
 
   // Reset state when dialog opens/closes
   useEffect(() => {
@@ -225,8 +241,8 @@ const PDFViewerContent: React.FC<PDFViewerContentProps> = ({
                   renderTextLayer={false}
                   renderAnnotationLayer={false}
                 />{" "}
-                {/* Show highlight if coordinates are available */}
-                {coordinates && coordinates.length >= 4 && highlightStyle && (
+                {/* Show highlight only when on the target page */}
+                {coordinates && coordinates.length >= 4 && pageNumber === currentPage && highlightStyle && !userNavigating && (
                   <div className="absolute z-10" style={highlightStyle} />
                 )}
               </div>
