@@ -5,6 +5,7 @@ import { toast } from "react-toastify"
 import { useClassificationContext } from '../../features/ClassificationPage/ClassificationCardRow/ClassificationContext';
 import AgentsSideBar from "../../features/ClassificationPage/AgentsSideBar.";
 import  { Book } from "../../services/booksApi"
+import ChunkSizeConfig from "../ChunkSizeConfig/ChunkSizeConfig";
 
 interface BookTableViewProps {
   filteredBooks: Book[];
@@ -21,6 +22,8 @@ const BookTableView: React.FC<BookTableViewProps> = ({
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarBookId, setSidebarBookId] = useState<string | null>(null);
+  const [chunkConfigOpen, setChunkConfigOpen] = useState(false);
+  const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
 
   const handleRowClick = (id: string) => {
     const basePath = router.pathname.startsWith("/analysis")
@@ -33,6 +36,19 @@ const BookTableView: React.FC<BookTableViewProps> = ({
     e.stopPropagation();
     setSidebarBookId(bookId);
     setSidebarOpen(true);
+  };
+
+  const handleIndexClick = (e: React.MouseEvent, bookId: string) => {
+    e.stopPropagation();
+    setSelectedBookId(bookId);
+    setChunkConfigOpen(true);
+  };
+
+  const handleChunkSizeConfirm = (chunkSize: number) => {
+    if (selectedBookId) {
+      indexBook(selectedBookId, chunkSize);
+      toast.success("Chunking Started");
+    }
   };
 
   return (
@@ -193,8 +209,7 @@ const BookTableView: React.FC<BookTableViewProps> = ({
                       title="Index"
                       onClick={e => {
                         e.stopPropagation();
-                        indexBook(book._id);
-                        toast.success("Chunking Started")
+                        handleIndexClick(e, book._id);
                       }}
                       disabled={isAnyBookProcessing} 
                       className={`p-2 rounded ${
@@ -237,6 +252,11 @@ const BookTableView: React.FC<BookTableViewProps> = ({
 
       {/* Sidebar */}
       <AgentsSideBar open={sidebarOpen} bookId={sidebarBookId || ""} onClose={() => setSidebarOpen(false)} />
+      <ChunkSizeConfig
+        isOpen={chunkConfigOpen}
+        onClose={() => setChunkConfigOpen(false)}
+        onConfirm={handleChunkSizeConfirm}
+      />
     </div>
   );
 };

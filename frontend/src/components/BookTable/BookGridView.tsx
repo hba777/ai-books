@@ -4,6 +4,7 @@ import { useBooks } from "../../context/BookContext";
 import { toast } from "react-toastify";
 import { useClassificationContext } from "../../features/ClassificationPage/ClassificationCardRow/ClassificationContext";
 import AgentsSideBar from "../../features/ClassificationPage/AgentsSideBar.";
+import ChunkSizeConfig from "../ChunkSizeConfig/ChunkSizeConfig";
 
 interface Book {
   _id: string;
@@ -72,6 +73,8 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarBookId, setSidebarBookId] = useState<string | null>(null);
+  const [chunkConfigOpen, setChunkConfigOpen] = useState(false);
+  const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
 
   const handleBookClick = (id: string) => {
     const basePath = router.pathname.startsWith("/analysis")
@@ -84,6 +87,19 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
     e.stopPropagation();
     setSidebarBookId(bookId);
     setSidebarOpen(true);
+  };
+
+  const handleIndexClick = (e: React.MouseEvent, bookId: string) => {
+    e.stopPropagation();
+    setSelectedBookId(bookId);
+    setChunkConfigOpen(true);
+  };
+
+  const handleChunkSizeConfirm = (chunkSize: number) => {
+    if (selectedBookId) {
+      indexBook(selectedBookId, chunkSize);
+      toast.success("Indexing Started");
+    }
   };
 
   return (
@@ -184,11 +200,7 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
               {book.status === "Unprocessed" && (
                 <button
                   title="Index"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    indexBook(book._id);
-                    toast.success("Indexing Started");
-                  }}
+                  onClick={(e) => handleIndexClick(e, book._id)}
                   disabled={isAnyBookProcessing}
                   className={`p-1 rounded-full ${
                     isAnyBookProcessing
@@ -222,6 +234,13 @@ const BookGridView: React.FC<BookGridViewProps> = ({ books }) => {
         open={sidebarOpen}
         bookId={sidebarBookId || ""}
         onClose={() => setSidebarOpen(false)}
+      />
+
+      {/* Chunk Size Config Popup */}
+      <ChunkSizeConfig
+        isOpen={chunkConfigOpen}
+        onClose={() => setChunkConfigOpen(false)}
+        onConfirm={handleChunkSizeConfirm}
       />
     </div>
   );

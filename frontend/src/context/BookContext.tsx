@@ -40,7 +40,7 @@ interface BookContextType {
   getBookFile: (bookId: string) => Promise<Blob>;
   assignSingleDepartment: (bookId: string, department: string) => Promise<void>;
   addFeedback: (bookId: string, department: string, comment?: string, image?: string) => Promise<void>;
-  indexBook: (bookId: string) => Promise<void>;
+  indexBook: (bookId: string, chunkSize?: number) => Promise<void>;
   startClassification: (bookId: string, runClassification?: boolean, runAnalysis?: boolean) => Promise<void>;
   getBookNameById: (bookId: string) => string | undefined;
   reviewOutcomes: ReviewOutcomesResponse[];
@@ -109,8 +109,8 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await fetchBooks(); // Refresh books to get updated data
   };
 
-  const indexBook = async (bookId: string) => {
-    await apiIndexBook(bookId);
+  const indexBook = async (bookId: string, chunkSize?: number) => {
+    await apiIndexBook(bookId, chunkSize);
     fetchBooks();
     wsRef.current = connectToIndexProgressWebSocket(bookId, () => {
     console.log("Triggered");

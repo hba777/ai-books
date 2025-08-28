@@ -239,8 +239,10 @@ export async function assignSingleDepartment(bookId: string, department: string)
 }
 
 // Chunking Book
-export async function indexBook(bookId: string): Promise<{ message: string; indexed_doc_id: string }> {
-  const res = await api.post<{ message: string; indexed_doc_id: string }>(`/chunks/index-book/${bookId}`);
+export async function indexBook(bookId: string, chunkSize: number = 1000): Promise<{ message: string; indexed_doc_id: string }> {
+  const res = await api.post<{ message: string; indexed_doc_id: string }>(`/chunks/index-book/${bookId}`, {
+    chunk_size: chunkSize
+  });
   return res.data;
 }
 

@@ -4,6 +4,7 @@ from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from .summarization import summarize_pdf
 from .database_operations import insert_document
+import os
 
 
 def get_chunk_coordinates(words):
@@ -18,15 +19,14 @@ def get_chunk_coordinates(words):
     bottom = max(float(w['bottom']) for w in words)
     return (x0, top, x1, bottom)
 
-def create_chunks_with_page_numbers(file_path: str):
+def create_chunks_with_page_numbers(file_path: str, chunk_size: int = 1000):
     """
     Loads PDF, extracts text and page numbers using pdfplumber, and splits the content into chunks.
     """
     chunks = []
     print(f"Working with file: {file_path.split('/')[-1]}")
 
-    chunk_size = 10000  # Example chunk size in characters
-    chunk_overlap = 5000 # Example overlap in characters
+    chunk_overlap = int(chunk_size * 0.1)  # 10% of chunk size
 
     with open(file_path, "rb") as pdf_file:
         with pdfplumber.open(pdf_file) as pdf:
@@ -94,22 +94,34 @@ def create_chunks_with_page_numbers(file_path: str):
                     ))
     return chunks
     
-def index(file_path, doc_id):
-    """Save the documents in the database"""
-    chunks = create_chunks_with_page_numbers(file_path=file_path)
-    print(f"Split the documents in {len(chunks)} paragraphs.")
-    
-    # Extract plain text from chunks
-    summary_chunks_text = [chunk.page_content for chunk in chunks]
+def index(file_path: str, book_id: str, chunk_size: int = 1000):
+    """
+    Main indexing function that processes a PDF file and creates chunks.
+    """
+    try:
+        # Create chunks with page numbers
+        chunks = create_chunks_with_page_numbers(file_path, chunk_size)
+        print(f"Split the documents in {len(chunks)} paragraphs.")
+        
+        # Extract plain text from chunks
+        summary_chunks_text = [chunk.page_content for chunk in chunks]
 
-    # Convert list of strings into a single summary string
-    # summary = "\n\n".join(summary_chunks_text)
+        # Convert list of strings into a single summary string
+        summary = summarize_pdf(summary_chunks_text)
+        
+        # Pass the chunks and combined summary to the DB
+        indexed_doc_id = insert_document(book_id, chunks=chunks, summary=summary)
 
-    summary = summarize_pdf(summary_chunks_text)
-    # Pass the chunks and combined summary to the DB
-    indexed_doc_id = insert_document(doc_id, chunks=chunks, summary=summary)
-
-    return indexed_doc_id
+        print(f"Indexing completed for book {book_id}")
+        return indexed_doc_id
+        
+    except Exception as e:
+        print(f"Error during indexing: {e}")
+        raise e
+    finally:
+        # Clean up temporary file
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
 #################################################################################
 
