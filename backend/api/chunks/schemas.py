@@ -24,3 +24,6 @@ class ChunkResponse(BaseModel):
 
 class ChunkListResponse(BaseModel):
     items: List[ChunkResponse]
+
+class IndexBookRequest(BaseModel):
+    chunk_size: int = 3000

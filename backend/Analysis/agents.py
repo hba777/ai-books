@@ -1,5 +1,5 @@
 import json
-from typing import List, Dict, Callable
+from typing import List, Dict, Callable, Optional
 from langgraph.graph import END, StateGraph
 from langchain.prompts import PromptTemplate
 from langchain_groq import ChatGroq
@@ -7,6 +7,7 @@ from langchain_core.runnables import RunnableLambda
 from db.mongo import get_agent_configs_collection
 from .models import State
 from .knowledge_base import get_relevant_info, retriever, knowledge_list
+import operator
 
 # Define a type for agent functions for clear type hinting
 Agent = Callable[[State], Dict]
@@ -15,8 +16,6 @@ Agent = Callable[[State], Dict]
 available_agents: Dict[str, Agent] = {}
 
 # ─── PROMPT TEMPLATE ────────────────────────────────────────────────────────
-
-
 
 TEMPLATE = """
 You are an expert reviewer assessing passages from books on Pakistan's history and politics for alignment with official policies, national narratives, and Pakistan Army's institutional positions.
@@ -91,14 +90,10 @@ If evidence is insufficient or interpretation is ambiguous, recommend human revi
     "issues_found": true/false,
     "problematic_text": "exact text segment that is problematic",
     "observation": "specific explanation of why this conflicts with KB or policy guidelines",
-    "recommendation": "delete/rephrase/fact-check/provide references",
+    "recommendation": "delete/rephrase/fact-check/provide references"
 }}
 Respond only with valid JSON. Do not include any explanation outside the JSON block.
 """
-
-
-
-
 
 def register_agent(name: str, agent_function: Agent):
     """
@@ -106,74 +101,91 @@ def register_agent(name: str, agent_function: Agent):
     """
     available_agents[name] = agent_function
 
-def create_review_agent(review_name: str, criteria: str, guidelines: str, confidence_score: int, llm_model: ChatGroq, eval_llm_model: ChatGroq) -> Agent:
+def create_review_agent(
+    review_name: str,
+    criteria: str,
+    guidelines: str,
+    confidence_score: int,
+    llm_model: ChatGroq,
+    knowledge_base: Optional[List[Dict]] = None
+) -> Agent:
     """
     Creates a specialized review agent function that includes an internal evaluation loop.
     The confidence_score is now passed as an argument.
     """
     prompt_template = PromptTemplate.from_template(TEMPLATE)
 
+    if knowledge_base:
+        # ✅ FIX: First, parse the json_data string within the knowledge_base
+        parsed_kb_data = []
+        for kb_item in knowledge_base:
+            json_data_str = kb_item.get("json_data")
+            if json_data_str:
+                try:
+                    parsed_kb_data.append(json.loads(json_data_str))
+                except json.JSONDecodeError as e:
+                    print(f"Error parsing json_data for agent {review_name}: {e}")
+                    # Handle error or continue
+
+        # Now, extract and format information from the parsed data
+        kb_official_narrative = "\\n".join(
+            [f"- {kb.get('official_narrative', 'N/A')}" for kb in parsed_kb_data]
+        )
+        kb_key_points = "\\n".join(
+            [f"- {point}" for kb in parsed_kb_data for point in kb.get('key_points', [])]
+        )
+        sensitive_aspects_list = []
+        for kb in parsed_kb_data:
+            for aspect in kb.get('sensitive_aspects', []):
+                sensitive_aspects_list.append(
+                    f" - Topic: {aspect.get('topic', 'N/A')}, "
+                    f"Approved Framing: '{aspect.get('approved_framing', 'N/A')}', "
+                    f"Problematic Framing: '{aspect.get('problematic_framing', 'N/A')}'"
+                )
+        kb_sensitive_aspects = "\\n".join(sensitive_aspects_list)
+        recommended_terminology_list = []
+        for kb in parsed_kb_data:
+            for term_type, terms in kb.get('recommended_terminology', {}).items():
+                term_list = ", ".join(terms)
+                recommended_terminology_list.append(
+                    f" - {term_type.capitalize()}: {term_list}"
+                )
+        kb_recommended_terminology = "\\n".join(recommended_terminology_list)
+        kb_authoritative_sources = "\\n".join(
+            [f"- {source}" for kb in parsed_kb_data for source in kb.get('authoritative_sources', [])]
+        )
+    else:
+        kb_official_narrative = "No specific knowledge base provided."
+        kb_key_points = "No specific knowledge base provided."
+        kb_sensitive_aspects = "No specific knowledge base provided."
+        kb_recommended_terminology = "No specific knowledge base provided."
+        kb_authoritative_sources = "No specific knowledge base provided."
+
+    # ─── AGENT SUB-WORKFLOW ──────────────────────────────────────────────────
+
     def agent_sub_step(state: State) -> State:
-        print(f"\n--- {state['current_agent_name']} Sub-Agent Step - Attempt {state.get('current_agent_retries', 0) + 1} ---")
+        print(f"\n--- {review_name} Sub-Agent Step - Attempt {state.get('current_agent_retries', 0) + 1} ---")
         report_text = state["report_text"]
         metadata = state["metadata"]
-        predicted_label = metadata.get("predicted_label", "N/A")
-
-        official_narrative = "No relevant official narrative found."
-        key_points_str = "No relevant key points found."
-        sensitive_aspects_str = "No relevant sensitive aspects found."
-        recommended_terminology_str = "No relevant recommended terminology found."
-        authoritative_sources_str = "No relevant authoritative sources found."
-
-        # MODIFICATION START: Conditional KB application based on agent name and predicted label
-        # FactCheckingReview agent always uses KB
-        if state['current_agent_name'] == "FactCheckingReview":
-            print(f"--- {state['current_agent_name']} (FactCheckingReview) always uses KB. ---")
-            relevant_knowledge = get_relevant_info(report_text)
-            if isinstance(relevant_knowledge, list) and relevant_knowledge:
-                relevant_item = relevant_knowledge[0]
-                official_narrative = relevant_item.get("official_narrative", official_narrative)
-                key_points_str = ", ".join(relevant_item.get("key_points", []))
-                sensitive_aspects_str = json.dumps(relevant_item.get("sensitive_aspects", []))
-                recommended_terminology_str = json.dumps(relevant_item.get("recommended_terminology", {}))
-                authoritative_sources_str = ", ".join(relevant_item.get("authoritative_sources", []))
-        # Other agents skip KB if the text is classified as "general or unrelated text"
-        elif predicted_label == "general or unrelated text":
-            print(f"--- Skipping KB lookup for '{predicted_label}' chunk for {state['current_agent_name']}. ---")
-            official_narrative = "N/A (Text classified as general or unrelated)"
-            key_points_str = "N/A (Text classified as general or unrelated)"
-            sensitive_aspects_str = "N/A (Text classified as general or unrelated)"
-            recommended_terminology_str = "N/A (Text classified as general or unrelated)"
-            authoritative_sources_str = "N/A (Text classified as general or unrelated)"
-        # All other cases (not FactCheckingReview and not "general or unrelated text") use KB
-        else:
-            print(f"--- Using KB for '{predicted_label}' chunk for {state['current_agent_name']}. ---")
-            relevant_knowledge = get_relevant_info(report_text)
-            if isinstance(relevant_knowledge, list) and relevant_knowledge:
-                relevant_item = relevant_knowledge[0]
-                official_narrative = relevant_item.get("official_narrative", official_narrative)
-                key_points_str = ", ".join(relevant_item.get("key_points", []))
-                sensitive_aspects_str = json.dumps(relevant_item.get("sensitive_aspects", []))
-                recommended_terminology_str = json.dumps(relevant_item.get("recommended_terminology", {}))
-                authoritative_sources_str = ", ".join(relevant_item.get("authoritative_sources", []))
-        # MODIFICATION END
+        
+        # Now, add relevant knowledge from the vector store based on the chunk text
+        relevant_knowledge = get_relevant_info(report_text, k=2)
 
         prompt = prompt_template.format(
             text=report_text,
             page=metadata.get("page", "N/A"),
             paragraph=metadata.get("paragraph", "N/A"),
             title=metadata.get("title", "N/A"),
-            predicted_label=predicted_label,
             specific_criteria=criteria,
             policy_guidelines=guidelines,
-            official_narrative=official_narrative,
-            key_points=key_points_str,
-            sensitive_aspects=sensitive_aspects_str,
-            recommended_terminology=recommended_terminology_str,
-            authoritative_sources=authoritative_sources_str
+            official_narrative=kb_official_narrative,
+            key_points=kb_key_points,
+            sensitive_aspects=kb_sensitive_aspects,
+            recommended_terminology=kb_recommended_terminology,
+            authoritative_sources=kb_authoritative_sources
         )
 
-        print(f"--- {state['current_agent_name']} Input Prompt ---")
+        print(f"--- {review_name} Input Prompt ---")
         print(prompt)
         print("-" * 30)
 
@@ -184,14 +196,14 @@ def create_review_agent(review_name: str, criteria: str, guidelines: str, confid
 
         try:
             parsed_output = json.loads(raw_output)
-            print(f"--- {state['current_agent_name']} Raw Output ---")
+            print(f"--- {review_name} Raw Output ---")
             print(raw_output)
-            print(f"--- {state['current_agent_name']} Parsed Output ---")
+            print(f"--- {review_name} Parsed Output ---")
             print(parsed_output)
             print("-" * 30)
         except json.JSONDecodeError:
-            error_message = f"Error decoding JSON from {state['current_agent_name']}: {raw_output}"
-            print(f"--- {state['current_agent_name']} Output (Error) ---")
+            error_message = f"Error decoding JSON from {review_name}: {raw_output}"
+            print(f"--- {review_name} Output (Error) ---")
             print(error_message)
             print("-" * 30)
             parsed_output = {"error": error_message, "human_review_reason": "JSON_DECODE_ERROR"}
@@ -207,10 +219,10 @@ def create_review_agent(review_name: str, criteria: str, guidelines: str, confid
 
     def evaluation_sub_step(state: State) -> State:
         if state.get("current_agent_human_review", False):
-            print(f"\n--- {state['current_agent_name']} Evaluation Skipped: JSON Decode Error ---")
+            print(f"\n--- {review_name} Evaluation Skipped: JSON Decode Error ---")
             return {"current_agent_confidence": 0}
 
-        print(f"\n--- {state['current_agent_name']} Sub-Evaluation Step - Attempt {state.get('current_agent_retries', 0)} ---")
+        print(f"\n--- {review_name} Sub-Evaluation Step - Attempt {state.get('current_agent_retries', 0)} ---")
         prompt_from_agent = state["current_agent_input_prompt"]
         response_from_agent = state["current_agent_raw_output"]
 
@@ -231,27 +243,27 @@ Respond only with a single, valid JSON object that follows this structure:
 {{"confidence": <score>}}
 DO NOT include any explanation or text outside of the JSON object.
 """
-        print(f"--- {state['current_agent_name']} Evaluation Prompt ---")
+        print(f"--- {review_name} Evaluation Prompt ---")
         print(eval_prompt)
         print("-" * 30)
 
-        eval_response = eval_llm_model.invoke(eval_prompt).content
+        eval_response = llm_model.invoke(eval_prompt).content
         confidence = 0
         try:
             eval_data = json.loads(eval_response)
             confidence = int(eval_data.get("confidence", 0))
-            print(f"--- {state['current_agent_name']} Evaluation Response ---")
+            print(f"--- {review_name} Evaluation Response ---")
             print(eval_data)
             print(f"Confidence: {confidence}")
             print("-" * 30)
         except json.JSONDecodeError:
-            print(f"--- {state['current_agent_name']} Evaluation Response (Error) ---")
+            print(f"--- {review_name} Evaluation Response (Error) ---")
             print(f"Error decoding JSON from evaluator: {eval_response}")
             print("Confidence set to 0 due to evaluation parsing error.")
             print("-" * 30)
             confidence = 0
         except Exception as e:
-            print(f"--- {state['current_agent_name']} Evaluation Response (Other Error) ---")
+            print(f"--- {review_name} Evaluation Response (Other Error) ---")
             print(f"An unexpected error occurred during evaluation parsing: {e}")
             print("Confidence set to 0.")
             print("-" * 30)
@@ -269,30 +281,27 @@ DO NOT include any explanation or text outside of the JSON object.
         is_null_response = parsed_output.get("issues_found") is False and parsed_output.get("problematic_text") is None
 
         if state.get("current_agent_human_review", False):
-            print(f"\n⚠️ {state['current_agent_name']} JSON Decode Error detected. Routing directly to human review.")
+            print(f"\n⚠️ {review_name} JSON Decode Error detected. Routing directly to human review.")
             return "human_review_needed_sub_step"
         elif is_null_response and state["current_agent_retries"] < max_retries:
-            print(f"\n🔄 {state['current_agent_name']} Returned a 'null' response. Retrying... (Attempt {state['current_agent_retries']} of {max_retries})")
+            print(f"\n🔄 {review_name} Returned a 'null' response. Retrying... (Attempt {state['current_agent_retries']} of {max_retries})")
             return "agent_sub_step"
         elif is_null_response and state["current_agent_retries"] >= max_retries:
-            print(f"\n⚠️ {state['current_agent_name']} Returned a 'null' response after {max_retries} retries. Human review needed.")
+            print(f"\n⚠️ {review_name} Returned a 'null' response after {max_retries} retries. Human review needed.")
             return "human_review_needed_sub_step"
         
-        # --- MODIFICATION START ---
-        # The confidence threshold is now a variable captured from the parent function's scope.
         if state["current_agent_confidence"] >= confidence_score:
-            print(f"\n✨ {state['current_agent_name']} Confidence {state['current_agent_confidence']}% is sufficient (threshold: {confidence_score}%). Exiting sub-workflow.")
+            print(f"\n✨ {review_name} Confidence {state['current_agent_confidence']}% is sufficient (threshold: {confidence_score}%). Exiting sub-workflow.")
             return "end"
         elif state["current_agent_retries"] < max_retries:
-            print(f"\n🔄 {state['current_agent_name']} Confidence {state['current_agent_confidence']}% is too low (threshold: {confidence_score}%). Retrying... (Attempt {state['current_agent_retries']} of {max_retries})")
+            print(f"\n🔄 {review_name} Confidence {state['current_agent_confidence']}% is too low (threshold: {confidence_score}%). Retrying... (Attempt {state['current_agent_retries']} of {max_retries})")
             return "agent_sub_step"
         else:
-            print(f"\n⚠️ {state['current_agent_name']} Confidence {state['current_agent_confidence']}% still too low after {max_retries} retries (threshold: {confidence_score}%). Human review needed for this agent's output.")
+            print(f"\n⚠️ {review_name} Confidence {state['current_agent_confidence']}% still too low after {max_retries} retries (threshold: {confidence_score}%). Human review needed for this agent's output.")
             return "human_review_needed_sub_step"
-        # --- MODIFICATION END ---
 
     def human_review_sub_step(state: State) -> State:
-        print(f"\n--- {state['current_agent_name']} Human Review Needed ---")
+        print(f"\n--- {review_name} Human Review Needed ---")
         return {
             "current_agent_human_review": True
         }
@@ -358,7 +367,7 @@ DO NOT include any explanation or text outside of the JSON object.
         }
     return review_agent_with_evaluation
 
-def load_agents_from_mongo(llm_model: ChatGroq, eval_llm_model: ChatGroq):
+def load_agents_from_mongo(llm_model: ChatGroq):
     """
     Loads agent configurations (name, criteria, guidelines) from a MongoDB collection
     and registers them as review agents.
@@ -375,6 +384,7 @@ def load_agents_from_mongo(llm_model: ChatGroq, eval_llm_model: ChatGroq):
             criteria = doc.get("criteria")
             guidelines = doc.get("guidelines")
             confidence_score = doc.get("confidence_score")
+            knowledge_base_data = doc.get("knowledge_base") # Get the knowledge base data
 
             if agent_name and criteria and guidelines and confidence_score is not None:
                 agent = create_review_agent(
@@ -383,7 +393,7 @@ def load_agents_from_mongo(llm_model: ChatGroq, eval_llm_model: ChatGroq):
                     guidelines,
                     confidence_score,
                     llm_model,
-                    eval_llm_model
+                    knowledge_base_data # Pass the knowledge base data to the agent function
                 )
                 register_agent(agent_name, agent)
                 print(

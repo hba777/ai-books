@@ -130,12 +130,10 @@ export function connectToProgressWebSocket(
 
 export function connectToIndexProgressWebSocket(
   bookId: string,
-  onDone: () => void
+  onDone: () => void,
 ): WebSocket {
   const wsUrl = `ws://${process.env.NEXT_PUBLIC_BACKEND_HOST}/ws/index-progress/${bookId}`;
 
-
-  
   const ws = new WebSocket(wsUrl);
 
   ws.onopen = () => {
@@ -157,6 +155,7 @@ export function connectToIndexProgressWebSocket(
 
   ws.onclose = (event) => {
     console.log('[WebSocket] Connection closed', event);
+    // If it closed without sending 'done', surface as error
   };
 
   return ws;
@@ -239,8 +238,10 @@ export async function assignSingleDepartment(bookId: string, department: string)
 }
 
 // Chunking Book
-export async function indexBook(bookId: string): Promise<{ message: string; indexed_doc_id: string }> {
-  const res = await api.post<{ message: string; indexed_doc_id: string }>(`/chunks/index-book/${bookId}`);
+export async function indexBook(bookId: string, chunkSize: number = 1000): Promise<{ message: string; indexed_doc_id: string }> {
+  const res = await api.post<{ message: string; indexed_doc_id: string }>(`/chunks/index-book/${bookId}`, {
+    chunk_size: chunkSize
+  });
   return res.data;
 }
 
@@ -318,5 +319,11 @@ export async function updateAnalysisFilters(bookId: string, analysisFilters?: st
   if (analysisConfidence !== undefined) payload.confidence = analysisConfidence;
   
   const res = await api.patch<Book>(`/books/${bookId}/filters/analysis`, payload);
+  return res.data;
+}
+
+// Test model load on backend
+export async function testModelLoad(): Promise<{ status: string }> {
+  const res = await api.get<{ status: string }>(`/chunks/test-model`);
   return res.data;
 }

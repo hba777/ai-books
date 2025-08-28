@@ -1,17 +1,35 @@
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 from utils.jwt_utils import get_user_from_cookie
 from db.mongo import get_chunks_collection, books_collection, fs
-from .schemas import ChunkResponse, ChunkListResponse
+from .schemas import ChunkResponse, ChunkListResponse, IndexBookRequest
 import tempfile
 from bson import ObjectId
 from Classification.index_document import index
+
 
 router = APIRouter(prefix="/chunks", tags=["Chunks"])
 
 done = []
 
+
+
+@router.get("/test-model")
+def test_model_load():
+    """Try to query the LLM; return 200 if ok, 500 if it fails."""
+    from Classification.models import LLAMA
+    try:
+        # Run a lightweight inference
+        resp = LLAMA.invoke("ping")
+        if resp and hasattr(resp, "content"):
+            return {"status": "ok", "response": resp.content}
+        else:
+            raise RuntimeError("Model responded unexpectedly")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Model load failed: {e}")
+
+
 @router.post("/index-book/{book_id}")
-def index_book(book_id: str, background_tasks: BackgroundTasks):
+def index_book(book_id: str, request: IndexBookRequest, background_tasks: BackgroundTasks):
     # 1. Get the book document
     book = books_collection.find_one({"_id": ObjectId(book_id)})
     if not book or "file_id" not in book:
@@ -33,8 +51,8 @@ def index_book(book_id: str, background_tasks: BackgroundTasks):
         tmp.write(file_obj.read())
         tmp_path = tmp.name
 
-    # 4. Add background task
-    background_tasks.add_task(index, tmp_path, book_id)
+    # 4. Add background task with chunk_size
+    background_tasks.add_task(index, tmp_path, book_id, request.chunk_size)
 
     return {
         "message": f"Indexing and classification started for book {book_id}"

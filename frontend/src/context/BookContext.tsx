@@ -11,6 +11,7 @@ import {
   connectToProgressWebSocket,
   connectToIndexProgressWebSocket,
   connectToAnalysisProgressWebSocket,
+  testModelLoad,
   Book,
   ClassificationProgress,
   AnalysisProgress,
@@ -29,6 +30,7 @@ import {
   updateAnalysisFilters as apiUpdateAnalysisFilters
 } from "../services/booksApi"
 import { useUser } from "../context/UserContext";
+import { toast } from "react-toastify";
 
 interface BookContextType {
   books: Book[];
@@ -40,7 +42,7 @@ interface BookContextType {
   getBookFile: (bookId: string) => Promise<Blob>;
   assignSingleDepartment: (bookId: string, department: string) => Promise<void>;
   addFeedback: (bookId: string, department: string, comment?: string, image?: string) => Promise<void>;
-  indexBook: (bookId: string) => Promise<void>;
+  indexBook: (bookId: string, chunkSize?: number) => Promise<void>;
   startClassification: (bookId: string, runClassification?: boolean, runAnalysis?: boolean) => Promise<void>;
   getBookNameById: (bookId: string) => string | undefined;
   reviewOutcomes: ReviewOutcomesResponse[];
@@ -109,12 +111,12 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await fetchBooks(); // Refresh books to get updated data
   };
 
-  const indexBook = async (bookId: string) => {
-    await apiIndexBook(bookId);
+  const indexBook = async (bookId: string, chunkSize?: number) => {
+    await apiIndexBook(bookId, chunkSize);
     fetchBooks();
     wsRef.current = connectToIndexProgressWebSocket(bookId, () => {
     console.log("Triggered");
-    fetchBooks(); // this should work now
+    fetchBooks();
   });
   };
 
@@ -209,8 +211,11 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         websocketRefs.current.set(`${bookId}-analysis`, analysisWs);
       }
       
-    } catch (error) {
+    } catch (error: any) {
+      const detail = error?.response?.data?.detail || error?.message || 'Failed to start processing';
+      toast.error(`Processing failed: ${detail}`);
       console.error('Error starting classification:', error);
+      throw error;
     }
   };
 
@@ -391,6 +396,15 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!userLoading && user) {
       fetchBooks();
       restoreWebSocketConnections(); // Call the new function here
+      // Attempt to load model on backend once user is available
+      (async () => {
+        try {
+          await testModelLoad();
+        } catch (e: any) {
+          const msg = e?.response?.data?.detail || e?.message || 'Model load failed';
+          toast.error(`Model loading failed: ${msg}`);
+        }
+      })();
     } else if (!userLoading && !user) {
       setBooks([]); // clear if logged out
       setActiveClassifications([]); // clear active classifications

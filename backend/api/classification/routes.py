@@ -59,7 +59,6 @@ async def start_classification(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error starting processing: {str(e)}")
-
     
 @router.get("/classifications/{book_id}", dependencies=[Depends(get_user_from_cookie)])
 def get_book_classifications(book_id: str):
