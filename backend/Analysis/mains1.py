@@ -1,6 +1,6 @@
 from langgraph.graph import START, END, StateGraph
 from .models import State
-from .llm_init import llm, eval_llm, llm1
+from .llm_init import llm
 from .knowledge_base import knowledge_list, retriever
 from .agents import load_agents_from_mongo, available_agents
 from .workflow_nodes import main_node, final_report_generator
@@ -26,7 +26,7 @@ def run_workflow(book_id: str, run_analysis: bool, run_classification: bool, pdf
         
     # Load agents dynamically from MongoDB
     print("Loading agents from MongoDB...")
-    load_agents_from_mongo(llm, eval_llm)
+    load_agents_from_mongo(llm)
 
     total_agents = len(available_agents)
     if total_agents == 0:

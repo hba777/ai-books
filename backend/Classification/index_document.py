@@ -117,6 +117,18 @@ def index(file_path: str, book_id: str, chunk_size: int = 1000):
         
     except Exception as e:
         print(f"Error during indexing: {e}")
+        # Revert status to lastFinalstatus if available
+        try:
+            from db.mongo import books_collection
+            from bson import ObjectId
+            book = books_collection.find_one({"_id": ObjectId(book_id)}) or {}
+            fallback_status = book.get("lastFinalstatus") or "Unprocessed"
+            books_collection.update_one(
+                {"_id": ObjectId(book_id)},
+                {"$set": {"status": fallback_status}}
+            )
+        except Exception as revert_err:
+            print(f"Failed to revert status: {revert_err}")
         raise e
     finally:
         # Clean up temporary file

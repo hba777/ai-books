@@ -9,7 +9,7 @@ from langchain.chains.query_constructor.schema import AttributeInfo
 from langchain.retrievers.self_query.base import SelfQueryRetriever
 from langchain_core.exceptions import OutputParserException
 from .config import MONGO_URI, CHROMA_DB_DIRECTORY
-from .llm_init import embeddings, llm1
+from .llm_init import embeddings, llm
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -107,7 +107,7 @@ document_content_description = "Knowledge Base official narratives and facts"
 
 # Initialize the SelfQueryRetriever, enabling it to construct queries over the vector store's metadata
 retriever = SelfQueryRetriever.from_llm(
-    llm1,
+    llm,
     vectorstore,
     document_content_description,
     metadata_field_info,

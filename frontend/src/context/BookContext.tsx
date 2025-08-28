@@ -29,6 +29,7 @@ import {
   updateAnalysisFilters as apiUpdateAnalysisFilters
 } from "../services/booksApi"
 import { useUser } from "../context/UserContext";
+import { toast } from "react-toastify";
 
 interface BookContextType {
   books: Book[];
@@ -110,12 +111,56 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const indexBook = async (bookId: string, chunkSize?: number) => {
-    await apiIndexBook(bookId, chunkSize);
-    fetchBooks();
-    wsRef.current = connectToIndexProgressWebSocket(bookId, () => {
-    console.log("Triggered");
-    fetchBooks(); // this should work now
-  });
+    try {
+      await apiIndexBook(bookId, chunkSize ?? 1000);
+      fetchBooks();
+
+      let pollId: number | undefined;
+      const stopPolling = () => {
+        if (pollId !== undefined) {
+          clearInterval(pollId);
+          pollId = undefined;
+        }
+      };
+
+      // Start polling as a fallback in case WS doesn't emit
+      if (typeof window !== 'undefined') {
+        pollId = window.setInterval(async () => {
+          try {
+            const latest = await getBookById(bookId);
+            // If status moved out of Indexing/Processing, stop and refresh
+            if (latest.status !== 'Indexing' && latest.status !== 'Processing') {
+              stopPolling();
+              await fetchBooks();
+              if (latest.status !== 'Processed') {
+                toast.error('Indexing failed or was reverted.');
+              }
+            }
+          } catch (e) {
+            // On polling error, stop and refresh
+            stopPolling();
+            await fetchBooks();
+          }
+        }, 4000);
+      }
+
+      wsRef.current = connectToIndexProgressWebSocket(bookId, async () => {
+        console.log("Triggered");
+        stopPolling();
+        await fetchBooks(); // this should work now
+      }, async (evt: any) => {
+        // Error or unexpected close: show toast and refresh
+        stopPolling();
+        toast.error('Indexing encountered an error. Status reverted if needed.');
+        await fetchBooks();
+      });
+    } catch (error: any) {
+      const detail = error?.response?.data?.detail || error?.message || 'Failed to start indexing';
+      toast.error(`Indexing failed: ${detail}`);
+      // Ensure UI refresh to pick latest book status from backend
+      fetchBooks();
+      throw error;
+    }
   };
 
   const getBookNameById = (bookId: string): string | undefined => {
@@ -209,8 +254,11 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         websocketRefs.current.set(`${bookId}-analysis`, analysisWs);
       }
       
-    } catch (error) {
+    } catch (error: any) {
+      const detail = error?.response?.data?.detail || error?.message || 'Failed to start processing';
+      toast.error(`Processing failed: ${detail}`);
       console.error('Error starting classification:', error);
+      throw error;
     }
   };
 

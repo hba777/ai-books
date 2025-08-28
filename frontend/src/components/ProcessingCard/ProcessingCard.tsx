@@ -1,8 +1,17 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useBooks } from "../../context/BookContext";
 
 const ProcessingCard: React.FC = () => {
   const { activeClassifications, activeAnalyses, getBookNameById } = useBooks();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null; // Avoid SSR/client mismatch; render only on client
+  }
 
   const hasAny = activeClassifications.length > 0 || activeAnalyses.length > 0;
   if (!hasAny) {
