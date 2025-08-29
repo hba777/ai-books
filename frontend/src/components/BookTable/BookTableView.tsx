@@ -47,7 +47,6 @@ const BookTableView: React.FC<BookTableViewProps> = ({
   const handleChunkSizeConfirm = (chunkSize: number) => {
     if (selectedBookId) {
       indexBook(selectedBookId, chunkSize);
-      toast.success("Chunking Started");
     }
   };
 

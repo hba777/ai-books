@@ -112,12 +112,24 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const indexBook = async (bookId: string, chunkSize?: number) => {
-    await apiIndexBook(bookId, chunkSize);
-    fetchBooks();
-    wsRef.current = connectToIndexProgressWebSocket(bookId, () => {
-    console.log("Triggered");
-    fetchBooks();
-  });
+    try {
+      // Test model load before proceeding
+      await testModelLoad();
+      toast.success("Chunking Started");
+
+      // If model load succeeds, proceed with indexing
+      await apiIndexBook(bookId, chunkSize);
+      fetchBooks();
+      wsRef.current = connectToIndexProgressWebSocket(bookId, () => {
+        console.log("Triggered");
+        fetchBooks();
+      });
+    } catch (error: any) {
+      const detail = error?.response?.data?.detail || error?.message || 'Model load failed';
+      toast.error(`Indexing failed: ${detail}`);
+      console.error('Error in indexBook:', error);
+      throw error;
+    }
   };
 
   const getBookNameById = (bookId: string): string | undefined => {
@@ -127,6 +139,10 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const startClassification = async (bookId: string, runClassification: boolean = true, runAnalysis: boolean = true) => {
     try {
+      // Test model load before proceeding
+      await testModelLoad();
+      
+      // If model load succeeds, proceed with classification
       await apiStartClassification(bookId, runClassification, runAnalysis);
       await fetchBooks(); // Refresh books to get updated data
       
