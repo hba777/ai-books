@@ -9,7 +9,7 @@ import {
 
 interface ClassificationDetailsCardProps {
   onSeeInfo?: () => void;
-  onJumpToHighlight?: (className: string, direction: "next" | "prev") => void;
+  onJumpToHighlight?: (pageNumber: string, direction: "next" | "prev", coordinates?: number[]) => void;
 }
 
 interface ClassData {

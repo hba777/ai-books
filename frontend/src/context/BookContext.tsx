@@ -263,6 +263,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await apiRemoveClassificationFromChunk(chunkId, label);
     // Refresh classifications cache for the affected book
     classificationsCacheRef.current.clear();
+    
   };
 
   const jumpToClassificationCoordinates = (coordinates: number[], pageNumber: number) => {

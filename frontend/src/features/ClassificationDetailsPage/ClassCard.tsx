@@ -9,7 +9,7 @@ interface ClassCardProps {
   count: number;
   entries: ClassificationEntry[];
   bookId: string;
-  onJumpToHighlight: (className: string, direction: "next" | "prev") => void;
+  onJumpToHighlight: (pageNumber: string, direction: "next" | "prev", coordinates?: number[]) => void;
 }
 
 interface FeedbackItem {
@@ -222,8 +222,10 @@ const ClassCard: React.FC<ClassCardProps> = ({
     // Get the selected entry and jump to its coordinates if available
     const selectedEntry = filteredEntries[newIndex];
     if (selectedEntry?.coordinates && selectedEntry?.page_number) {
-      // Call the parent's onJumpToHighlight with the current classification info
-      onJumpToHighlight(className, direction);
+      console.log(selectedEntry.chunk_id)
+
+      // Call the parent's onJumpToHighlight with the specific entry data
+      onJumpToHighlight(selectedEntry.page_number.toString(), direction, selectedEntry.coordinates);
     }
   };
 
